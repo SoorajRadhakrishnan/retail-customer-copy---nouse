@@ -1,0 +1,30 @@
+{
+    "theme_color": "#2d374b",
+    "background_color": "#2d374b",
+    "display": "standalone",
+    "scope": "/",
+    "start_url": "/index.html",
+    "name": "ZaadRetail",
+    "short_name": "ZaadRetail",
+    "icons": [{
+            "src": "/assets/img/appicon.webp",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/assets/img/appicon.webp",
+            "sizes": "256x256",
+            "type": "image/png"
+        },
+        {
+            "src": "/assets/img/appicon.webp",
+            "sizes": "384x384",
+            "type": "image/png"
+        },
+        {
+            "src": "/assets/img/appicon.webp",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

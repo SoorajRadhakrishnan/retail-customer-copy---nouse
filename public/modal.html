@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>Categories</title>
+    <base href="http://visatyping2.localhost/">
+    <link rel="shortcut icon" href="assets/img/favicon.png" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <!-- <link href="assets/lib/fontawesome-free/css/all.min.css" rel="stylesheet"> -->
+    <link href="assets/lib/ionicons/css/ionicons.min.css" rel="stylesheet">
+    <link href="assets/lib/typicons.font/typicons.min.css" rel="stylesheet">
+    <link href="assets/lib/flag-icon-css/css/flag-icon.min.css" rel="stylesheet">
+    <link href="assets/lib/dataTables.bootstrap4/jquery.dataTables.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/responsive/2.4.0/css/responsive.dataTables.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/buttons/2.3.2/css/buttons.dataTables.min.css" rel="stylesheet">
+    <!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.css" rel="stylesheet"> -->
+    <!-- <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/fixedheader/3.4.0/css/fixedHeader.dataTables.min.css"> -->
+    <link rel="stylesheet" href="assets/css/azia.css?v=166274628">
+    <link href="assets/lib/select2/dist/css/select2.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/lib/select2/dist/css/select2-bootstrap-5-theme.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css?v=283086245">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <script src="assets/lib/jquery/jquery.min.js"></script>
+    <!-- <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script> -->
+    <script src="assets/lib/select2/dist/js/select2.min.js"></script>
+    <script src="assets/js/swipe.js"></script>
+</head>
+
+<body>
+    <!-- HEADER WILL BE HERE -->
+    <div class="az-content az-content-dashboard  animate__animated animate__fadeIn">
+        <div class="container-fluid">
+            <div class="az-content-body">
+                <button class="nav-linkk btn btn-dark rounded-10 shadoww mr-2 mb-2" data-toggle="modal"
+                    data-target="#dynamicPopup-sm" data-backdrop="static" data-keyboard="false">Modal-sm</button>
+                <button class="nav-linkk btn btn-dark rounded-10 shadoww mr-2 mb-2" data-toggle="modal"
+                    data-target="#dynamicPopup-md" data-backdrop="static" data-keyboard="false">Modal-md</button>
+                <button class="nav-linkk btn btn-dark rounded-10 shadoww mr-2 mb-2" data-toggle="modal"
+                    data-target="#dynamicPopup-lg" data-backdrop="static" data-keyboard="false">Modal-lg</button>
+                <button class="nav-linkk btn btn-dark rounded-10 shadoww mr-2 mb-2" data-toggle="modal"
+                    data-target="#dynamicPopup-xl" data-backdrop="static" data-keyboard="false">Modal-xl</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="dynamicPopup-sm" tabindex="-1" role="dialog" data-backdrop="static"
+        data-keyboard="false" aria-hidden="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content rounded-10 popupContent-sm">
+                <div class="modal-header">
+                    <h5 class="modal-title text-uppercase text-center w-100">MODAL HEADER</h5>
+                </div>
+                <div class="modal-body py-5" style="max-height: 70vh !important; overflow-x:auto">
+                <h5 class="py-5 text-center">MODAL BODY</h5>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-dark px-4 text-uppercase rounded-10"
+                        data-dismiss="modal">Back</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="dynamicPopup-md" tabindex="-1" role="dialog" data-backdrop="static"
+        data-keyboard="false" aria-hidden="true">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content rounded-10 popupContent-md">
+                <div class="modal-header">
+                    <h5 class="modal-title text-uppercase text-center w-100">Create Service</h5>
+                </div>
+                <form action="" id="serviceForm" class="was-validated" autocomplete="off">
+                    <div class="col-12 p-0">
+                        <div class="modal-body" style="max-height: 70vh !important; overflow-x:auto">
+                            <div class="row">
+                                <div class="col-12" id="categoryDiv">
+                                    <label class="mb-0">Category</label>
+                                    <div class="input-group mt-0 mb-3">
+                                        <select class="form-control rounded select2-hidden-accessible" id="category"
+                                            name="category[]" data-placeholder="Choose Category" multiple="" required=""
+                                            tabindex="-1" aria-hidden="true">
+                                            <option value=""></option>
+                                        </select><span class="select2 select2-container select2-container--bootstrap-5"
+                                            dir="ltr" style="width: auto;"><span class="selection"><span
+                                                    class="select2-selection select2-selection--multiple"
+                                                    role="combobox" aria-haspopup="true" aria-expanded="false"
+                                                    tabindex="-1">
+                                                    <ul class="select2-selection__rendered">
+                                                        <li class="select2-search select2-search--inline"><input
+                                                                class="select2-search__field" type="search" tabindex="0"
+                                                                autocomplete="off" autocorrect="off"
+                                                                autocapitalize="off" spellcheck="false" role="textbox"
+                                                                aria-autocomplete="list" placeholder="Choose Category"
+                                                                style="width: 0px;"></li>
+                                                    </ul>
+                                                </span></span><span class="dropdown-wrapper"
+                                                aria-hidden="true"></span></span>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-group mt-0 mb-0">
+                                        <label class="mb-0">Service Name</label>
+                                        <input type="text" class="form-control rounded-10" id="service_name"
+                                            placeholder="" name="service_name" required="" autofocus="">
+                                        <div class="valid-feedback">&nbsp;</div>
+                                        <div class="invalid-feedback">&nbsp;</div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-group mt-0 mb-3">
+                                        <label class="mb-0" for="payment_type">Default Payment Method</label>
+                                        <select class="form-control rounded-10" name="payment_type" id="payment_type"
+                                            onchange="selectThis()">
+                                            <option value="">Choose one</option>
+                                            <option value="bank">Payment Method</option>
+                                            <option value="supplier">Supplier</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-12" style="display:none" id="pm">
+                                    <label class="mb-0">Payment Method</label>
+                                    <div class="input-group mt-0 mb-3">
+                                        <select class="form-control rounded select2-hidden-accessible"
+                                            id="payment_method" name="payment_method"
+                                            data-placeholder="Choose Payment Method" required="" tabindex="-1"
+                                            aria-hidden="true">
+                                            <option value=""></option>
+                                        </select><span class="select2 select2-container select2-container--bootstrap-5"
+                                            dir="ltr" style="width: auto;"><span class="selection"><span
+                                                    class="select2-selection select2-selection--single" role="combobox"
+                                                    aria-haspopup="true" aria-expanded="false" tabindex="0"
+                                                    aria-labelledby="select2-payment_method-container"><span
+                                                        class="select2-selection__rendered"
+                                                        id="select2-payment_method-container"><span
+                                                            class="select2-selection__placeholder">Choose Payment
+                                                            Method</span></span><span class="select2-selection__arrow"
+                                                        role="presentation"><b
+                                                            role="presentation"></b></span></span></span><span
+                                                class="dropdown-wrapper" aria-hidden="true"></span></span>
+                                        <button class="btn btn-dark px-3 pt-2" style="border-radius: 0 10px 10px 0;"
+                                            type="button" onclick="clearSelect2('payment_method')"><i
+                                                class="fa fa-times-circle"></i></button>
+                                    </div>
+                                </div>
+                                <div class="col-12" style="display:none" id="sup">
+                                    <label class="mb-0">Supplier</label>
+                                    <div class="input-group mt-0 mb-3">
+                                        <select class="form-control rounded select2-hidden-accessible" id="supplier"
+                                            name="supplier" data-placeholder="Choose Supplier" required="" tabindex="-1"
+                                            aria-hidden="true">
+                                            <option value=""></option>
+                                        </select><span class="select2 select2-container select2-container--bootstrap-5"
+                                            dir="ltr" style="width: auto;"><span class="selection"><span
+                                                    class="select2-selection select2-selection--single" role="combobox"
+                                                    aria-haspopup="true" aria-expanded="false" tabindex="0"
+                                                    aria-labelledby="select2-supplier-container"><span
+                                                        class="select2-selection__rendered"
+                                                        id="select2-supplier-container"><span
+                                                            class="select2-selection__placeholder">Choose
+                                                            Supplier</span></span><span class="select2-selection__arrow"
+                                                        role="presentation"><b
+                                                            role="presentation"></b></span></span></span><span
+                                                class="dropdown-wrapper" aria-hidden="true"></span></span>
+                                        <button class="btn btn-dark px-3 pt-2" style="border-radius: 0 10px 10px 0;"
+                                            type="button" onclick="clearSelect2('supplier')"><i
+                                                class="fa fa-times-circle"></i></button>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-group mt-0 mb-0">
+                                        <label class="mb-0">Description</label>
+                                        <textarea class="form-control rounded-10" rows="5" style="resize: none;"
+                                            id="service_description" placeholder=""
+                                            name="service_description"></textarea>
+                                        <div class="valid-feedback">&nbsp;</div>
+                                        <div class="invalid-feedback">&nbsp;</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-group mt-0 mb-0">
+                                        <label class="mb-0">Cost</label>
+                                        <input type="text" class="form-control rounded-10" id="cost" placeholder=""
+                                            onclick="this.select();" name="cost" required="" value="0"
+                                            onkeyup="zzero()">
+                                        <div class="valid-feedback">&nbsp;</div>
+                                        <div class="invalid-feedback">&nbsp;</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-group mt-0 mb-0">
+                                        <label class="mb-0">Selling Price</label>
+                                        <input type="text" class="form-control rounded-10" id="price" placeholder=""
+                                            onclick="this.select();" name="price" required="" value="0">
+                                        <div class="valid-feedback">&nbsp;</div>
+                                        <div class="invalid-feedback">&nbsp;</div>
+                                    </div>
+                                </div>
+                                <div class="col-12" id="zzero">
+                                    <div class="form-check cursor-pointer no-select">
+                                        <input type="checkbox" class="form-check-input" id="zero_profit"
+                                            name="zero_profit">
+                                        <label class="form-check-label cursor-pointer text-dark" for="zero_profit">
+                                            This is a non-profit service
+                                            <span class="small d-block">The cost for this service will be the unit price
+                                                charged at the time of billing.</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-dark px-4 text-uppercase rounded-10 modalClose"
+                                data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-dark px-4 text-uppercase rounded-10">Save</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="dynamicPopup-lg" tabindex="-1" role="dialog" data-backdrop="static"
+        data-keyboard="false" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content rounded-10 popupContent-lg">
+                <div class="modal-header">
+                    <h5 class="modal-title text-uppercase text-center w-100">MODAL HEADER</h5>
+                </div>
+                <div class="modal-body py-5" style="max-height: 70vh !important; overflow-x:auto">
+                <h5 class="py-5 text-center">MODAL BODY</h5>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-dark px-4 text-uppercase rounded-10"
+                        data-dismiss="modal">Back</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="dynamicPopup-xl" tabindex="-1" role="dialog" data-backdrop="static"
+        data-keyboard="false" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content rounded-10 popupContent-xl">
+                <div class="modal-header">
+                    <h5 class="modal-title text-uppercase text-center w-100">MODAL HEADER</h5>
+                </div>
+                <div class="modal-body py-5" style="max-height: 70vh !important; overflow-x:auto">
+                <h5 class="py-5 text-center">MODAL BODY</h5>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-dark px-4 text-uppercase rounded-10"
+                        data-dismiss="modal">Back</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.3/dist/umd/popper.min.js"></script>
+    <script src="assets/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/lib/dataTables.bootstrap4/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.4.0/js/dataTables.responsive.min.js"></script>
+    <script src="assets/lib/notify/notify.min.js"></script>
+    <script src="assets/js/azia.min.js"></script>
+    <!-- <script src="assets/js/main.min.js"></script> -->
+    <script src="assets/js/main.js?v=23346382"></script>
+</body>
+
+</html>

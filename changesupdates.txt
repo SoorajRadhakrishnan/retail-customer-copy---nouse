@@ -1,0 +1,75 @@
+Adimin side
+
+   ✅ 1.table design change -categories
+
+    2. table design chage -items
+    3. table design change -unit
+    4. table design change -suppliers
+    5. table design change- drivers
+    6. table design change -staffs
+    7. table design change -expense categories
+    8. modal text box space align – create items
+    9. date select box space align -sales orders
+    10. refresh button alignment-sales order
+    11. th align center on table sales orders -sales order
+    12. payment type selectbox width change -sales order
+    13. date select box space alignment -purchase
+    14. refresh button alignment-purchase
+    15. table design change – purchase
+    16. select item box left align -purchase-create purchase
+    17. space between select boxes-purchase-create purchase
+    18. date select box space alignment -expense
+    19. refresh button alignment-expense
+    20. table design change – expense
+    21. title change -create expense modal
+    22. description input type change-create expense modal
+    23. items order change -create expense modal
+    24. invoice textbox width change -create expense modal
+    25. Total Before VAT textbox width change -create expense modal
+    26. VAT amount textbox width change - create expense modal
+    27. final amount textbox width change -create expense modal
+    28. final amount text space alignment change -create expense modal
+ 	29. table design change – item stock
+    30. cost price textbox width change -item stock
+    31. enter stock textbox width change -item stock
+    32. refresh button alignment-bill wise report
+    33. table design change-bill wise report
+    34. table design change-category wise report
+    35. table design change-item  wise report
+    36. table design change-order-type wise report
+    37. table design change-user wise report
+    38. table design change-driver wise report
+    39. table design change-customer wise report
+    40. table design change-performance wise report
+    41. table design change-performance report
+    42. refresh button alignment-performance report
+    43. date select box space alignment-performance report
+    44. table design change-stock  report
+    45. table design change-settle sale  report
+    46. date select box space alignment-settle sale  report
+    47. table design change-expense report
+    48. date select box space alignment-expense report
+
+
+user side
+
+    1. menu buttons alignment change -user menu
+    2. button icon change -user menu
+    3. width alignment table data of latest 5 orders-crm
+    4. date selectbox alignment change -logs
+    5. selectbox of payment type box width change -delivery sale log
+    6. text alignment change  driver log button-delivery sale log
+    7. checkbox size change -driver log
+    8. text alignment change delivery log button-driver log
+    9. th alignment change -credit sale
+    10. print and update position change-settle sale
+    11. refresh button alignment change-payback
+
+
+super admin side
+
+    1. table design change -payment method
+    2. table design change -price size
+    3. textbox alignment -create branch modal
+    4. placeholder image change
+    5. table design change -user permissions

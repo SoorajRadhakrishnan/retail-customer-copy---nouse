@@ -1,0 +1,299 @@
+/* Apply custom scrollbar styles for Webkit-based browsers (Chrome, Safari) on larger screens */
+@media (min-width: 768px) {
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #dcdee0;
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #dcdee0;
+    }
+  }
+
+  /* Apply custom scrollbar styles for Firefox on larger screens */
+  @media (min-width: 768px) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #dcdee0 #f1f1f1;
+    }
+  }
+
+  /* Ensure scrollable elements behave well on mobile */
+  .scrollable-element {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scrolling on iOS */
+  }
+
+
+  .pos-qty:focus {
+    outline: none;
+    box-shadow: none;
+    border: 0;
+  }
+
+  .pos-qty:read-only {
+    background-color: #3b4863 !important;
+    color: #fff;
+  }
+
+  .pos .pos-cart-section {
+    min-height: calc(100vh - 150px);
+    max-height: calc(100vh - 150px);
+  }
+
+  .pos .pos-category-section {
+    min-height: calc(100vh - 150px);
+    max-height: calc(100vh - 150px);
+    overflow-y: auto;
+  }
+
+  .pos .pos-items-section {
+    padding-top: 60px !important;
+    min-height: calc(100vh - 150px);
+    max-height: calc(100vh - 150px);
+    overflow-y: auto;
+  }
+
+  .pos .pos-items-section .pos-item-btn img {
+    border-radius: 10px 10px 0 0;
+    border-bottom: 1px solid rgba(59, 72, 99, .1);
+  }
+
+  .pos .pos-items-section .pos-item-btn .desc {
+    padding: .3rem .5rem;
+  }
+
+  /* .pos .pos-items-section .pos-item-btn .desc p {} */
+
+  .pos .pos-items-section .pos-item-price {
+    position: absolute;
+    background-color: #3b4863 !important;
+    color: #fff;
+    border-radius: 10px 0 10px 0;
+    z-index: 1;
+    /* padding: 2px 5px; */
+  }
+
+  .pos-item {
+    flex: 0 0 50% !important;
+    max-width: 50% !important;
+  }
+
+  @media (min-width: 768px) {
+    .pos-item {
+      flex: 0 0 33% !important;
+      max-width: 33% !important;
+    }
+  }
+
+  @media (min-width: 1200px) {
+    .pos-item {
+      flex: 0 0 25% !important;
+      max-width: 25% !important;
+    }
+  }
+
+  @media (min-width: 1400px) {
+    .pos-item {
+      flex: 0 0 20% !important;
+      max-width: 20% !important;
+    }
+  }
+
+  .pos-cart-section-table {
+    min-height: calc(100vh - 255px);
+    max-height: calc(100vh - 255px);
+    overflow-y: auto;
+  }
+
+  .pos-cart-section-save {
+    background-color: #eff0f1;
+    height: 255px;
+  }
+
+  .main-menu-in {
+    background: rgba(59, 72, 99, .5);
+    height: 60%;
+    /* width: 100px; */
+    -webkit-backdrop-filter: blur(8px);
+    /* Safari 9+ */
+    backdrop-filter: blur(8px);
+    /* Chrome and Opera */
+  }
+.main-menu-in {
+  background: rgba(200, 207, 225, 0.5);
+  /* width: 100px; */
+  height: 60%;
+  -webkit-backdrop-filter: blur(8px);
+  /* Safari 9+ */
+  backdrop-filter: blur(8px);
+  /* Chrome and Opera */
+}
+
+  .main-menu:hover {
+    width: 0;
+    overflow: hidden;
+    transition: .5s;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .pos-items-section-search{
+    position: absolute;
+    z-index: 999;
+    left: .3rem;
+    right: 0;
+    border-radius: 10px 10px 0 0 ;
+  }
+  .pos-items-section-search input{
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #dcdee0;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #dcdee0;
+  }
+/* } */
+
+/* Apply custom scrollbar styles for Firefox on larger screens */
+@media (min-width: 768px) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #dcdee0 #f1f1f1;
+  }
+}
+
+/* Ensure scrollable elements behave well on mobile */
+.scrollable-element {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Smooth scrolling on iOS */
+}
+
+
+.pos-qty:focus {
+  outline: none;
+  box-shadow: none;
+  border: 0;
+}
+
+.pos-qty:read-only {
+  background-color: #3b4863 !important;
+  color: #fff;
+}
+
+.pos .pos-cart-section {
+  min-height: calc(100vh - 150px);
+  max-height: calc(100vh - 150px);
+}
+
+.pos .pos-category-section {
+  min-height: calc(100vh - 150px);
+  max-height: calc(100vh - 150px);
+  overflow-y: auto;
+}
+
+.pos .pos-items-section {
+  padding-top: 60px !important;
+  min-height: calc(100vh - 150px);
+  max-height: calc(100vh - 150px);
+  overflow-y: auto;
+}
+
+.pos .pos-items-section .pos-item-btn img {
+  border-radius: 10px 10px 0 0;
+  border-bottom: 1px solid rgba(59, 72, 99, .1);
+}
+
+.pos .pos-items-section .pos-item-btn .desc {
+  padding: .3rem .5rem;
+}
+
+.pos .pos-items-section .pos-item-btn .desc p {}
+
+.pos .pos-items-section .pos-item-price {
+  position: absolute;
+  background-color: #3b4863 !important;
+  color: #fff;
+  border-radius: 10px 0 10px 0;
+  /* padding: 2px 5px; */
+}
+
+.pos-item {
+  flex: 0 0 50% !important;
+  max-width: 50% !important;
+}
+
+@media (min-width: 768px) {
+  .pos-item {
+    flex: 0 0 33% !important;
+    max-width: 33% !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .pos-item {
+    flex: 0 0 25% !important;
+    max-width: 25% !important;
+  }
+}
+
+@media (min-width: 1400px) {
+  .pos-item {
+    flex: 0 0 20% !important;
+    max-width: 20% !important;
+  }
+}
+
+.pos-cart-section-table {
+  min-height: calc(100vh - 255px);
+  max-height: calc(100vh - 255px);
+  overflow-y: auto;
+}
+
+.pos-cart-section-save {
+  background-color: #eff0f1;
+  height: 255px;
+}
+
+.main-menu-in {
+  background: rgba(200, 207, 225, 0.5);
+  /* width: 100px; */
+  height: 60%;
+  -webkit-backdrop-filter: blur(8px);
+  /* Safari 9+ */
+  backdrop-filter: blur(8px);
+  /* Chrome and Opera */
+}
+
+.main-menu:hover {
+  width: 0;
+  overflow: hidden;
+  transition: .5s;
+  padding-left: 0;
+  padding-right: 0;
+}
+.pos-items-section-search{
+  position: absolute;
+  z-index: 999;
+  left: .3rem;
+  right: 0;
+  border-radius: 10px 10px 0 0 ;
+}
+.pos-items-section-search input{
+  border-radius: 10px;
+}
+

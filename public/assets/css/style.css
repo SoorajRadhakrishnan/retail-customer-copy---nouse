@@ -1,0 +1,428 @@
+.col-notify {
+    display: none;
+    width: 100vw;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0;
+    right: 0;
+    padding: 1rem 30vw;
+    z-index: 9999 !important;
+}
+
+.col-notify .col-notify-in p {
+    color: rgba(255, 255, 255, 0.8);
+    text-align: center;
+    margin-bottom: 0;
+}
+
+.col-notify .col-notify-in {
+    display: block;
+    background-color: #212529;
+    padding: 1rem;
+    border-radius: 10px;
+    box-shadow: rgba(0, 0, 0, 0.16) 0px 10px 36px 0px,
+        rgba(0, 0, 0, 0.06) 0px 0px 0px 1px;
+}
+
+@media (max-width: 767px) {
+    .col-notify {
+        padding: 1rem;
+    }
+}
+
+.infoV {
+    background-color: #fff;
+    border-radius: 10px;
+    padding-top: 20px;
+    padding-bottom: 3px;
+    margin: 0.5rem auto;
+    background-color: #f0f0f0;
+    color: #212529;
+    border: 1px solid #ccc;
+}
+
+.infoV p {
+    position: absolute;
+    /* z-index: 9; */
+    margin-bottom: 0;
+    background-color: #f0f0f0;
+    top: -7px;
+    left: -1px;
+    border-radius: 10px 10px 0 0;
+    padding: 0.2rem 0.7rem;
+    border-top: 1px solid #ccc;
+    border-left: 1px solid #ccc;
+}
+
+.table thead th {
+    background-color: #dcdee0;
+    color: #222;
+    font-size: 100%;
+}
+
+.table-sale td {
+    vertical-align: middle;
+}
+
+.table-sale td .input-group-append .btn {
+    border-radius: 0 10px 10px 0;
+}
+
+.table-sale td .input-group-prepend .btn {
+    border-radius: 10px 0 0 10px;
+}
+
+.table-sale td .btn:focus {
+    outline: none !important;
+    background-color: #525457;
+    color: #fff;
+}
+
+/* .table-sale {
+    overflow-y: auto;
+  } */
+
+.table-sale thead th {
+    position: sticky;
+    top: 0;
+    /* background-color: #7d7f82; */
+    /* color: #fff; */
+    z-index: 9;
+}
+
+.top-right {
+    top: 3%;
+    right: 3%;
+}
+
+.outline-none,
+.outline-none:focus {
+    outline: none !important;
+}
+
+.resize-none {
+    resize: none;
+}
+
+.w-search {
+    width: 15%;
+    padding: 0 5px !important;
+    transition: 0.5s all;
+}
+
+@media (max-width: 1366px) {
+    .w-search {
+        width: 20%;
+    }
+}
+
+@media (max-width: 1099px) {
+    .w-search {
+        width: 25%;
+    }
+}
+
+@media (max-width: 767px) {
+    .w-search {
+        width: 50%;
+    }
+}
+
+@media (max-width: 456px) {
+    .w-search {
+        width: 100%;
+        padding: 0 !important;
+    }
+}
+
+.custom-radio .cus input[type="radio"] {
+    display: none;
+}
+
+.btn:active,
+.btn:focus,
+.btn.active {
+    background-image: none !important;
+    outline: 0 !important;
+    -webkit-box-shadow: none !important;
+    box-shadow: none !important;
+}
+
+.az-header-menu .nav-item-m {
+    margin: 0 5px 0 0 !important;
+}
+
+.az-header-menu .nav-link-m {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 3px 10px !important;
+    margin: 0 !important;
+    border-radius: 10px;
+}
+
+.az-header-menu .nav-link-m span {
+    margin-right: 3px;
+    font-size: 100%;
+}
+
+@media (max-width: 1200px) {
+    .az-header-menu .nav-item-m {
+        margin: 0 0 0.5rem 0 !important;
+    }
+}
+
+.main-menu:hover, nav.main-menu.expanded{
+    width: 344px;
+        overflow: hidden;
+        transition: 0.5s;
+        padding-left: 1rem;
+        padding-right: 0.5rem;
+        left: 0;
+    }
+
+    .main-menu-in {
+        background: rgba(200, 207, 225, 0.5);
+            /* width: 100%; */
+            height: auto !important;
+            max-height: 88vh !important;
+            border-radius: 10px;
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+        }
+.main-menu {
+    background: rgba(59, 72, 99, 0);
+    position: fixed;
+    top: 5rem;
+    bottom: 0;
+    /* height: 100vh; */
+    left: -100px;
+    width: 1px;
+    /* padding-top: 80px; */
+    overflow: hidden;
+    padding-left: 0.5rem;
+    -webkit-transition: width 0.5s linear;
+    transition: width 0.5s linear;
+    -webkit-transform: translateZ(0) scale(1, 1);
+    z-index: 1000;
+    transition: 0.5s;
+}
+
+.main-menu-in .btns {
+    display: block !important;
+    height: 80px !important;
+    width: 80px !important;
+    background-size: 40px;
+    background-position: 20px 10px;
+    background-repeat: no-repeat;
+    background-color: #3b4863;
+    filter: drop-shadow(5px 5px 5px rgba(0, 0, 0, 0.3));
+}
+
+.main-menu-in .btns span {
+    color: #fff;
+    display: block;
+    margin-top: 50px;
+    text-align: center;
+}
+
+/* .main-menu-in .btn-sale {
+    background-image: url(assets/img/newinv.png);
+} */
+
+/* .main-menu-in .btn-expense {
+    background-image: url(assets/img/expense.png);
+} */
+
+.main-menu-in .btn-lock {
+    background-image: url(assets/img/lock.png);
+}
+.main-menu-in .btn-reload {
+    background-image: url(assets/img/reload.png);
+    position: absolute;
+    bottom: 110px;
+    background-position: 20px 20px;
+}
+.main-menu-in .btn-back {
+    /* background-image: url(assets/img/back.png); */
+    position: absolute;
+    bottom: 15px;
+    background-position: 20px 20px;
+}
+
+.no-select {
+    -webkit-user-select: none;
+    /* Safari */
+    -ms-user-select: none;
+    /* IE 10 and IE 11 */
+    user-select: none;
+    /* Standard syntax */
+}
+
+select.form-control.is-valid,
+.was-validated select.form-control:valid {
+    padding-right: calc(1.5em + 1rem);
+    background-position: center right calc(0.375em + 0.75rem);
+}
+
+select.form-control.is-invalid,
+.was-validated select.form-control:invalid {
+    padding-right: calc(1.5em + 1rem);
+    background-position: center right calc(0.375em + 0.75rem);
+}
+
+/* ===== Scrollbar CSS ===== */
+/* Firefox */
+* {
+    scrollbar-width: auto;
+    scrollbar-color: #dcdee0 #ffffff;
+}
+
+/* Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+    width: 16px;
+}
+
+*::-webkit-scrollbar-track {
+    background: #ffffff;
+}
+
+*::-webkit-scrollbar-thumb {
+    background-color: #dcdee0;
+    border-radius: 10px;
+    border: 3px solid #ffffff;
+}
+
+.small2 {
+    font-size: 55%;
+}
+
+button.close {
+    z-index: 999;
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+}
+button.close span {
+    font-size: 2rem;
+}
+
+button.close:active,
+button.close:focus,
+button.close.active {
+    background-image: none !important;
+    outline: 0 !important;
+    -webkit-box-shadow: none !important;
+    box-shadow: none !important;
+}
+.searchLi {
+    width: 170px;
+}
+
+.searchLi input {
+    height: auto;
+    font-size: 0.8rem;
+    padding: 8px 25px 8px 10px;
+}
+
+.searchLi #navList {
+    border-radius: 10px;
+    width: 170px;
+    list-style: none;
+    padding: 0;
+    position: absolute;
+    background-color: #f9f9f9;
+    /* border: 1px solid #ddd; */
+    max-height: 200px;
+    /* Set a max height for better visibility */
+    overflow-y: auto;
+    /* Enable scrolling if the list exceeds max height */
+    display: none;
+    /* Initially hide the list */
+    margin-top: 5px;
+}
+
+.searchLi #navList li {
+    padding: 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.searchLi #navList li a {
+    color: #000;
+    padding: 8px;
+    width: 100%;
+    display: block;
+}
+
+.searchLi #navList li a:active,
+.searchLi #navList li a:focus,
+.searchLi #navList li a.active {
+    background-image: none !important;
+    outline: 0 !important;
+    -webkit-box-shadow: none !important;
+    box-shadow: none !important;
+    background-color: #3b4863;
+    color: #fff;
+}
+
+@media (max-width: 767px) {
+    .searchLi,
+    .searchLi #navList {
+        width: 200px;
+    }
+}
+#searchContainer {
+    position: relative;
+    display: inline-block;
+}
+
+#searchIcon span {
+    font-size: 1rem;
+}
+#searchIcon {
+    position: absolute;
+    top: 60%;
+    right: 10px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    /* color: #333 !important; */
+}
+/* Set the initial styles for both normal and hover states */
+.original-text {
+    display: inline;
+}
+
+.hover-text {
+    display: none;
+}
+
+/* Apply different styles on hover */
+.text-container:hover .original-text {
+    display: none;
+}
+
+.text-container:hover .hover-text {
+    display: inline;
+}
+.checkbox-1x {
+    transform: scale(1.5);
+    -webkit-transform: scale(1.5);
+}
+.overlaytt {
+    display: table-column;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 0;
+    z-index: 999;
+    background-color: transparent;
+}
+
+
+table-custom, .table-custom th, .table-custom td, .table-custom tr{
+    border-color:rgba(0, 0, 0, .00) !important;
+  }
+  .table-custom tr th {
+    /* font-size: 1rem !important; */
+    background-color: rgba(0, 0, 0, .01) !important;
+    vertical-align: middle;
+  }

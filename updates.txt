@@ -1,0 +1,255 @@
+
+13/09/2024
+
+Admin Side
+
+✅ 1. Table Design Update - Categories
+✅ 2. Table Design Update - Items
+✅ 3. Table Design Update - Unit
+✅ 4. Table Design Update - Suppliers
+✅ 5. Table Design Update - Drivers
+✅ 6. Table Design Update - Staff
+✅ 7. Table Design Update - Expense Categories
+✅ 8. Modal Text Box Alignment - Adjust spacing in the Create Items modal for better layout.
+✅ 9. Date Selector Alignment - Adjust spacing for date selectors in Sales Orders.
+✅ 10. Refresh Button Alignment - Correct positioning of the refresh button in Sales Orders.
+✅ 11. Table Header Alignment - Center align table headers in the Sales Orders table.
+✅ 12. Payment Type Selector Width - Adjust width of the payment type select box in Sales Orders.
+✅ 13. Date Selector Alignment - Adjust spacing for date selectors in Purchase Orders.
+✅ 14. Refresh Button Alignment - Correct positioning of the refresh button in Purchase Orders.
+✅ 15. Table Design Update - Purchase Orders
+✅ 16. Item Selection Box Alignment - Left-align item select box in Purchase Orders (Create Purchase).
+✅ 17. Spacing Between Select Boxes - Adjust spacing between select boxes in Purchase Orders (Create Purchase).
+✅ 18. Date Selector Alignment - Adjust spacing for date selectors in Expense entries.
+✅ 19. Refresh Button Alignment - Correct positioning of the refresh button in Expenses.
+✅ 20. Table Design Update - Expense Entries
+✅ 21. Title Change - Update title in the Create Expense modal for clarity.
+✅ 22. Description Input Type - Change the input type for the description field in the Create Expense modal.
+✅ 23. Item Order Update - Rearrange the order of items in the Create Expense modal for better flow.
+✅ 24. Invoice Textbox Width - Adjust width of the invoice textbox in the Create Expense modal.
+✅ 25. Total Before VAT Textbox Width - Adjust width of the “Total Before VAT” textbox in the Create Expense modal.
+✅ 26. VAT Amount Textbox Width - Adjust width of the VAT amount textbox in the Create Expense modal.
+✅ 27. Final Amount Textbox Width - Adjust width of the final amount textbox in the Create Expense modal.
+✅ 28. Final Amount Text Alignment - Correct spacing for the final amount text in the Create Expense modal.
+✅ 29. Table Design Update - Item Stock
+✅ 30. Cost Price Textbox Width - Adjust width of the cost price textbox in Item Stock.
+✅ 31. Enter Stock Textbox Width - Adjust width of the "Enter Stock" textbox in Item Stock.
+✅ 32. Refresh Button Alignment - Correct positioning of the refresh button in the Bill Wise Report.
+✅ 33. Table Design Update - Bill Wise Report
+✅ 34. Table Design Update - Category Wise Report
+✅ 35. Table Design Update - Item Wise Report
+✅ 36. Table Design Update - Order Type Wise Report
+✅ 37. Table Design Update - User Wise Report
+✅ 38. Table Design Update - Driver Wise Report
+✅ 39. Table Design Update - Customer Wise Report
+✅ 40. Table Design Update - Performance Wise Report
+✅ 41. Table Design Update - Performance Report
+✅ 42. Refresh Button Alignment - Correct positioning of the refresh button in the Performance Report.
+✅ 43. Date Selector Alignment - Adjust spacing for date selectors in the Performance Report.
+✅ 44. Table Design Update - Stock Report
+✅ 45. Table Design Update - Settle Sale Report
+✅ 46. Date Selector Alignment - Adjust spacing for date selectors in the Settle Sale Report.
+✅ 47. Table Design Update - Expense Report
+✅ 48. Date Selector Alignment - Adjust spacing for date selectors in the Expense Report.
+
+User Side
+
+✅ 49. Menu Button Alignment - Adjust alignment of buttons in the User Menu.
+✅ 50. Button Icon Change - Update the icons for buttons in the User Menu.
+❌ 51. Table Width Alignment - Adjust the width of table columns displaying the latest 5 orders in the CRM.
+✅ 52. Date Selector Alignment - Adjust spacing for the date select box in Logs.
+✅ 53. Payment Type Selector Width - Change the width of the payment type select box in Delivery Sale Logs.
+✅ 54. Driver Log Button Text Alignment - Align text properly on the Driver Log button in Delivery Sale Logs.
+✅ 55. Checkbox Size Change - Adjust the size of the checkbox in the Driver Log.
+✅ 56. Delivery Log Button Text Alignment - Correct text alignment for the Delivery Log button in the Driver Log.
+✅ 57. Table Header Alignment - Adjust table header alignment in Credit Sale logs.
+✅ 58. Print & Update Button Position - Adjust the position of Print and Update buttons in Settle Sale.
+✅ 59. Refresh Button Alignment - Correct positioning of the refresh button in Payback.
+
+Super Admin Side
+
+✅ 60. Table Design Update - Payment Method
+✅ 61. Table Design Update - Price Size
+✅ 62. Textbox Alignment - Correct textbox alignment in the Create Branch modal.
+❌ 63. Placeholder Image Update - Change the placeholder image.
+✅ 64. Table Design Update - User Permissions
+
+---
+
+17/09/2024
+
+Admin Side
+
+✅ 1. The alignment is messing when adding more units - Create Items modal
+✅ 2. Change the refresh button to Submit button
+✅ 3. Change all the labels to bold - Create Purchase
+❌ 4. Modal width increase to 75%(cant change)
+✅ 5. Enter to next field - Create Expense form
+✅ 6. Add icons for Nav items
+✅ 7. Image width to the same for all in the table - Create Items table
+✅ 8. Add total outstanding on the left side in bold - Supplier Outstanding
+✅ 9. Add total outstanding on the left side in bold - Customer Outstanding
+✅ 10. Make the text bold in the card - Settle Sales
+✅ 11. Total balance to bold - Statements in User
+❌ 12. Text alignment of stock in the products on user (Not applicable)
+
+---
+
+21/09/2024
+
+✅ 1. Menu buttons change - User
+✅ 2. Image width change - Admin Items table
+✅ 3. Changed Submit to Refresh with icon - Admin Categories
+✅ 4. Changed Submit to Refresh with icon - Admin Items
+✅ 5. Changed Submit to Refresh with icon - Admin Units
+✅ 6. Changed Submit to Refresh with icon - Admin Supplier
+✅ 7. Changed Submit to Refresh with icon - Admin Driver
+✅ 8. Changed Submit to Refresh with icon - Admin Staffs
+✅ 9. Changed Submit to Refresh with icon - Admin Customer
+✅ 10. Changed Submit to Refresh with icon - Admin Expense Categories
+✅ 11. Action button design change - User Delivery Log
+
+23-09-24
+✅refresh button between spaces
+✅submenu icon spacing-admin
+✅add error place holder in admin item table
+✅sub menu add add ingredients
+✅create purchase modal not working
+✅checkbox design change -admin create item
+✅table design change -production
+✅table design change -ingredients
+✅table design change -barcode
+✅button text alignment -production
+✅select box width change-production
+✅button text alignment-ingredients
+✅add ingredients button icon spacing -ingredients
+
+24-03-24
+✅table design change-available stock
+✅button alignment change -available stock
+✅button alignment change-stock manage
+✅item selct width change-admin item
+✅error image change -itemmodal
+space correction -item modal
+
+25-09-24
+errors to be updated
+item price is not visible -user
+discount and note adding modal save button missing -user
+opening balance modal is not showing-user
+statement print showing table is not correct -credit sale user
+error image not showing -user
+log and delivery log missing-user menu
+
+
+user
+✅menu modal opening error fix-user menu
+✅product price error fix
+
+admin
+✅table structure change -stock manage
+✅sub menu icons image error fix
+
+roohi site updated
+
+26-09-24
+✅note saving issue on key up-user enter discount modal
+
+    loking into the work flow of ZaadDocs
+
+✅**creating a welcome/installation page for zaad retail**
+27-09-29
+✅uploaded image not seen -admin item(create item popup)
+✅git upload changes
+update resonse not showing -admin items
+
+
+list adding page creation 2day
+controller side (need deleveoper assistence to clarify the existing logic)
+permission
+
+
+28-09-24
+✅Creating *Minimum stock* field on create item (popup)
+✅New page for MINIMUM STOCK REPORT
+
+✅Creating new product with minimum qty
+
+30-09-24
+
+✅Minimum Stock permission adding on super admin
+✅Adding field for adding minimu stock- Create Item (popup)
+✅Removing cost price and selling price -master item table
+
+2-10-2024
+    ✅1. Change Labels to Bold - Admin
+    ✅2. Add Category Filter - Admin->Item
+    ✅3. Add Item Type Filter - Admin->Item
+    ✅4. Show Item in the Dropdown According to the Item Type - Admin-> Stock
+    ✅5. Show Item in the Dropdown According to the Item Type-Admin Item
+    ❌6. Add Invoice View in Action -  Admin-> Purchase
+    ✅7. Add Search Filter to Ingredients -  Admin-> Add Ingredients
+    ❌8. Minimum Stock Product Not Showing on Report -  Admin-> Minimum Stock
+    ✅9. Viewing supplier page with filter on clicking on supllier-Admin Supllier outstanding
+    ❌10. Multiple items paying with single button -Admin purchase
+    ✅11. Show total outstanding on purchase -Admin purchase
+
+user
+
+❌1. List items not showing on Items popup -User-> Recent Sales
+✅2. Item price is not showing in the item - User
+✅3. Order not saving -User
+❌4. Payment type is not saving to table -User
+
+04-10-24
+Removed itemtype filter dropdown -Admin item
+
+
+Changes /updates 04-10-2024
+
+Admin
+
+✅1. Fix Category Filter Validation - Admin Item.
+✅2. Rearrange Stock Table Columns - Move the Unit column next to Available Stock in Admin Stock.
+✅3. Design Changes for Create Item Popup - Admin Create Item:
+✅4. Adjust width of Minimum Quantity field.
+✅5. Reorder fields: Place Item Type and Stock Applicable above Categories and Unit.
+❌6. change alignment of hind in pos checkbox
+✅7. Remove Fields Based on Item Type - If Item Type is set to "Raw Materials," remove Unit Price and Barcode in Admin Create Item (popup).
+✅8. Fix Item Type Filtering Issue - Admin Items.
+❌9. Change Stock Applicable Dropdown to Checkbox - Admin Create Item.
+✅10. Change Heading "Sales Order" to "Recent Sales" - Admin Sales Order.
+❌11. Add Search Filter for Invoice by Last Number - Admin Sales Order.
+❌12. Enable Edit/Delete Actions for Sales Orders - Admin Sales Order (waiting for Abdul Rahman's reply).
+❌13. Create New Page for Payback Log - Admin Report.
+✅14. item create issue -Admin Item
+✅15. Add ingredient checkbox issue
+
+
+User
+
+❌1. Create Payback History - User.
+❌2. Add Payback History in CRM - User CRM.
+❌3. Redesign Payback Submit Button - User Payback.
+❌4. Add Date and Customer Filters in Payback History - User (when creating records).
+    Ensure Payback Features Only Work After Pending Tasks - User.
+✅5. Change "Balance" Text to Bold - User Credit Sale.
+✅6. Replace Pay Icon with "Pay" Text - User Credit Sale.
+
+
+Current pending work
+✅1. Add Invoice View in Action -  Admin-> Purchase
+❌2. Minimum Stock Product Not Showing on Report -  Admin-> Minimum Stock
+✅3. Multiple items paying with single button -Admin purchase
+✅4. change alignment of hide in pos checkbox
+❌5. Change Stock Applicable Dropdown to Checkbox - Admin Create Item.
+✅6. Add Search Filter for Invoice by Last Number - Admin Sales Order.
+
+
+❌7. Enable Edit/Delete Actions for Sales Orders - Admin Sales Order (waiting for Abdul Rahman's reply).
+❌8. Create New Page for Payback Log - Admin Report.
+❌9. Create Payback History - User.
+❌10. Add Payback History in CRM - User CRM.
+✅11. Redesign Payback Submit Button - User Payback.
+❌12. Add Date and Customer Filters in Payback History - User (when creating records).
+        Ensure Payback Features Only Work After Pending Tasks - User.
