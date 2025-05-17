@@ -1,4 +1,4 @@
-	<?php $branch_id = getbranchid(); ?>
+<?php $branch_id = getbranchid(); ?>
 <div class="modal-header">
     <h5 class="modal-title text-uppercase text-center w-100">Ingredient</h5>
 </div>
@@ -12,24 +12,24 @@
                 <div class="col-12">
                     <div class="form-group mt-0 mb-0">
                         <label class="mb-0">Select Item</label>
-                        <select class="form-control rounded-10 select2 addITem" id="items" name="items"
-                            required="">
+                        <select class="form-control rounded-10 select2 addITem" id="items" name="items" required="">
                             <option value="">Select Item</option>
                             @foreach ($items as $item)
-                          <?php
-                                                        if ($item->size_name === 'Unit price') {
-                                                            $item->size_name = ''; // Clear size_name
-                                                        }
-                                                        ?>
-                                <option value="{{ $item->price_id }}" 
-    data-price_id="{{ $item->price_id }}" 
-    data-item_id="{{ $item->item_id }}" 
-    data-name="{{ $item->item_name }}" 
-    data-item_size="{{ $item->size_name }}" 
-    data-unit="{{ $item->unit->unit_name }}">
-     {{ $item->item_name }}{{ $item->size_name ? ' - ' . $item->size_name : '' }}
-</option>
- 
+                            <?php
+                                if ($item->size_name === 'Unit price') {
+                                    $item->size_name = ''; // Clear size_name
+                                }else{
+                                    $item->size_name = ' - '. $item->size_name;
+                                }
+                            ?>
+                                <option value="{{ $item->price_id }}"
+                                    data-price_id="{{ $item->price_id }}"
+                                    data-item_id="{{ $item->item_id }}"
+                                    data-name="{{ $item->item_name }}"
+                                    data-item_size="{{ $item->size_name }}"
+                                    data-unit="{{ $item->unit->unit_name }}">
+                                    {{ $item->item_name.$item->size_name }}
+                                </option>
                             @endforeach
                         </select>
                         <div class="valid-feedback">&nbsp;</div>
@@ -87,10 +87,10 @@
 </form>
 
 <script>
-        $(document).ready(function() {
-    $('#items').select2({
-        theme: "bootstrap-5",
-      dropdownParent: $("#PurchaseForm"),//add this code
+    $(document).ready(function() {
+        $('#items').select2({
+            theme: "bootstrap-5",
+            dropdownParent: $("#PurchaseForm"),//add this code
     });
 });
 
@@ -114,9 +114,9 @@
                 <tr class="tr` + rand + `">
                     <input type="hidden" class="price_id" name="price_id[]" value="` + price_id + `">
                     <input type="hidden" class="item_id" name="item_id[]" value="` + item_id + `">
-                    <input type="hidden" class="item_name" name="item_name[]" value="` + item_name + " - " + item_size + `">
+                    <input type="hidden" class="item_name" name="item_name[]" value="` + item_name + item_size + `">
                     <input type="hidden" class="unit" name="unit[]" value="` + unit + `">
-                    <td width="40%">` + item_name + " - " + item_size + `</td>
+                    <td width="40%">` + item_name + item_size + `</td>
                     <td width="30%">` + unit + `</td>
                     <td width="30%"><input type="number" class="form-control rounded-10" placeholder="" name="qty[]" required="" autofocus="" value=""
                         id="qty` + rand + `"></td>

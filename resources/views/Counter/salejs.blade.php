@@ -1,7 +1,7 @@
 <script>
     var branchvat = $('#branchvat').val();
 
-    $(".item-click").click(function() {
+    $(document).on('click', '.item-click', function() {
         var id = $(this).data('id');
         var price_size_id = $(this).data('price_size_id');
         var item_name = $(this).data('item_name');
@@ -11,11 +11,13 @@
         var tax = $('#branchvat').val();//$(this).data('tax');
         var tax_percent = $('#js_branch_vat').val();//$(this).data('tax_percent');
         var unit_id = $(this).data('unit_id');
-        var item_price_cost_price = showAmt($(this).data('item_price_cost_price'));
+        var item_price_cost_price = $(this).data('item_price_cost_price');
         var price = showAmt($(this).data('price'));
         var stock_applicable = $(this).data('stock_applicable');
         var price_id = $(this).data('price_id');
         var stock_check = "{{ app('appSettings')['stock_check']->value }}";
+        var item_type = $(this).data('item_type');
+        var delivery_service = $('#delivery_service').val();
         if (tax_percent == '') {
             tax_percent = 0;
         }
@@ -37,7 +39,8 @@
                 price: price,
                 stock_applicable: stock_applicable,
                 stock_check: stock_check,
-                price_id: price_id
+                price_id: price_id,
+                item_type: item_type
             }
             product_add(value);
         }
@@ -47,9 +50,15 @@
         if ($("#barcodeSearch").val().length > 0) {
             var barcode_id = $("#barcodeSearch").val();//alert(barcode_id);
             var barcode_id_numeric = barcode_id;
+            var order_type = $('#order_type').val();
+            var delivery_service = $('#delivery_service').val();
+            var url = "{{ url('item-search') }}";
+            if(order_type == 'delivery'){
+                url = "{{ url('barcode-search') }}?type="+order_type+"&service="+delivery_service;
+            }
             $.ajax({
                 type: "POST",
-                url: "{{ url('barcode-search') }}",
+                url: url,
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
@@ -83,7 +92,8 @@
                                     price: item.price,
                                     stock_applicable: item.stock_applicable,
                                     stock_check: item.stock_check,
-                                    price_id: item.price_id
+                                    price_id: item.price_id,
+                                    item_type: item.item_type
                                 }
                                 product_add(value);
                             }
@@ -117,30 +127,30 @@
                 item_stock1 = parseFloat(item_stock) + parseFloat(old_qty);
             }
 
-            // if (prod_id == value.price_id && qty > 0) {
-            //     if (value.stock_applicable == 1) {
-            //         if (parseFloat(qty_plus) < parseFloat(item_stock1) || stock_check == 'no') {
-            //             $("tr:nth-child(" + i + ") td:nth-child(2) input").val((parseInt(qty_plus) + 1));
-            //             sb_total();
-            //             return true;
-            //         } else {
-            //             notifyme2("No Stock");
-            //             return false;
-            //         }
-            //     } else {
-            //         $("tr:nth-child(" + i + ") td:nth-child(2) input").val((parseInt(qty_plus) + 1));
-            //         sb_total();
-            //         return true;
-            //     }
-            // } else {
-            //     if (qty < 0) {
-            //         if (prod_id == value.price_id) {
-            //             $("tr:nth-child(" + i + ") td:nth-child(2) input").val((parseInt(qty_plus) - 1));
-            //             sb_total();
-            //             return true;
-            //         }
-            //     }
-            // }
+            if (prod_id == value.price_id && qty > 0) {
+                if (value.stock_applicable == 1) {
+                    if (parseFloat(qty_plus) < parseFloat(item_stock1) || stock_check == 'no') {
+                        $("tr:nth-child(" + i + ") td:nth-child(2) input").val((parseInt(qty_plus) + 1));
+                        sb_total();
+                        return true;
+                    } else {
+                        notifyme2("No Stock");
+                        return false;
+                    }
+                } else {
+                    $("tr:nth-child(" + i + ") td:nth-child(2) input").val((parseInt(qty_plus) + 1));
+                    sb_total();
+                    return true;
+                }
+            } else {
+                if (qty < 0) {
+                    if (prod_id == value.price_id) {
+                        $("tr:nth-child(" + i + ") td:nth-child(2) input").val((parseInt(qty_plus) - 1));
+                        sb_total();
+                        return true;
+                    }
+                }
+            }
         }
 // <input type='number' name='price_id[]' class='price_id' id='price_id'  value="` + value.price_id + `">
 // <span class="d-block text-dark small unit-price">` + value.price + `</span>
@@ -155,11 +165,24 @@
         }else{
             readonly = "";
         }
+
         itemList = $(".item_list tr").length;
+
+        comboStyle = '';
+        if(value.item_type == 3){
+            var comboUrl = "{{ url('combo-item') }}?id="+value.price_id;
+            comboStyle = `<span class="text-dark discount_model dynamicPopup" style="font-size:16px;"
+                            data-pop="xl" data-url="`+comboUrl+`" data-toggle="modal"
+                            data-target="#dynamicPopup-xl" data-image="{{ url(config('constant.LOADING_GIF')) }}">
+                            <i class="fa fa-plus"></i>
+                        </span>`;
+        }
+
         item_design = `
-            <tr>
+            <tr data-item-id="` + value.price_id + `">
                 <td class="align-content-center" style="width:35%"><b>
                     ` + value.item_name + `</b>
+                    ${comboStyle}
                     <span class="d-block text-dark discount_model" style="font-size:16px" onclick="discount_model('`+itemList+`')"><i class="fa fa-info-circle"></i></span>
                     <input type='hidden' name='price_id[]' class='price_id' id='price_id'  value="` + value.price_id + `">
                     <input type='hidden' name='category_id[]' class='category_id' id='category_id'  value="` + value.category_id + `">
@@ -179,6 +202,8 @@
                     <input type="hidden" name="discount_amount[]" class="discount-amount" value="0">
                     <input type="hidden" name="notes[]" class="notes" value="">
                     <input type="hidden" name="item_discount[]" class="item_discount" value="">
+                    <input type="hidden" name="item_type[]" class="item_type" value="` + value.item_type + `">
+                    <div class="ingredients"></div>
                 </td>
                 <td class="align-content-center p-0 py-1" style="width:15%">
                     <div class="input-group input-group-sm shadow rounded-10"
@@ -201,6 +226,9 @@
                     value="`+ value.price +`" name="unit-price[]"  style="width:80%;margin:0px 10px;border:2px solid #3b4863 !important;border-radius:10px;padding:0px" onfocus="this.select()" `+ readonly +`>
                 </td>
                 <td class="text-right align-content-center row_total" style="width:35%;font-weight:600">` + value.price * qty + `</td>
+ <td>
+                                                            <button class="btn  remove-row-btn"><i class="fa fa-trash"></i></button>
+                                                        </td>
             </tr>`;
         $("#item_append").append(item_design);
         sb_total();
@@ -248,6 +276,14 @@
             }
         }
     });
+  $(document).on('click', '.remove-row-btn', function() {
+    // Remove the closest table row
+    $(this).closest('tr').remove();
+
+    // Optionally, recalculate totals or perform other actions after row removal
+    sb_total(); // Call your function to update totals if necessary
+});
+
 
     // Quantity Key up function
     $(document).on('change paste keyup', 'input.qty', function() {
@@ -345,6 +381,7 @@
         var grand_total_show = 0;
         var tax_percentage = single_tax_amount = [];
         itemList = $(".item_list tr").length;
+        var totalQty = 0;
         for (var i = 1; i < itemList; i++) {
             var qty = parseFloat($("tr:nth-child(" + i + ") td:nth-child(2) input.qty").val());
             var disc_amt = parseFloat($("tr:nth-child(" + i + ") td:nth-child(1) input.discount-amount").val());
@@ -374,7 +411,7 @@
             if (discount_total != 0 && discount_total != '') {
                 unit_price = parseFloat(unit_price) - parseFloat(discount_total);
                 // $("tr:nth-child(" + i + ") td:nth-child(1) .unit-price").text((unit_price).toFixed(4));
-                // $("tr:nth-child(" + i + ") td:nth-child(3) .unit-price").val((unit_price).toFixed(4));
+                //$("tr:nth-child(" + i + ") td:nth-child(3) .unit-price").val((unit_price).toFixed(4));
                 // $("tr:nth-child(" + i + ") td:nth-child(1) .final_item_price").val((unit_price).toFixed(4));
             }
 
@@ -409,6 +446,7 @@
             $("tr:nth-child(" + i + ") td:nth-child(4).row_total").html(showAmt(tot_amt));
             $("tr:nth-child(" + i + ") td:nth-child(1) input.total_price").val(tot_amt);
             total_price_val += parseFloat($("tr:nth-child(" + i + ") td:nth-child(4).row_total").html());
+            totalQty += qty;
         }
 
         let enter_amount = 0;
@@ -448,6 +486,7 @@
             $('.amountcount').css('display', 'none');
         }
         $('#itemsCount').html(itemList - 1);
+        $('#itemsQtyCount').html(totalQty);
         $('.total_amount_show').html(showAmt(total_price_val));
         if(branchvat == 'exclusive'){
             $('.paymodel_gt_total').html(showAmt(grand_total_show + unit_price_vat_withoutdiscount));
@@ -624,11 +663,16 @@
     document.getElementById('ItemSearch').addEventListener('keyup', function() {
         let input = this.value.toLowerCase();
         let dropdown = document.getElementById('dropdownItemSearch');
-
+        var order_type = $('#order_type').val();
+        var delivery_service = $('#delivery_service').val();
+        var url = "{{ url('item-search') }}";
+        if(order_type == 'delivery'){
+            url = "{{ url('item-search') }}?type="+order_type+"&service="+delivery_service;
+        }
         if ($(this).val() != '') {
             $.ajax({
                 type: "POST",
-                url: "{{ url('item-search') }}",
+                url: url,
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
@@ -672,7 +716,8 @@
                                     price: item.price,
                                     stock_applicable: item.stock_applicable,
                                     stock_check: item.stock_check,
-                                    price_id: item.price_id
+                                    price_id: item.price_id,
+                                    item_type: item.item_type
                                 }
                                 product_add(value); // Call your product add function
                             }

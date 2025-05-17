@@ -266,9 +266,9 @@ $style_print = '';
                 ' :</td>';
 
             if ($branch_details->vat == 'inclusive') {
-                echo "<td colspan='2'  style='font-size:12px;text-align: right; " . $style_print . "'> " . showAmount($total_amount - $tax_amount, 1) . '</td></tr>';
+                echo "<td colspan='2'  style='font-size:12px;text-align: right; " . $style_print . "'> " . showAmount($net_total - $tax_amount, 1) . '</td></tr>';
             } else {
-                echo "<td colspan='2'  style='font-size:12px;text-align: right; " . $style_print . "'> " . showAmount($total_amount, 1) . '</td></tr>';
+                echo "<td colspan='2'  style='font-size:12px;text-align: right; " . $style_print . "'> " . showAmount($net_total, 1) . '</td></tr>';
             }
 
             echo "<tr>
@@ -292,9 +292,9 @@ $style_print = '';
                 ' :</td>';
 
             if ($branch_details->vat == 'inclusive') {
-                echo "<td colspan='2'  style='font-size:12px;text-align: right; " . $style_print . "'> " . showAmount($total_amount, 1) . '</td></tr>';
+                echo "<td colspan='2'  style='font-size:12px;text-align: right; " . $style_print . "'> " . showAmount($net_total, 1) . '</td></tr>';
             } else {
-                echo "<td colspan='2'  style='font-size:12px;text-align: right; " . $style_print . "'> " . showAmount($total_amount + $tax_amount, 1) . '</td></tr>';
+                echo "<td colspan='2'  style='font-size:12px;text-align: right; " . $style_print . "'> " . showAmount($net_total + $tax_amount, 1) . '</td></tr>';
             }
 
             $grand_taxable = 0;

@@ -1,3 +1,8 @@
+<?php
+$branch_id = auth()->user()->branch_id;
+$branch_details = DB::table('branches')->where('id', $branch_id)->whereNull('deleted_at')->first();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -7,53 +12,52 @@
     <title>Item Barcodes</title>
     <style>
         @page {
-            size: 1.5in 1in;
-            margin: 0;
-        }
+        size: 2in 1.3in;
+        margin: 0;
+    }
 
-        .label {
-            width: 1.5in;
-            height: 1in;
-            display: inline-block;
-            /* border: 1px solid #000; */
-            box-sizing: border-box;
-            text-align: center;
-            font-size: 8px;
-            /* Adjust font size as needed */
-            margin: 0;
-            padding: 2px;
-        }
+    .label {
+        width: 2in;
+        height: 1.15in;
+        display: block;
+        box-sizing: border-box;
+        text-align: center;
+        font-size: 9px;
+        margin: 0;
+        padding: 2px;
+        /* page-break-after: always; */
+        overflow: hidden;
+    }
 
-        /* .label .name {
-            text-align: center;
-        }
-
-        .label .barcode {
-            text-align: left;
-        }
-
-        .label #price {
-            text-align: left;
-        } */
-
-        .barcode {
-            /* margin-top: 5px; */
-        }
+    .barcode {
+        font-size: 10px;
+        font-weight: bold;
+        text-align: center;
+        display: block;
+        margin: 0 auto;
+        width: 70%;
+    }
     </style>
 </head>
 
 <body>
+
     @foreach ($items as $item)
+        {{-- <?php if($branch_details->image != '' && file_exists(public_path('storage/image/' . $branch_details->image))) { ?>
+        <div style="text-align: center; ">
+            <img style="text-align: center;width: 50px;margin-top: 2px;"
+                src="{{ public_path('storage/image/' . $branch_details->image) }}">
+        </div>
+        <?php }  ?> --}}
         <div class="label">
-            <div class="name"> {{ $item['name'] }} </div>
+            <div class="name " style="font-weight: bold;margin-top: 17px;  "> {{ strtoupper($item['name']) }} </div>
             <div class="barcode"> {!! $item['barcode_html'] !!} </div>
             <div>
-                <span class="barcode"> {{ showAmount($item['price'], 1) }} </span>
+                <span class="barcode" style="font-size: 12px"> {{ showAmount($item['price'], 1) }} </span>
             </div>
-            <div id="price"> {{ $item['barcode'] }} </div>
+            <div id="price" class="barcode"> {{ $item['barcode'] }} </div>
         </div>
     @endforeach
-    {{-- <button onclick="window.print()">Print Barcodes</button> --}}
 </body>
 
 </html>

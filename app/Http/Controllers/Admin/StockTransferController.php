@@ -75,6 +75,7 @@ class StockTransferController extends Controller
             'item_id.*' => 'required|integer',   // Validate each item_id
             'item_name.*' => 'required|string',   // Validate each item_name
             'qty.*' => 'required|integer|min:1',  // Validate each quantity
+            'cost_price.*' => 'required|min:1',  // Validate each quantity
         ]);
 
         $validation->after(function ($validation) use ($request) {
@@ -122,26 +123,43 @@ class StockTransferController extends Controller
 
             foreach($manageItems as $item){
 
-                $itemPrize = ItemPrice::where('id', $item->item_price_id)->first();
-                $old_stock = $itemPrize->stock;
-                $current_stock = $old_stock + $item->qty;
+                $itemsPrice = ItemPrice::where('id', $item->item_price_id)->first();
+                $old_stock = $itemsPrice->stock;
+                if($old_stock > 0) {
+                    $current_stock = $item->qty + $old_stock;
+                    $totalAmount = $item->qty * $item->cost_price;
+                    $finalTotalCostPrice = $itemsPrice->total_cost_price + $totalAmount;
+                    $finalCostPrice = $finalTotalCostPrice / $current_stock;
+                } else {
+                    $current_stock = $old_stock + $item->qty;
+                    $finalCostPrice = $item->cost_price;
+                    $finalTotalCostPrice = $item->cost_price * $current_stock;
 
-                ItemPrice::where('id', $itemPrize->id)->update([
+                    if($current_stock <= 0) {
+                        $finalTotalCostPrice = 0;
+                    }
+                }
+
+                $itemsPrice->update([
                     'stock' => $current_stock,
+                    'cost_price' => $finalCostPrice,
+                    'total_cost_price' => $finalTotalCostPrice,
                 ]);
 
                 DB::table('stock_management_history')->insert([
                     'user_id' => auth()->user()->id,
-                    'item_id' => $itemPrize->item_id,
-                    'item_price_id' => $itemPrize->id,
+                    'item_id' => $itemsPrice->item_id,
+                    'item_price_id' => $itemsPrice->id,
                     'action_type' => 'add',
                     'open_stock' => $old_stock,
                     'stock_value' => $item->qty,
                     'closing_stock' => $current_stock,
                     'date_added' => date("Y-m-d H:i:s"),
                     'reference_no' => $item->id,
-                    'reference_key' => 'Stock Transfer Delete',
-                    'shop_id' =>  $this->getBranchId()
+                    'reference_key' => 'Stock Transfer Edit Stock Revert',
+                    'shop_id' =>  $this->getBranchId(),
+                    'cost_price' => $finalCostPrice,
+                    'total_cost_price' => $finalTotalCostPrice
                 ]);
             }
 
@@ -159,14 +177,21 @@ class StockTransferController extends Controller
                     'item_price_size_id' => $request->price_size_id[$key],
                     'item_id' => $request->item_id[$key],
                     'qty' => $request->qty[$key],
+                    'cost_price' => $request->cost_price[$key],
                 ]);
 
                 $items = ItemPrice::where('id', $values)->first();
                 $old_stock = $items->stock;
                 $current_stock = $old_stock - $request->qty[$key];
+                $item_cost_price = $items->cost_price;
+                $finalCostPrice = $item_cost_price * $current_stock;
+                if($current_stock <= 0) {
+                    $finalCostPrice = 0;
+                }
 
                 ItemPrice::where('id', $items->id)->update([
                     'stock' => $current_stock,
+                    'total_cost_price' => $finalCostPrice,
                 ]);
 
                 DB::table('stock_management_history')->insert([
@@ -180,7 +205,9 @@ class StockTransferController extends Controller
                     'date_added' => date("Y-m-d H:i:s"),
                     'reference_no' => $stockManageItem->id,
                     'reference_key' => 'Stock Transfer Add',
-                    'shop_id' =>  $request->source_branch_id
+                    'shop_id' =>  $request->source_branch_id,
+                    'cost_price' => $item_cost_price,
+                    'total_cost_price' => $finalCostPrice
                 ]);
             }
 
@@ -218,15 +245,22 @@ class StockTransferController extends Controller
                     'item_price_id' => $values,
                     'item_price_size_id' => $request->price_size_id[$key],
                     'item_id' => $request->item_id[$key],
-                    'qty' => $request->qty[$key]
+                    'qty' => $request->qty[$key],
+                    'cost_price' => $request->cost_price[$key],
                 ]);
 
                 $items = ItemPrice::where('id', $values)->first();
                 $old_stock = $items->stock;
                 $current_stock = $old_stock - $request->qty[$key];
+                $item_cost_price = $items->cost_price;
+                $finalCostPrice = $item_cost_price * $current_stock;
+                if($current_stock <= 0) {
+                    $finalCostPrice = 0;
+                }
 
                 ItemPrice::where('id', $items->id)->update([
                     'stock' => $current_stock,
+                    'total_cost_price' => $finalCostPrice,
                 ]);
 
                 DB::table('stock_management_history')->insert([
@@ -240,7 +274,9 @@ class StockTransferController extends Controller
                     'date_added' => date("Y-m-d H:i:s"),
                     'reference_no' => $stockManageItem->id,
                     'reference_key' => 'Stock Transfer Add',
-                    'shop_id' =>  $request->source_branch_id
+                    'shop_id' =>  $request->source_branch_id,
+                    'cost_price' => $item_cost_price,
+                    'total_cost_price' => $finalCostPrice
                 ]);
             }
 
@@ -288,13 +324,28 @@ class StockTransferController extends Controller
         }
         $stock_transfer_items = $stock_transfer->getManageItems;
         foreach($stock_transfer_items as $values){
-            $items = ItemPrice::where('id', $values->item_price_id)->first();
-            $old_stock = $items->stock;
+            $itemsPrice = ItemPrice::where('id', $values->item_price_id)->first();
+            $old_stock = $itemsPrice->stock;
             $qty = $values->qty;
-            $current_stock = $old_stock + $qty;
+            if($old_stock > 0) {
+                $current_stock = $qty + $old_stock;
+                $totalAmount = $qty * $values->cost_price;
+                $finalTotalCostPrice = $itemsPrice->total_cost_price + $totalAmount;
+                $finalCostPrice = $finalTotalCostPrice / $current_stock;
+            } else {
+                $current_stock = $old_stock + $qty;
+                $finalCostPrice = $values->cost_price;
+                $finalTotalCostPrice = $values->cost_price * $qty;
 
-            ItemPrice::where('id', $items->id)->update([
+                if($current_stock <= 0) {
+                    $finalTotalCostPrice = 0;
+                }
+            }
+
+            $itemsPrice->update([
                 'stock' => $current_stock,
+                'cost_price' => $finalCostPrice,
+                'total_cost_price' => $finalTotalCostPrice,
             ]);
 
             DB::table('stock_management_history')->insert([
@@ -308,7 +359,9 @@ class StockTransferController extends Controller
                 'date_added' => date("Y-m-d H:i:s"),
                 'reference_no' => $values->id,
                 'reference_key' => 'Stock Transfer Delete',
-                'shop_id' =>  $this->getBranchId()
+                'shop_id' =>  $this->getBranchId(),
+                'cost_price' => $finalCostPrice,
+                'total_cost_price' => $finalTotalCostPrice
             ]);
         }
         $result = $stock_transfer->delete();
@@ -381,6 +434,7 @@ class StockTransferController extends Controller
         $item_price_name = $request->item_price_name;
         $price_id = $request->price_id;
         $qtys = $request->qty;
+        $cost_prices = $request->cost_price;
 
         foreach($receivedQty as $key => $qty)
         {
@@ -464,7 +518,8 @@ class StockTransferController extends Controller
                         'stock' => '0', // Set stock to 0 if needed, or adjust this based on your logic
                         'barcode' => $itemPriceValue->barcode,
                         'price_item_type' => $itemPriceValue->price_item_type,
-                        'cost_price' => $itemPriceValue->cost_price,
+                        'cost_price' => '0', //$itemPriceValue->cost_price,
+                        'total_cost_price' => '0',
                     ]);
                 }
             }
@@ -500,7 +555,8 @@ class StockTransferController extends Controller
                         'stock' => '0', // Set stock to 0 if needed, or adjust this based on your logic
                         'barcode' => $itemPriceValue->barcode,
                         'price_item_type' => $itemPriceValue->price_item_type,
-                        'cost_price' => $itemPriceValue->cost_price,
+                        'cost_price' => '0', //$itemPriceValue->cost_price,
+                        'total_cost_price' => '0',
                     ]);
                 }
             }
@@ -508,13 +564,29 @@ class StockTransferController extends Controller
             $sizeId = PriceSize::where('size_slug', $item_price_name[$key])->where('branch_id', $destination_branch_id)->first();
 
             if($qtys[$key] != $qty) {
-                $items = ItemPrice::where('id', $price_id[$key])->first();
-                $old_stock = $items->stock;
+                $itemsPrice = ItemPrice::where('id', $price_id[$key])->first();
+                $old_stock = $itemsPrice->stock;
                 $returnQty = $qtys[$key] - $qty;
                 $current_stock = $old_stock + $returnQty;
+                if($old_stock > 0) {
+                    $current_stock = $returnQty + $old_stock;
+                    $totalAmount = $returnQty * $cost_prices[$key];
+                    $finalTotalCostPrice = $itemsPrice->total_cost_price + $totalAmount;
+                    $finalCostPrice = $finalTotalCostPrice / $current_stock;
+                } else {
+                    $current_stock = $old_stock + $returnQty;
+                    $finalCostPrice = $cost_prices[$key];
+                    $finalTotalCostPrice = $cost_prices[$key] * $current_stock;
 
-                ItemPrice::where('id', $price_id[$key])->update([
+                    if($current_stock <= 0) {
+                        $finalTotalCostPrice = 0;
+                    }
+                }
+
+                $itemsPrice->update([
                     'stock' => $current_stock,
+                    'cost_price' => $finalCostPrice,
+                    'total_cost_price' => $finalTotalCostPrice,
                 ]);
 
                 DB::table('stock_management_history')->insert([
@@ -528,16 +600,33 @@ class StockTransferController extends Controller
                     'date_added' => date("Y-m-d H:i:s"),
                     'reference_no' => $key,
                     'reference_key' => 'Stock Transfer Return',
-                    'shop_id' =>  $source_branch_id
+                    'shop_id' =>  $source_branch_id,
+                    'cost_price' => $finalCostPrice,
+                    'total_cost_price' => $finalTotalCostPrice
                 ]);
             }
 
-            $items = ItemPrice::where('item_id', $itemId->id)->where('price_size_id', $sizeId->id)->first();
-            $old_stock = $items->stock;
-            $current_stock = $old_stock + $qty;
+            $itemsPrice = ItemPrice::where('item_id', $itemId->id)->where('price_size_id', $sizeId->id)->first();
+            $old_stock = $itemsPrice->stock;
+            if($old_stock > 0) {
+                $current_stock = $old_stock + $qty;
+                $totalAmount = $qty * $cost_prices[$key];
+                $finalTotalCostPrice = $itemsPrice->total_cost_price + $totalAmount;
+                $finalCostPrice = $finalTotalCostPrice / $current_stock;
+            } else {
+                $current_stock = $old_stock + $qty;
+                $finalCostPrice = $cost_prices[$key];
+                $finalTotalCostPrice = $cost_prices[$key] * $current_stock;
 
-            ItemPrice::where('id', $items->id)->update([
+                if($current_stock <= 0) {
+                    $finalTotalCostPrice = 0;
+                }
+            }
+
+            $itemsPrice->update([
                 'stock' => $current_stock,
+                'cost_price' => $finalCostPrice,
+                'total_cost_price' => $finalTotalCostPrice,
             ]);
 
             DB::table('stock_management_history')->insert([
@@ -551,7 +640,9 @@ class StockTransferController extends Controller
                 'date_added' => date("Y-m-d H:i:s"),
                 'reference_no' => $key,
                 'reference_key' => 'Stock Transfer',
-                'shop_id' =>  $destination_branch_id
+                'shop_id' =>  $destination_branch_id,
+                'cost_price' => $finalCostPrice,
+                'total_cost_price' => $finalTotalCostPrice
             ]);
 
             StockManageItem::where('id', $key)->update([

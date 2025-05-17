@@ -143,7 +143,55 @@
             object-position: center;
         }
     </style>
+  <style>
+    /* Container to control absolute positioning */
+    .item-container {
+        position: relative;
+    }
+    /* Default styling for normal screen sizes */
+    .responsive-margin {
+        position: absolute;
+        right: 3px; /* Set initial right position to keep the element on the right */
+        top: 142px; /* Adjust vertical alignment */
+        max-width: 80px; /* Control width to avoid overflow */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    /* Responsive styling for 1366x768 screen size */
+    @media (max-width: 1366px) and (max-height: 768px) {
+        .responsive-margin {
+            right: 3px; /* Shift further left on smaller screens */
+            top: 120px; /* Adjust vertical alignment for smaller screen */
+            max-width: 70px; /* Adjust width if needed */
+        }
+    }
+</style>
 
+<style>
+        /* Container to control absolute positioning */
+        .item-container {
+            position: relative;
+        }
+        /* Default styling for normal screen sizes */
+        .responsive-margin {
+            position: absolute;
+            right: 3px; /* Set initial right position to keep the element on the right */
+            top: 142px; /* Adjust vertical alignment */
+            max-width: 80px; /* Control width to avoid overflow */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        /* Responsive styling for 1366x768 screen size */
+        @media (max-width: 1366px) and (max-height: 768px) {
+            .responsive-margin {
+                right: 3px; /* Shift further left on smaller screens */
+                top: 120px; /* Adjust vertical alignment for smaller screen */
+                max-width: 70px; /* Adjust width if needed */
+            }
+        }
+    </style>
 
 @endsection
 
@@ -292,6 +340,8 @@
                                                 {{-- <th class="py-2 bg-transparent text-center" style="width: 100px;">Dis (%)
                                                 </th> --}}
                                                 <th class="py-2 bg-transparent text-right" style="width:35%">Price</th>
+                                                <th class="py-2 bg-transparent text-right" style="width:35%">remove</th>
+
                                             </tr>
                                         </thead>
 
@@ -479,6 +529,9 @@
                                                             style="width:35%;font-weight:600">
                                                             {{ formatToDecimals($item->total_price) }}
                                                         </td>
+                                                       <td>
+                                                            <button class="btn  remove-row-btn"><i class="fa fa-trash"></i></button>
+                                                        </td>
                                                     </tr>
                                                 @endforeach
                                             @endif
@@ -558,7 +611,7 @@
                             </div>
                         </div>
                         <div class="card card-body shadow rounded-10 mb-2 p-2 pos-items-section">
-                            <div class="d-flex flex-wrap align-items-start align-items-stretch">
+                           <div class="d-flex flex-wrap align-items-start align-items-stretch" id="fetch-item-append">
 
                                 @foreach ($items as $item)
                                     <div class="pos-item p-1 itemcontent {{ $item->category_slug }}">
@@ -585,32 +638,7 @@
                                             </p>
                                         </div>
 
-                                        <style>
-                                            /* Container to control absolute positioning */
-                                            .item-container {
-                                                position: relative;
-                                            }
-
-                                            /* Default styling for normal screen sizes */
-                                            .responsive-margin {
-                                                position: absolute;
-                                                right: 3px; /* Set initial right position to keep the element on the right */
-                                                top: 142px; /* Adjust vertical alignment */
-                                                max-width: 80px; /* Control width to avoid overflow */
-                                                overflow: hidden;
-                                                text-overflow: ellipsis;
-                                                white-space: nowrap;
-                                            }
-
-                                            /* Responsive styling for 1366x768 screen size */
-                                            @media (max-width: 1366px) and (max-height: 768px) {
-                                                .responsive-margin {
-                                                    right: 3px; /* Shift further left on smaller screens */
-                                                    top: 120px; /* Adjust vertical alignment for smaller screen */
-                                                    max-width: 70px; /* Adjust width if needed */
-                                                }
-                                            }
-                                        </style>
+                                        
 
                                             @if ($item->image)
                                                 <div class="image-wrapper">
@@ -637,18 +665,21 @@
                                                     {{ $item->size_name }}
                                                 @endif
 
-                                                <p class="mb-1 border-bottom text-truncate"
+                                          {{--      <p class="mb-1 border-bottom text-truncate"
                                                     title="{{ $item->item_stock }}">
-                                                    {{-- {{ getPriceName(auth()->user()->branch_id, $item->price_size_id) }} --}}
-                                                </p>
-                                                <p class="mb-0 text-truncate"
+                                                    {{ getPriceName(auth()->user()->branch_id, $item->price_size_id) }}
+                                                </p>--}}
+                                                <p class="mb-0 d-flex align-items-center justify-content-between"
+                                                    style="height: 23px !important;  "
                                                     title="{{ Str::ucfirst($item->item_name) }}">
-                                                    <b>{{ Str::ucfirst($item->item_name) }}</b> 
+                                                    <b class="flex-grow-1 ">{{ Str::ucfirst($item->item_name) }}</b>
                                                 </p>
-                                                <p class="mb-0 text-truncate text-right" style="height: 23px !important"
+                                                <p class="mb-0 d-flex align-items-center justify-content-between text-right"
+                                                    style="height: 23px !important;  "
                                                     title="{{ $item->item_other_name }}">
-                                                    <b>{{ $item->item_other_name }}</b>
+                                                    <b class="flex-grow-1 ">{{ $item->item_other_name }}</b>
                                                 </p>
+
                                             </div>
                                         </button>
                                     </div>
@@ -1121,6 +1152,23 @@
         </script>
     @endif
     <script>
+          $(document).ready(function () {
+            // $('#ajax-loader').fadeIn(); // Fade in loader
+            $.ajax({
+                url: "{{ url('fetch-items') }}",
+                type: 'GET',
+                success: function (res) {
+                    $('#fetch-item-append').append(res.html);
+                    $('#remaining-items-loader').remove();
+                },
+                error: function () {
+                    alert('Something went wrong while loading items. Please try again.');
+                },
+                complete: function () {
+                    // $('#ajax-loader').fadeOut();
+                }
+            });
+        });
         function discount_model(item_count) {
             $(".item_count").val(item_count);
             var amount = parseFloat($("tr:nth-child(" + item_count + ") td:nth-child(1) input.discount-amount").val());

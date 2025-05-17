@@ -5,7 +5,7 @@ $from_date = isset($_GET['from_date']) && $_GET['from_date'] != '' ? $_GET['from
 $to_date = isset($_GET['to_date']) && $_GET['to_date'] != '' ? $_GET['to_date'] : date('Y-m-d');
 $session_branch = getSessionBranch() ? ' - ' . getBranchById(getSessionBranch()) : '';
 $branch_name = auth()->user()->branch_id ? ' - ' . auth()->user()->branch->branch_name : $session_branch;
-$title = 'STOCK MOVING REPORT' . $branch_name . ' - ' . $from_date . ' - ' . $to_date;
+$title = 'STOCK OUT REPORT' . $branch_name . ' - ' . $from_date . ' - ' . $to_date;
 ?>
 @section('title', $title)
 
@@ -29,16 +29,10 @@ $title = 'STOCK MOVING REPORT' . $branch_name . ' - ' . $from_date . ' - ' . $to
                 <div class="col-12">
                     <div class="az-dashboard-one-title">
                         <div>
-                            <h2 class="az-dashboard-title">Stock Moving Report</h2>
+                            <h2 class="az-dashboard-title">Stock Out Report</h2>
                             <p class="az-dashboard-text"></p>
                         </div>
-                        <div class="az-content-header-right">
-                            <nav class="nav">
-                                <a id="createbtn"
-                                    class="nav-linkk btn btn-dark rounded-10 shadoww mr-2 mb-2 d-flex justify-content-center align-items-center"
-                                    href="{{ url('admin/stock') }}"> Available Stock</a>
-                            </nav>
-                        </div>
+
                     </div>
                 </div>
                 <div class="col-12">
@@ -58,32 +52,20 @@ $title = 'STOCK MOVING REPORT' . $branch_name . ' - ' . $from_date . ' - ' . $to
                                     </div>
                                     <div class="w-auto ml-3">
                                         <label class="mb-0 d-block small font-weight-bold">Item</label>
-                                        <select class="form-control rounded-10 select2" id="item_id" name="item_id" onchange="this.form.submit()">
-    <option value="">Select Item</option>
-    @foreach ($items as $item)
-        <option value="{{ $item->price_id }}" @if ($item->price_id == $item_id) selected="selected" @endif>
-            {{ Str::ucfirst($item->item_name) }}
-            {{ $item->size_name === 'Unit price' ? '' : ' - ' . $item->size_name }}
-        </option>
-    @endforeach
-</select>
+                                        <select class="form-control rounded-10 select2" id="item_id" name="item_id"
+                                            onchange="this.form.submit()">
+                                            <option value="">Select Item</option>
+                                            @foreach ($items as $item)
+                                                <option value="{{ $item->item_id }}"
+                                                    @if ($item->item_id == $item_id) selected="selected" @endif>
+                                                    {{ Str::ucfirst($item->item_name) }}
+                                                    {{ $item->size_name === 'Unit price' ? '' : ' - ' . $item->size_name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
 
                                     </div>
-                                    <div class="w-auto ml-3">
-                                        <label class="mb-0 d-block small font-weight-bold">Action Type</label>
-                                        <select class="form-control rounded-10 select2" id="action_type" name="action_type"
-                                            onchange="this.form.submit()">
-                                            <option value="">Select Action Type</option>
-                                            <option value="add"
-                                                @if ('add' == $action_type) selected="selected" @endif>
-                                                Add
-                                            </option>
-                                            <option value="sub"
-                                                @if ('sub' == $action_type) selected="selected" @endif>
-                                                Sub
-                                            </option>
-                                        </select>
-                                    </div>
+
                                     <div class="w-auto ml-3">
                                         <label class="mb-0 d-block small font-weight-bold">&nbsp;</label>
                                         <button type="submit" class="btn btn-dark rounded-10 px-3">
@@ -120,16 +102,12 @@ $title = 'STOCK MOVING REPORT' . $branch_name . ' - ' . $from_date . ' - ' . $to
                                                     <th>Branch</th>
                                                 @endif
                                                 <th>Date</th>
+                                                <th>Customer</th>
                                                 <th>Item</th>
-
-                                                <th>Reference</th>
-                                                <th>Action Type</th>
                                                 <th>Unit</th>
                                                 <th>Open Stock</th>
                                                 <th>Qty</th>
                                                 <th>Closing Stock</th>
-                                                <th>Closing Cost Price</th>
-                                                <th>Closing Total Cost Price</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -138,27 +116,19 @@ $title = 'STOCK MOVING REPORT' . $branch_name . ' - ' . $from_date . ' - ' . $to
                                                     <tr>
                                                         <td>{{ $key + 1 }}</td>
                                                         @if (!auth()->user()->branch_id)
-                                                            <td>{{ getBranchById($value->shop_id) }}</td>
+                                                            <td>{{ getBranchById($value->branch_id) }}</td>
                                                         @endif
-                                                        <td>{{ dateFormat($value->date_added, 1) }}</td>
-                                                        @if ($value->item_price_id)
-                                                            <td>{{ Str::ucfirst(getItemNameSize($value->item_price_id)) }}
-                                                            </td>
-                                                        @else
-                                                            <td></td>
-                                                        @endif
+                                                        <td>{{ dateFormat($value->created_at) }}</td>
+                                                        @if ($value->customer_id>0)
+                                                        <td>{{ Str::ucfirst(getCustomer($value->customer_id)->customer_name) ." - ". getCustomer($value->customer_id)->customer_number}}</td>
+                                                    @else
+                                                        <td></td>
+                                                    @endif                                                            <td>{{ dateFormat($value->created_at) }}</td>
+                                                        <td>{{ $value->item_name }}</td>
 
-                                                        {{-- <td>{{ $value->reference_no }}</td> --}}
-                                                        <td>{{ str_replace('_', ' ', $value->reference_key) }}</td>
-                                                        <td>{{ $value->action_type }}</td>
-                                                        <td>
-                                                            {{ getUnitByItemId($value->item_id) }}
-                                                        </td>
                                                         <td>{{ $value->open_stock }}</td>
-                                                        <td>{{ $value->stock_value }}</td>
+                                                        <td>{{ $value->qty }}</td>
                                                         <td>{{ $value->closing_stock }}</td>
-                                                        <td>{{ showAmount($value->cost_price) }}</td>
-                                                        <td>{{ showAmount($value->total_cost_price) }}</td>
                                                     </tr>
                                                 @endforeach
                                             @endif

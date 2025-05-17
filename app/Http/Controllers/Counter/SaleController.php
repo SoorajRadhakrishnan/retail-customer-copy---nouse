@@ -2,41 +2,59 @@
 
 namespace App\Http\Controllers\Counter;
 
-use App\Models\Admin\Item;
-use App\Models\Admin\Staff;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Models\Admin\Category;
-use App\Models\Admin\Customer;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
-use App\Models\Admin\Driver;
-use App\Models\Admin\ItemPrice;
-use App\Models\SaleOrderItems;
-use App\Models\SaleOrderPayment;
-use App\Models\SaleOrders;
+// use App\Http\Services\PaymentTranscationService;
+use App\Models\Admin\{Item, Staff, Category, Customer, Driver, ItemPrice};
+use App\Models\{SaleOrders, SaleOrderItems, SaleOrderPayment};
 
 class SaleController extends Controller
 {
+    // public function __construct(public PaymentTranscationService $paymentService) {}
+
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
         // $categorys = Category::where('branch_id', auth()->user()->branch_id)->withCount('items')->get();
+        $deliveryService = $request->service;
         $categorys = Category::where('branch_id', auth()->user()->branch_id)->get();
-        $items = Item::leftJoin('item_prices', function ($join) {
+        $query = Item::leftJoin('item_prices', function ($join) {
             $join->on('items.id', '=', 'item_prices.item_id');
         })->leftJoin('categories', function ($joins) {
             $joins->on('items.category_id', '=', 'categories.id');
         })->leftJoin('price_size', function ($joins) {
             $joins->on('item_prices.price_size_id', '=', 'price_size.id');
         })->where('items.branch_id', auth()->user()->branch_id)
-            ->where('items.item_type', '1')
+            // ->where('items.item_type', '1')
             ->where('items.active', 'yes')
             // ->where('item_prices.price', '>', 0)
-            ->select(DB::raw('items.*,item_prices.id as price_id,item_prices.item_id,item_prices.price_size_id,item_prices.price,item_prices.stock as item_stock,item_prices.cost_price as item_price_cost_price,categories.category_slug,price_size.size_name'))
-            ->get();
+            ->select(DB::raw('items.*,item_prices.id as price_id,item_prices.item_id,item_prices.price_size_id,item_prices.price,item_prices.stock as item_stock,item_prices.cost_price as item_price_cost_price,categories.category_slug,price_size.size_name'));
+
+        if ($deliveryService != 'normal' && $request->type == 'delivery') {
+
+            $query->join('item_delivery_service_price as idsp', 'item_prices.id', '=', 'idsp.item_price_id')
+                    ->where('idsp.service_id', $deliveryService)
+                    ->addSelect(
+                        'idsp.id as delivery_service_price_id',
+                        'idsp.price as delivery_service_price',
+                    );
+        }
+        $items = $query->get();
+
+        // Map the results to modify the price field
+        $items = $items->map(function ($item) use ($request) {
+            if ($request->service != 'normal' && $request->type == 'delivery' && isset($item->delivery_service_price)) {
+                $item->price = $item->delivery_service_price;
+            } else {
+                $item->price = $item->price;
+            }
+            return $item;
+        });
+
         // dd($items);
         $drivers = Driver::where('branch_id', auth()->user()->branch_id)->get();
         $sale_orders = $customer = null;
@@ -44,16 +62,36 @@ class SaleController extends Controller
         {
             $customer = Customer::where("id",$request->customer)->first();
         }
-        return view("Counter.sale", compact('categorys', 'items', 'drivers', 'sale_orders','customer'));
+        return view("Counter.sale", compact('categorys', 'items', 'drivers', 'sale_orders','customer', 'deliveryService'));
+    }
+      public function fetchItems(Request $request)
+    {
+        $items = Item::leftJoin('item_prices', 'items.id', '=', 'item_prices.item_id')
+            ->leftJoin('categories', 'items.category_id', '=', 'categories.id')
+            ->leftJoin('price_size', 'item_prices.price_size_id', '=', 'price_size.id')
+            ->where('items.branch_id', auth()->user()->branch_id)
+            ->where('items.item_type', '1')
+            ->where('items.active', 'yes')
+            ->select(
+                'items.*',
+                'item_prices.id as price_id',
+                'item_prices.item_id',
+                'item_prices.price_size_id',
+                'item_prices.price',
+                'item_prices.stock as item_stock',
+                'item_prices.cost_price as item_price_cost_price',
+                'categories.category_slug',
+                'price_size.size_name'
+            )->orderBy('items.item_name')->skip(20)->take(PHP_INT_MAX)->get();
+
+        $html = '';
+        foreach ($items as $item) {
+            $html .= view('Counter.fetchItem', compact('item'))->render();
+        }
+
+        return response()->json(['html' => $html]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
 
     /**
      * Store a newly created resource in storage.
@@ -126,7 +164,7 @@ class SaleController extends Controller
             // echo '<pre>'; print_r($_POST);die;
             $sale_order_id = $request->sale_order_id;
             $amount_given = $request->amount_given;
-            $payment_type = (isset($request->payment_type) && $request->payment_type != '') ? $request->payment_type : 'both';
+            $payment_type = (isset($request->payment_type) && $request->payment_type != '') ? $request->payment_type : '';
             $order_type = (isset($request->order_type) && $request->order_type != '') ? $request->order_type : 'counter_sale';
             $card_num = (isset($request->card_num) && $request->card_num != '') ? $request->card_num : '0';
 
@@ -140,7 +178,7 @@ class SaleController extends Controller
             $discount = (isset($request->discount) && $request->discount != '') ? $request->discount : '0.0';
             $discount_per = (isset($request->discount_per) && $request->discount_per != '') ? $request->discount_per : '0.0';
             $staff_id = (isset($request->staff_id) && $request->staff_id != '') ? $request->staff_id : '0.0';
-
+            $delivery_type = (isset($request->delivery_service) && $request->delivery_service != '') ? $request->delivery_service : 'normal';
             $gross_total = (isset($request->gross_total) && $request->gross_total != '') ? $request->gross_total : 0;
             $tax_amount = (isset($request->tax_amount) && $request->tax_amount != '') ? $request->tax_amount : 0;
             $net_total = (isset($request->net_total) && $request->net_total != '') ? $request->net_total : 0;
@@ -182,7 +220,8 @@ class SaleController extends Controller
                     'without_tax'  => $gross_total,
                     'tax_amount'  => $tax_amount,
                     'with_tax'  => $net_total,
-                    'order_type' => $order_type
+                    'order_type' => $order_type,
+                    // 'delivery_type' => $delivery_type
                 ]);
             }
             if ($payment_status == 'paid') {
@@ -277,7 +316,7 @@ class SaleController extends Controller
         $customer_address = (isset($inputs['customer_address']) && $inputs['customer_address'] != '') ? $inputs['customer_address'] : '';
         $amount_given = (isset($inputs['amount_given']) && $inputs['amount_given'] != '') ? $inputs['amount_given'] : '0';
         $balance_amount = (isset($inputs['balance_amount']) && $inputs['balance_amount'] != '') ? $inputs['balance_amount'] : '';
-
+        $delivery_type = (isset($inputs['delivery_service']) && $inputs['delivery_service'] != '') ? $inputs['delivery_service'] : '';
         $gross_total = (isset($inputs['gross_total']) && $inputs['gross_total'] != '') ? $inputs['gross_total'] : 0;
         $tax_amount = (isset($inputs['tax_amount']) && $inputs['tax_amount'] != '') ? $inputs['tax_amount'] : 0;
         $net_total = (isset($inputs['net_total']) && $inputs['net_total'] != '') ? $inputs['net_total'] : 0;
@@ -311,6 +350,8 @@ class SaleController extends Controller
         $sale_order_item_ids = $inputs['sale_order_item_id'];
         $item_price_cost_prices = $inputs['item_price_cost_price'];
         $old_quantitys = $inputs['old_quantity'];
+        $ingredients = (isset($inputs['ingredients']) && $inputs['ingredients'] != '') ? $inputs['ingredients'] : '' ;
+        // $item_types = $inputs['item_type'];
 
         $notess = (isset($inputs['notes']) && $inputs['notes'] != '') ? $inputs['notes'] : '';
 
@@ -341,6 +382,8 @@ class SaleController extends Controller
                 $item_price_cost_price = 0;
             }
 
+            $item_price_cost_price = $item_price_cost_price !== null && is_numeric($item_price_cost_price) ? $item_price_cost_price : 0;
+            // $item_type = $item_types[$i];
 
             $item_details = Item::where('id', $item_id)->first();
             $item_id_i = $item_details->id;
@@ -401,6 +444,8 @@ class SaleController extends Controller
                     'tax_count' => '1', // $tax_count, //
                     'total_price' => $total_price, // $tax_count, //
                     'cost_price' => $item_price_cost_price, // $tax_count, //
+                    // 'item_type' => $item_type,
+                    // 'stock_applicable' => $stock_applicable,
                     // 'cost_price_taken' => $cost_price_taken,
                 ]);
             }else{
@@ -428,51 +473,132 @@ class SaleController extends Controller
                     'tax_count' => '1', // $tax_count, //
                     'total_price' => $total_price, // $tax_count, //
                     'cost_price' => $item_price_cost_price, // $tax_count, //
+                    // 'item_type' => $item_type,
+                    // 'stock_applicable' => $stock_applicable,
                     // 'cost_price_taken' => $cost_price_taken,
                 ]);
             }
+            // if($item_type == '3'){
+            //     if(isset($ingredients[$price_size_id])){
+            //         DB::table('sale_order_items')->where('id', $sale_order_item_id)->update([
+            //             'combo_items' => json_encode($ingredients[$price_size_id])
+            //         ]);
+            //     }
+            // }
 
-            if ($stock_applicable == 1 && $status != 'hold') {
-                if ($sale_order_item_id) {
-                    $result_stock = DB::table('item_prices')->where('id', $price_size_id)->whereNull('deleted_at')->first();
-                    //->where('branch_id', $branch_id)->where('item_id', $item_id_i)
-                    $stock_reaming = 0;
+            if ($status != 'hold') {
+                if ($sale_order_item_id && $stock_applicable == 1) {
+                    $result_stock = ItemPrice::where('id', $price_size_id)->first();
                     $old_stock = $result_stock->stock;
                     $stock_reaming = $result_stock->stock - $qty;
+                    $item_cost_price = $result_stock->cost_price;
+                    $finalCostPrice = $item_cost_price * $stock_reaming;
+                    if($stock_reaming <= 0) {
+                        $finalCostPrice = 0;
+                    }
 
                     if ($item_id > 0) {
-                        if ($stock_reaming >= 0) {
-                            DB::table('item_prices')->where('id', $price_size_id)->update(['stock' => $stock_reaming]);
-                            //->where('branch_id', $branch_id)->where('item_id', $item_id_i)->whereNull('deleted_at')
-                            $user_id = $user_id;
-                            $item_id = $item_id_i;
-                            $reference_no = $sale_order_id;
-                            $reference_key = $order_type;
-                            if ($status == 'hold') {
-                                $reference_key = $reference_key . '-' . $status;
-                            }
-                            $action_type = 'sub';
-                            $open_stock = $old_stock;
-                            $stock_value = $qty;
-                            $closing_stock = $stock_reaming;
-                            // DB::enableQueryLog();
-                            DB::table('stock_management_history')->insert([
-                                'user_id' => $user_id,
-                                'item_id' => $item_id,
-                                'item_price_id' => $price_size_id,
-                                'action_type' => $action_type,
-                                'open_stock' => $open_stock,
-                                'stock_value' => $stock_value,
-                                'closing_stock' => $closing_stock,
-                                'date_added' => $ordered_date,
-                                'reference_no' => $reference_no,
-                                'reference_key' => $reference_key,
-                                'shop_id' =>  $branch_id
-                            ]);
-                            // dd(DB::getQueryLog());
+                        $result_stock->update([
+                            'stock' => $stock_reaming,
+                            'total_cost_price' =>  $finalCostPrice,
+                        ]);
+                        $user_id = $user_id;
+                        $item_id = $item_id_i;
+                        $reference_no = $sale_order_item_id;
+                        $reference_key = 'Counter Sale';
+                        if($order_type == 'delivery') {
+                            $reference_key = 'Delivery Sale';
                         }
+                        if ($status == 'hold') {
+                            $reference_key = $reference_key . '-' . $status;
+                        }
+                        $action_type = 'sub';
+                        $open_stock = $old_stock;
+                        $stock_value = $qty;
+                        $closing_stock = $stock_reaming;
+
+                        DB::table('stock_management_history')->insert([
+                            'user_id' => $user_id,
+                            'item_id' => $item_id,
+                            'item_price_id' => $price_size_id,
+                            'action_type' => $action_type,
+                            'open_stock' => $open_stock,
+                            'stock_value' => $stock_value,
+                            'closing_stock' => $closing_stock,
+                            'date_added' => $ordered_date,
+                            'reference_no' => $reference_no,
+                            'reference_key' => $reference_key,
+                            'shop_id' =>  $branch_id,
+                            'cost_price' => $item_cost_price,
+                            'total_cost_price' => $finalCostPrice
+                        ]);
                     }
                 }
+                // if($item_type == '3'){
+                //     if(isset($ingredients[$price_size_id])){
+                //         foreach($ingredients[$price_size_id] as $key => $value){
+                //             $ingValues = explode(',', $value);
+                //             $old_quantity = DB::table('combo_sale_items')->where(['sale_order_item_id' => $sale_order_item_id, 'price_size_id' => $ingValues[0]])->first();
+                //             if($old_quantity != null) {
+                //                 $result_stock = ItemPrice::where('id', $ingValues[0])->first();
+                //                 ItemPrice::where('id', $ingValues[0])->update([
+                //                     'stock' => $result_stock->stock + $old_quantity->qty
+                //                 ]);
+                //             }
+
+                //             $comboId = DB::table('combo_sale_items')->insertGetId([
+                //                 'branch_id' => $branch_id,
+                //                 'price_size_id' => $ingValues[0],
+                //                 'item_id' => $ingValues[1],
+                //                 'qty' => ($ingValues[2] * $qty),
+                //                 'created_at' => now(),
+                //                 'sale_order_id' => $sale_order_id,
+                //                 'sale_order_item_id' => $sale_order_item_id,
+                //             ]);
+
+                //             $result_stock = ItemPrice::where('id', $ingValues[0])->first();
+                //             $stock_reaming = 0;
+                //             $old_stock = $result_stock->stock;
+                //             $stock_reaming = $result_stock->stock - ($ingValues[2] * $qty);
+                //             $item_cost_price = $result_stock->cost_price;
+                //             $finalCostPrice = $item_cost_price * $stock_reaming;
+                //             if($stock_reaming <= 0) {
+                //                 $finalCostPrice = 0;
+                //             }
+
+                //             $result_stock->update([
+                //                 'stock' => $stock_reaming,
+                //                 'total_cost_price' =>  $finalCostPrice,
+                //             ]);
+
+                //             $item_id = $ingValues[1];
+                //             $reference_no = $comboId;
+                //             $reference_key = 'Combo Sale';
+                //             if ($status == 'hold') {
+                //                 $reference_key = $reference_key . '-' . $status;
+                //             }
+                //             $action_type = 'sub';
+                //             $open_stock = $old_stock;
+                //             $stock_value = ($ingValues[2] * $qty);
+                //             $closing_stock = $stock_reaming;
+                //             DB::table('stock_management_history')->insert([
+                //                 'user_id' => $user_id,
+                //                 'item_id' => $item_id,
+                //                 'item_price_id' => $ingValues[0],
+                //                 'action_type' => $action_type,
+                //                 'open_stock' => $open_stock,
+                //                 'stock_value' => $stock_value,
+                //                 'closing_stock' => $closing_stock,
+                //                 'date_added' => $ordered_date,
+                //                 'reference_no' => $reference_no,
+                //                 'reference_key' => $reference_key,
+                //                 'shop_id' =>  $branch_id,
+                //                 'cost_price' => $item_cost_price,
+                //                 'total_cost_price' => $finalCostPrice
+                //             ]);
+                //         }
+                //     }
+                // }
             }
         }
         return DB::table('sale_orders')->where('id', $sale_order_id)->first();
@@ -505,49 +631,127 @@ class SaleController extends Controller
 
                 foreach($items as $key => $item)
                 {
-                    $old = ItemPrice::where('id', $item->price_size_id)->first();
-                    $closing_stock = $old->stock + $item->qty;
-                    ItemPrice::where('id', $item->price_size_id)->increment('stock', $item->qty);
+                    if($item->stock_applicable) {
+                        $itemsPrice = ItemPrice::where('id', $item->price_size_id)->first();
+                        $old_stock = $itemsPrice->stock;
+                        if($old_stock > 0) {
+                            $closing_stock = $item->qty + $old_stock;
+                            $totalAmount = $item->cost_price * $item->qty;
+                            $finalTotalCostPrice = $itemsPrice->total_cost_price + $totalAmount;
+                            $finalCostPrice = $finalTotalCostPrice / $closing_stock;
+                        } else {
+                            $closing_stock = $old_stock + $item->qty;
+                            $finalCostPrice = $item->cost_price;
+                            $finalTotalCostPrice = $item->cost_price * $closing_stock;
 
-                    DB::table('stock_management_history')->insert([
-                        'user_id' => auth()->user()->id,
-                        'item_id' => $item->item_id,
-                        'item_price_id' => $item->price_size_id,
-                        'action_type' => 'add',
-                        'open_stock' => $old->stock,
-                        'stock_value' => $item->qty,
-                        'closing_stock' => $closing_stock,
-                        'date_added' => date("Y-m-d H:i:s"),
-                        'reference_no' => $item->id,
-                        'reference_key' => "Delivery Delete",
-                        'shop_id' =>  auth()->user()->branch_id
-                    ]);
+                            if($closing_stock <= 0) {
+                                $finalTotalCostPrice = 0;
+                            }
+                        }
+
+                        $itemsPrice->update([
+                            'stock' => $closing_stock,
+                            'cost_price' => $finalCostPrice,
+                            'total_cost_price' => $finalTotalCostPrice,
+                        ]);
+
+                        DB::table('stock_management_history')->insert([
+                            'user_id' => auth()->user()->id,
+                            'item_id' => $item->item_id,
+                            'item_price_id' => $item->price_size_id,
+                            'action_type' => 'add',
+                            'open_stock' => $old_stock,
+                            'stock_value' => $item->qty,
+                            'closing_stock' => $closing_stock,
+                            'date_added' => date("Y-m-d H:i:s"),
+                            'reference_no' => $item->id,
+                            'reference_key' => "Delivery Delete",
+                            'shop_id' =>  auth()->user()->branch_id,
+                            'cost_price' => $finalCostPrice,
+                            'total_cost_price' => $finalTotalCostPrice
+                        ]);
+                    }
                 }
                 SaleOrders::where('id', $sale_id)->delete();
                 SaleOrderItems::where('sale_order_id', $sale_id)->delete();
                 SaleOrderPayment::where('sale_order_id', $sale_id)->delete();
+                // $this->paymentService->deletePayment($sale_id);
             } elseif ($type == 'status') {
+
+                if($status == 'reject') {
+                    $items = SaleOrderItems::where('sale_order_id', $sale_id)->get();
+
+                    foreach($items as $key => $item) {
+                        if($item->stock_applicable) {
+                            $itemsPrice = ItemPrice::where('id', $item->price_size_id)->first();
+                            $old_stock = $itemsPrice->stock;
+                            if($old_stock > 0) {
+                                $closing_stock = $item->qty + $old_stock;
+                                $totalAmount = $item->cost_price * $item->qty;
+                                $finalTotalCostPrice = $itemsPrice->total_cost_price + $totalAmount;
+                                $finalCostPrice = $finalTotalCostPrice / $closing_stock;
+                            } else {
+                                $closing_stock = $old_stock + $item->qty;
+                                $finalCostPrice = $item->cost_price;
+                                $finalTotalCostPrice = $item->cost_price * $closing_stock;
+
+                                if($closing_stock <= 0) {
+                                    $finalTotalCostPrice = 0;
+                                }
+                            }
+
+                            $itemsPrice->update([
+                                'stock' => $closing_stock,
+                                'cost_price' => $finalCostPrice,
+                                'total_cost_price' => $finalTotalCostPrice,
+                            ]);
+
+                            DB::table('stock_management_history')->insert([
+                                'user_id' => auth()->user()->id,
+                                'item_id' => $item->item_id,
+                                'item_price_id' => $item->price_size_id,
+                                'action_type' => 'add',
+                                'open_stock' => $old_stock,
+                                'stock_value' => $item->qty,
+                                'closing_stock' => $closing_stock,
+                                'date_added' => date("Y-m-d H:i:s"),
+                                'reference_no' => $item->id,
+                                'reference_key' => "Delivery cancelled",
+                                'shop_id' =>  auth()->user()->branch_id,
+                                'cost_price' => $finalCostPrice,
+                                'total_cost_price' => $finalTotalCostPrice
+                            ]);
+                        }
+                    }
+                    SaleOrders::where('id', $sale_id)->delete();
+                    SaleOrderItems::where('sale_order_id', $sale_id)->delete();
+                    SaleOrderPayment::where('sale_order_id', $sale_id)->delete();
+                    // $this->paymentService->deletePayment($sale_id);
+                } else if ($status == 'delivered') {
+
+                    $balance = $total - getPaidSaleAmount($sale_id)->amount;
+                    if($balance > 0) {
+                        SaleOrderPayment::create([
+                            'sale_order_id' => $sale_id,
+                            'payment_type' => $payment_type,
+                            'amount' => $balance,
+                            'currency' => app('appSettings')['currency']->value,
+                            'multiplier' => 1,
+                            'created_at' => date('Y-m-d H:i:s'),
+                            'real_amount' => $balance,
+                            'sub_payment_type' => '',
+                            'remarks' => '',
+                            'order_type' => 'delivery',
+                            'user_id' => auth()->user()->id,
+                            'shop_id' => auth()->user()->branch_id
+                        ]);
+
+                        // $this->paymentService->processPayment($payment_type, 'Sale', 'add', $sale_id, $balance, auth()->user()->branch_id, auth()->user()->id);
+                    }
+                }
                 SaleOrders::where('id', $sale_id)->update([
                     'status' => $status
                 ]);
-                $balance = $total - getPaidSaleAmount($sale_id)->amount;
-                if($balance > 0)
-                {
-                    SaleOrderPayment::create([
-                        'sale_order_id' => $sale_id,
-                        'payment_type' => $payment_type,
-                        'amount' => $balance,
-                        'currency' => app('appSettings')['currency']->value,
-                        'multiplier' => 1,
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'real_amount' => $balance,
-                        'sub_payment_type' => '', //$sub_multiple_payment_type,
-                        'remarks' => '', //$multiple_payment_remarks,
-                        'order_type' => 'delivery',
-                        'user_id' => auth()->user()->id,
-                        'shop_id' => auth()->user()->branch_id
-                    ]);
-                }
             }
             return 'success';
         } else {
@@ -556,67 +760,50 @@ class SaleController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $uuid)
+    public function edit(Request $request, string $uuid)
     {
+        $deliveryService = $request->service;
         $categorys = Category::where('branch_id', auth()->user()->branch_id)->get();
-        $items = Item::leftJoin('item_prices', function ($join) {
+        $query = Item::leftJoin('item_prices', function ($join) {
             $join->on('items.id', '=', 'item_prices.item_id');
         })->leftJoin('categories', function ($joins) {
             $joins->on('items.category_id', '=', 'categories.id');
         })->leftJoin('price_size', function ($joins) {
             $joins->on('item_prices.price_size_id', '=', 'price_size.id');
         })->where('items.branch_id', auth()->user()->branch_id)
-            ->where('items.item_type', '1')
+            // ->where('items.item_type', '1')
             ->where('items.active', 'yes')
             // ->where('item_prices.price', '>', 0)
-            ->select(DB::raw('items.*,item_prices.id as price_id,item_prices.item_id,item_prices.price_size_id,item_prices.price,item_prices.stock as item_stock,categories.category_slug,price_size.size_name'))
-            ->get();
-        // dd($items);
-        $drivers = Driver::where('branch_id', auth()->user()->branch_id)->get();
+            ->select(DB::raw('items.*,item_prices.id as price_id,item_prices.item_id,item_prices.price_size_id,item_prices.price,item_prices.stock as item_stock,item_prices.cost_price as item_price_cost_price,categories.category_slug,price_size.size_name'));
 
-        // $sale_orders = SaleOrders::leftJoin('sale_order_items', function ($join) {
-        //     $join->on('sale_orders.id', '=', 'sale_order_items.sale_order_id');
-        // })->where('sale_orders.shop_id', auth()->user()->branch_id)
-        //     ->where('sale_orders.uuid', $uuid)
-        //     ->select(DB::raw('sale_orders.*,
-        //         sale_order_items.id as sale_order_item_id,
-        //         sale_order_items.item_id,
-        //         sale_order_items.price_size_id,
-        //         sale_order_items.price,
-        //         sale_order_items.item_name,
-        //         sale_order_items.qty,
-        //         sale_order_items.tax_without_price'))
-        //     ->get();
+        if ($deliveryService != 'normal' && $request->type == 'delivery') {
+
+            $query->join('item_delivery_service_price as idsp', 'item_prices.id', '=', 'idsp.item_price_id')
+            ->where('idsp.service_id', $deliveryService)
+            ->addSelect(
+                'idsp.id as delivery_service_price_id',
+                'idsp.price as delivery_service_price',
+            );
+        }
+
+        $items = $query->get();
+
+        // Map the results to modify the price field
+        $items = $items->map(function ($item) use ($request) {
+            if ($request->service != 'normal' && $request->type == 'delivery' && isset($item->delivery_service_price)) {
+                $item->price = $item->delivery_service_price;
+            } else {
+                $item->price = $item->price;
+            }
+            return $item;
+        });
 
         $sale_orders = SaleOrders::where('uuid', $uuid)->first(); //dd($sale_orders);
+        $drivers = Driver::where('branch_id', auth()->user()->branch_id)->get();
         $customer = null;
-        return view("Counter.sale", compact('categorys', 'items', 'drivers', 'sale_orders','customer'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return view("Counter.sale", compact('categorys', 'items', 'drivers', 'sale_orders','customer', 'deliveryService'));
     }
 
     public function get_customer(Request $request)
@@ -651,21 +838,42 @@ class SaleController extends Controller
         $item_search = $request->search;
         if ($item_search) {
 
-            $items = Item::leftJoin('item_prices', function ($join) {
+            $query = Item::leftJoin('item_prices', function ($join) {
                 $join->on('items.id', '=', 'item_prices.item_id');
             })->leftJoin('categories', function ($joins) {
                 $joins->on('items.category_id', '=', 'categories.id');
             })->leftJoin('price_size', function ($joins) {
                 $joins->on('item_prices.price_size_id', '=', 'price_size.id');
             })->where('items.branch_id', auth()->user()->branch_id)
-                ->where('items.item_type', '1')
-                ->where('items.active', 'yes')
-                // ->where('item_prices.price', '>', 0)
-                ->select(DB::raw('items.*,item_prices.id as price_id,item_prices.item_id,item_prices.price_size_id,item_prices.price,item_prices.stock as item_stock,categories.category_slug,price_size.size_name'))
-                ->where('items.item_name', 'like', '%' . $item_search . '%')
-                ->orWhere('item_prices.barcode', 'like', '%' . $item_search . '%')
-                ->limit('5')
-                ->get();
+                // ->where('items.item_type', '1')
+            ->where('items.active', 'yes')
+            // ->where('item_prices.price', '>', 0)
+            ->select(DB::raw('items.*,item_prices.id as price_id,item_prices.item_id,item_prices.price_size_id,item_prices.price,item_prices.stock as item_stock,item_prices.cost_price as item_price_cost_price,categories.category_slug,price_size.size_name'))
+            ->where(function($query) use ($item_search) {
+                $query->where('items.item_name', 'like', '%' . $item_search . '%')
+                ->orWhere('item_prices.barcode', 'like', '%' . $item_search . '%');
+            });
+
+            if ($request->service != 'normal' && $request->type == 'delivery') {
+
+                $query->join('item_delivery_service_price as idsp', 'item_prices.id', '=', 'idsp.item_price_id')
+                ->where('idsp.service_id', $request->service)
+                ->addSelect(
+                    'idsp.id as delivery_service_price_id',
+                    'idsp.price as delivery_service_price',
+                );
+            }
+            $items = $query->limit('5')->get();
+
+            // Map the results to modify the price field
+            $items = $items->map(function ($item) use ($request) {
+                if ($request->service != 'normal' && $request->type == 'delivery' && isset($item->delivery_service_price)) {
+                    $item->price = $item->delivery_service_price;
+                } else {
+                    $item->price = $item->price;
+                }
+                return $item;
+            });
             return response()->json(['data' => $items]);
         }
     }
@@ -674,21 +882,40 @@ class SaleController extends Controller
     {
         $item_search = $request->barcode;
         if ($item_search) {
-
-            $items = Item::leftJoin('item_prices', function ($join) {
+            $query = Item::leftJoin('item_prices', function ($join) {
                 $join->on('items.id', '=', 'item_prices.item_id');
             })->leftJoin('categories', function ($joins) {
                 $joins->on('items.category_id', '=', 'categories.id');
             })->leftJoin('price_size', function ($joins) {
                 $joins->on('item_prices.price_size_id', '=', 'price_size.id');
             })->where('items.branch_id', auth()->user()->branch_id)
-                ->where('items.item_type', '1')
+                // ->where('items.item_type', '1')
                 ->where('items.active', 'yes')
                 // ->where('item_prices.price', '>', 0)
-                ->select(DB::raw('items.*,item_prices.id as price_id,item_prices.item_id,item_prices.price_size_id,item_prices.price,item_prices.stock as item_stock,categories.category_slug,price_size.size_name'))
-                ->where('item_prices.barcode', $item_search)
-                ->limit('1')
-                ->get();
+                ->select(DB::raw('items.*,item_prices.id as price_id,item_prices.item_id,item_prices.price_size_id,item_prices.price,item_prices.stock as item_stock,item_prices.cost_price as item_price_cost_price,categories.category_slug,price_size.size_name'))
+                ->where('item_prices.barcode', $item_search);
+
+            if ($request->service != 'normal' && $request->type == 'delivery') {
+                $query->join('item_delivery_service_price as idsp', 'item_prices.id', '=', 'idsp.item_price_id')
+                ->where('idsp.service_id', $request->service)
+                ->addSelect(
+                    'idsp.id as delivery_service_price_id',
+                    'idsp.price as delivery_service_price',
+                );
+            }
+
+            $items = $query->limit('1')->get();
+
+            // Map the results to modify the price field
+            $items = $items->map(function ($item) use ($request) {
+                if ($request->service != 'normal' && $request->type == 'delivery' && isset($item->delivery_service_price)) {
+                    $item->price = $item->delivery_service_price;
+                } else {
+                    $item->price = $item->price;
+                }
+                return $item;
+            });
+
             return response()->json(['data' => $items]);
         }
     }
@@ -720,6 +947,10 @@ class SaleController extends Controller
             // mysqli_query($GLOBALS['conn'], "DELETE FROM `sale_order_payments` WHERE sale_order_id = '$sale_order_id'");
         }
         $i = $net_total;
+
+        // delete  inserted data;
+        // $this->paymentService->deletePayment($sale_order_id);
+
         if (!empty($multiple_payment_amount) && ($multiple_payment_amount) != 0) {
             foreach ($multiple_payment_amount as $key => $value) {
                 if ($value > 0) {
@@ -748,6 +979,10 @@ class SaleController extends Controller
                             'user_id' => $user_id,
                             'shop_id' => $shop_id
                         ]);
+
+                        if ($multiple_payment_type != 'credit') {
+                            // $this->paymentService->processPayment($multiple_payment_type, 'sale', 'add', $sale_order_id, $value, $shop_id, $user_id);
+                        }
 
                         if ($multiple_payment_type == 'credit') {
                             $cred_payment_details = $this->get_credit_sale($sale_order_id);
@@ -821,7 +1056,7 @@ class SaleController extends Controller
         $discount = (isset($inputs['discount']) && $inputs['discount'] != '') ? $inputs['discount'] : '0.0';
         $discount_per = (isset($inputs['discount_per']) && $inputs['discount_per'] != '') ? $inputs['discount_per'] : '0.0';
         $staff_id = (isset($inputs['staff_id']) && $inputs['staff_id'] != '') ? $inputs['staff_id'] : '0.0';
-
+        $delivery_type = (isset($inputs['delivery_service']) && $inputs['delivery_service'] != '') ? $inputs['delivery_service'] : 'normal';
         //$cash_back_receipt_id = (isset($inputs['cash_back_receipt_id']) && $inputs['cash_back_receipt_id'] != '') ? $inputs['cash_back_receipt_id'] : '';
         //$cash_back_amount = (isset($inputs['cash_back_amount']) && $inputs['cash_back_amount'] != '') ? $inputs['cash_back_amount'] : '0';
 
@@ -904,6 +1139,7 @@ class SaleController extends Controller
                 'vat' => $vat,
                 'date_time' => $date_time,
                 'discount_per' => $discount_per,
+                // 'delivery_type' => $delivery_type,
                 'staff_id' => $staff_id,
                 'without_tax' => $gross_total,
                 'tax_amount' => $tax_amount,
@@ -933,6 +1169,8 @@ class SaleController extends Controller
             $category_ids = $inputs['category_id'];
             $total_prices = $inputs['total_price'];
             $item_price_cost_prices = $inputs['item_price_cost_price'];
+            $ingredients = (isset($inputs['ingredients']) && $inputs['ingredients'] != '') ? $inputs['ingredients'] : '' ;
+            // $item_types = $inputs['item_type'];
 
             $notess = (isset($inputs['notes']) && $inputs['notes'] != '') ? $inputs['notes'] : '';
 
@@ -961,6 +1199,8 @@ class SaleController extends Controller
                 {
                     $item_price_cost_price = 0;
                 }
+                $item_price_cost_price = $item_price_cost_price !== null && is_numeric($item_price_cost_price) ? $item_price_cost_price : 0;
+                // $item_type = $item_types[$i];
                 $item_details = Item::where('id', $item_id)->first();
                 $item_id_i = $item_details->id;
                 $other_item_name = $item_details->other_item_name;
@@ -1010,26 +1250,45 @@ class SaleController extends Controller
                     'tax_name' => 'VAT', // $tax_name, //
                     'tax_count' => '1', // $tax_count, //
                     'total_price' => $total_price, // $tax_count, //
-                    // 'cost_price' => $item_price_cost_price, // $tax_count, //
+                    'cost_price' => $item_price_cost_price, // $tax_count, //
+                    // 'item_type' => $item_type,
+                    // 'stock_applicable' => $stock_applicable,
                     // 'cost_price_taken' => $cost_price_taken,
                 ]);
 
-                if ($stock_applicable == 1  && $status != 'hold') {
-                    if ($sale_order_item_id) {
-                        $result_stock = DB::table('item_prices')->where('id', $price_size_id)->whereNull('deleted_at')->first();
-                        //->where('branch_id', $branch_id)->where('item_id', $item_id_i)
+                // if($item_type == '3'){
+                //     if(isset($ingredients[$price_size_id])){
+                //         DB::table('sale_order_items')->where('id', $sale_order_item_id)->update([
+                //             'combo_items' => json_encode($ingredients[$price_size_id])
+                //         ]);
+                //     }
+                // }
+
+                if ($status != 'hold') {
+                    if ($sale_order_item_id && $stock_applicable == 1) {
+                        $result_stock = ItemPrice::where('id', $price_size_id)->first();
                         $stock_reaming = 0;
                         $old_stock = $result_stock->stock;
                         $stock_reaming = $result_stock->stock - $qty;
+                        $item_cost_price = $result_stock->cost_price;
+                        $finalCostPrice = $item_cost_price * $stock_reaming;
+                        if($stock_reaming <= 0) {
+                            $finalCostPrice = 0;
+                        }
 
                         if ($item_id > 0) {
-                            if ($stock_reaming >= 0) {
-                                DB::table('item_prices')->where('id', $price_size_id)->update(['stock' => $stock_reaming]);
-                                //->where('branch_id', $branch_id)->where('item_id', $item_id_i)->whereNull('deleted_at')
+                            // if ($stock_reaming >= 0) {
+                                $result_stock->update([
+                                    'stock' => $stock_reaming,
+                                    'total_cost_price' =>  $finalCostPrice,
+                                ]);
                                 $user_id = $user_id;
                                 $item_id = $item_id_i;
-                                $reference_no = $sale_order_id;
-                                $reference_key = $order_type;
+                                $reference_no = $sale_order_item_id;
+                                $reference_key = 'Counter Sale';
+                                if($order_type == 'delivery') {
+                                    $reference_key = 'Delivery Sale';
+                                }
                                 if ($status == 'hold') {
                                     $reference_key = $reference_key . '-' . $status;
                                 }
@@ -1049,14 +1308,73 @@ class SaleController extends Controller
                                     'date_added' => $ordered_date,
                                     'reference_no' => $reference_no,
                                     'reference_key' => $reference_key,
-                                    'shop_id' =>  $branch_id
+                                    'shop_id' =>  $branch_id,
+                                    'cost_price' => $item_cost_price,
+                                    'total_cost_price' => $finalCostPrice
                                 ]);
                                 // dd(DB::getQueryLog());
-                            }
+                            // }
                         }
                     }
+                    // if($item_type == '3'){
+                    //     if(isset($ingredients[$price_size_id])){
+                    //         foreach($ingredients[$price_size_id] as $key => $value){
+                    //             $ingValues = explode(',', $value);
+                    //             $comboId = DB::table('combo_sale_items')->insertGetId([
+                    //                 'branch_id' => $branch_id,
+                    //                 'price_size_id' => $ingValues[0],
+                    //                 'item_id' => $ingValues[1],
+                    //                 'qty' => ($ingValues[2] * $qty),
+                    //                 'created_at' => now(),
+                    //                 'sale_order_id' => $sale_order_id,
+                    //                 'sale_order_item_id' => $sale_order_item_id,
+                    //             ]);
+
+                    //             $result_stock = ItemPrice::where('id', $ingValues[0])->first();
+                    //             $stock_reaming = 0;
+                    //             $old_stock = $result_stock->stock;
+                    //             $stock_reaming = $result_stock->stock - ($ingValues[2] * $qty);
+                    //             $item_cost_price = $result_stock->cost_price;
+                    //             $finalCostPrice = $item_cost_price * $stock_reaming;
+                    //             if($stock_reaming <= 0) {
+                    //                 $finalCostPrice = 0;
+                    //             }
+
+                    //             $result_stock->update([
+                    //                 'stock' => $stock_reaming,
+                    //                 'total_cost_price' =>  $finalCostPrice,
+                    //             ]);
+
+                    //             $item_id = $ingValues[1];
+                    //             $reference_no = $comboId;
+                    //             $reference_key = 'Combo Sale';
+                    //             if ($status == 'hold') {
+                    //                 $reference_key = $reference_key . '-' . $status;
+                    //             }
+                    //             $action_type = 'sub';
+                    //             $open_stock = $old_stock;
+                    //             $stock_value = ($ingValues[2] * $qty);
+                    //             $closing_stock = $stock_reaming;
+                    //             DB::table('stock_management_history')->insert([
+                    //                 'user_id' => $user_id,
+                    //                 'item_id' => $item_id,
+                    //                 'item_price_id' => $ingValues[0],
+                    //                 'action_type' => $action_type,
+                    //                 'open_stock' => $open_stock,
+                    //                 'stock_value' => $stock_value,
+                    //                 'closing_stock' => $closing_stock,
+                    //                 'date_added' => $ordered_date,
+                    //                 'reference_no' => $reference_no,
+                    //                 'reference_key' => $reference_key,
+                    //                 'shop_id' =>  $branch_id,
+                    //                 'cost_price' => $item_cost_price,
+                    //                 'total_cost_price' => $finalCostPrice
+                    //             ]);
+                    //         }
+                    //     }
+                    // }
                 }
-            } //dd('123');
+            }
             return DB::table('sale_orders')->where('id', $sale_order_id)->first();
         } else {
             return false;
@@ -1094,5 +1412,71 @@ class SaleController extends Controller
         $ordered_date = date("Y-m-d H:i:s");
 
         mysqli_query($GLOBALS['conn'], "INSERT INTO stock_management_history (user_id, item_id, action_type, open_stock, stock_value, closing_stock, date_added, reference_no, reference_key,'shop_id') VALUES('$user_id', '$item_id', '$action_type', '$open_stock', '$stock_value', '$closing_stock', '$ordered_date', '$reference_no', '$reference_key')");
+    }
+
+    // public function deliveryServiceList()
+    // {
+    //     $deliveryServiceList = DeliveryService::where('branch_id', auth()->user()->branch_id)->get();
+    //     return view("Counter.Model.delivery_service_model", compact('deliveryServiceList'));
+    // }
+
+    public function rawMaterialForCombo(Request $request)
+    {
+        $item_price_id = $request->id;
+        $branch_id = auth()->user()->branch_id;
+        $items = Item::leftJoin('item_prices', function ($join) {
+                    $join->on('items.id', '=', 'item_prices.item_id');
+                })->leftJoin('price_size', function ($joins) {
+                    $joins->on('item_prices.price_size_id', '=', 'price_size.id');
+                })->where('items.branch_id', $branch_id)
+                ->where('items.stock_applicable', '1')
+                ->whereIn('items.item_type',['1', '2'])
+                ->select(DB::raw('items.*,item_prices.id as price_id,item_prices.item_id,item_prices.price_size_id,item_prices.price,item_prices.stock as item_stock,item_prices.cost_price as item_price_cost_price,price_size.size_name'))
+                ->get();
+
+        return view('Counter.Model.ingredientModel', compact('items', 'item_price_id'));
+    }
+
+    public function getStock(Request $request)
+    {
+        $price_id = $request->price_id;
+        $item_id = $request->item_id;
+        $items = Item::select('id', 'item_name', 'unit_id')
+                ->with(['itemprice' => function ($query) use ($price_id, $item_id) {
+                        $query->select('item_id', 'stock', 'cost_price')
+                        ->where('id', $price_id)->where('item_id', $item_id);
+                    }, 'unit' => function ($query) {
+                        $query->select('id', 'unit_name');
+                }])->where('id', $item_id)->first();
+
+        if ($items != null) {
+            $itemData = [
+                'id' => $items->id,
+                'item_name' => $items->item_name,
+                'stock' => $items->itemprice->first()->stock ?? 0,
+                'cost_price' => $items->itemprice->first()->cost_price ?? 0,
+                'unit_name' => $items->unit ? $items->unit->unit_name : null,
+            ];
+            return response()->json(['item' => $itemData]);
+        }
+        return response()->json(['status' => 'error']);
+    }
+
+    /**
+     * hold_delete
+     *
+     * @return void
+     */
+    public function hold_delete(Request $request)
+    {
+        $sale_id = $request->sale_id;
+        if ($sale_id) {
+            SaleOrders::where('id', $sale_id)->delete();
+            SaleOrderItems::where('sale_order_id', $sale_id)->delete();
+            SaleOrderPayment::where('sale_order_id', $sale_id)->delete();
+            return 'success';
+        } else {
+            return 'failed';
+        }
     }
 }

@@ -9,6 +9,7 @@
                                 <th class="py-2 bg-transparent text-center">S.NO</th>
                                 <th class="py-2 bg-transparent text-center">Item</th>
                                 <th class="py-2 bg-transparent text-center">Qty</th>
+                                <th class="py-2 bg-transparent text-center">Cost Price</th>
                                 <th class="py-2 bg-transparent text-center">Total Price</th>
                             </tr>
                         </thead>
@@ -20,6 +21,7 @@
                                         {{ str_replace(' - Unit price', '', $item->product_name) }}
                                     </td>
                                     <td class="py-2 bg-transparent text-center">{{ $item->qty }}</td>
+                                    <td class="py-2 bg-transparent text-center">{{ $item->unit_price }}</td>
                                     <td class="py-2 bg-transparent text-center">{{ showAmount($item->total_amount) }}</td>
                                 </tr>
                             @endforeach

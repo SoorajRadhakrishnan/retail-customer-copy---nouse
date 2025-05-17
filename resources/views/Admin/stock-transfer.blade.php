@@ -120,8 +120,8 @@
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
                                                     <td>{{ dateFormat($stock_transfer->transaction_date) }}</td>
-                                                    <td>{{ Str::ucfirst($stock_transfer->getSourcebranch->branch_name) }}</td>
-                                                    <td>{{ Str::ucfirst($stock_transfer->getDestinationbranch->branch_name) }}</td>
+                                                    <td>{{ $stock_transfer->getSourcebranch ? Str::ucfirst($stock_transfer->getSourcebranch->branch_name) : 'N/A' }}</td>
+                                                    <td>{{ $stock_transfer->getDestinationbranch ? Str::ucfirst($stock_transfer->getDestinationbranch->branch_name) : 'N/A' }}</td>
                                                     <td>{{ Str::ucfirst($stock_transfer->notes) }}</td>
                                                     <td>{{ Str::ucfirst($stock_transfer->status) }}</td>
                                                     <?php $show = 0; ?>
@@ -388,7 +388,7 @@
 
             // Check if at least one checkbox is checked
             if (!$('input[name="purchase_ids[]"]:checked').length) {
-                alert('Please select at least one purchase to mark as paid.');
+                notifyme2('Please select at least one purchase to mark as paid.');
                 return;
             }
 
@@ -401,12 +401,12 @@
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     success: function(response) {
-                        alert('Payment status updated successfully!');
+                        notifyme2('Payment status updated successfully!');
                         location.reload(); // Reload the page after success
                     },
                     error: function(xhr, status, error) {
                         console.error(xhr.responseText);
-                        alert('An error occurred while updating the payment status. Please try again.');
+                        notifyme2('An error occurred while updating the payment status. Please try again.');
                     }
                 });
             }

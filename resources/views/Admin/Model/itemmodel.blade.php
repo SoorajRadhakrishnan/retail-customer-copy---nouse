@@ -147,7 +147,7 @@
             $count = 1;
             ?>
 
-            <div class="row mx-0 ingredient_show"> <!-- Remove default margins from the row -->
+            <div class="row mx-0 "> <!-- Remove default margins from the row -->
                 @foreach ($price_sizes as $key => $price_size)
                     <!-- Unit Price Column -->
                     <div class="{{ $class }} "> <!-- Use padding to ensure spacing -->

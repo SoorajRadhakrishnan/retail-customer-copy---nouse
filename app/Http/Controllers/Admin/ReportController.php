@@ -595,29 +595,29 @@ public function minimum_stock(Request $request)
         return view("Admin.Report.settle-print", compact('settle_sale', 'shop_id'));
     }
 
-    public function supplier()
+       public function supplier()
     {
-        if(!(checkUserPermission('supplier_outstanding_report')))
-        {
+        if (!(checkUserPermission('supplier_outstanding_report'))) {
             return redirect('admin/dashboard')->withMessage('Unauthorized Access');
         }
 
         $branch_id = $this->getBranchId();
 
         $data = Purchase::when($branch_id, function ($query, $branch_id) {
-            $query->where('shop_id', $branch_id);
-        })
-        ->whereIn('payment_status', ['un_paid', 'partial_paid'])  // Include unpaid and partial paid statuses
-        ->where('status', 'received')
-        ->select(DB::raw('SUM(total_amount - paid_amount) as total_pending, supplier_id, shop_id'))
-        ->groupBy('supplier_id')
-        ->groupBy('shop_id')
-        ->get();
-
-
+                $query->where('shop_id', $branch_id);
+            })
+            ->whereIn('payment_status', ['un_paid', 'partial_paid']) // Include unpaid and partial paid statuses
+            ->where('status', 'received')
+            ->join('suppliers', 'purchase_orders.supplier_id', '=', 'suppliers.id') // Join with suppliers table
+            ->whereNull('suppliers.deleted_at') // Exclude deleted suppliers
+            ->select(DB::raw('SUM(total_amount - paid_amount) as total_pending, supplier_id, shop_id'))
+            ->groupBy('supplier_id')
+            ->groupBy('shop_id')
+            ->get();
 
         return view("Admin.Report.supplier-amount", compact('data'));
     }
+
 
     public function customer()
     {
@@ -742,4 +742,27 @@ public function minimum_stock(Request $request)
         // Return the view with the data
         return view("Admin.Report.driver-amount", compact('data', 'from_date', 'to_date'));
     }
+  public function stock_out(Request $request)
+        {
+            // Initialize the query
+            $query = DB::table('inventory_log')
+                ->leftJoin('items', 'inventory_log.item_id', '=', 'items.id')
+                ->select('inventory_log.*', 'items.item_name');
+
+            // Apply item filter if provided
+            if ($request->has('item_id') && !empty($request->item_id)) {
+                $query->where('inventory_log.item_id', $request->item_id);
+            }
+
+            // Apply date filter if provided
+            if ($request->has('start_date') && $request->has('end_date') && !empty($request->start_date) && !empty($request->end_date)) {
+                $query->whereBetween('inventory_log.created_at', [$request->start_date, $request->end_date]);
+            }
+
+            // Fetch the filtered data
+            $data = $query->get();
+            $items = getAllItem($this->getBranchId());
+// dd($data);   
+            return view('Admin.Report.stock_out', compact('data','items'));
+        }
 }

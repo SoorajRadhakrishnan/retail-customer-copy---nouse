@@ -12,7 +12,7 @@ class ItemPrice extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['item_id','price_size_id','price','stock','branch_id','cost_price','barcode', 'price_item_type'];
+    protected $fillable = ['item_id','price_size_id','price','stock','branch_id','cost_price','barcode', 'price_item_type', 'total_cost_price'];
 
     public function branch()
     {
@@ -27,6 +27,11 @@ class ItemPrice extends Model
     public function pricesize()
     {
         return $this->belongsTo(PriceSize::class,'price_size_id','id');
+    }
+
+    public function deliveryServicePrice()
+    {
+        return $this->hasMany(ItemDeliveryServicePrice::class, 'item_price_id', 'id');
     }
 
 }

@@ -39,8 +39,8 @@
                             </select>
                             <div class="input-group-append">
                                 <div class="input-group-append">
-                                    <button class="btn btn-dark rounded-left rounded-10" type="button"
-                                        data-toggle="modal" data-target="#createSupplierModal">
+                                    <button class="btn btn-dark rounded-left rounded-10" type="button" data-toggle="modal"
+                                        data-target="#createSupplierModal">
                                         <i class="fa fa-plus"></i> Add
                                     </button>
                                 </div>
@@ -60,18 +60,6 @@
                         <div class="invalid-feedback">&nbsp;</div>
                     </div>
                 </div>
-                {{-- <div class="col-3 pr-1">
-                    <div class="form-group mt-0 mb-0">
-                        <label class="mb-0 font-weight-bold">Payment Status</label>
-                        <select class="form-control rounded-10 onChange" id="payment_status" name="payment_status"
-                            required="">
-                            <option value="">Select Payment Status</option>
-                            <option value="paid" @if (optional($purchase)->payment_status == 'paid') selected @endif>Paid</option>
-                            <option value="un_paid" @if (optional($purchase)->payment_status == 'un_paid') selected @endif>Un Paid</option>
-                        </select>
-                        <div class="invalid-feedback">&nbsp;</div>
-                    </div>
-                </div> --}}
                 <div class="col-3">
                     <div class="form-group mt-0 mb-0">
                         <label class="mb-0 font-weight-bold">Status</label>
@@ -79,7 +67,7 @@
                             <option value="">Select Status</option>
                             <option value="pending" @if (optional($purchase)->status == 'pending') selected @endif>Pending</option>
                             <option value="ordered" @if (optional($purchase)->status == 'ordered') selected @endif>Ordered</option>
-                            <option value="received" @if (optional($purchase)->status == 'received') selected @endif>Received</option>
+                            <option value="received" @if (optional($purchase)->status == 'received' || is_null(optional($purchase)->status)) selected @endif>Received</option>
                         </select>
                         <div class="valid-feedback">&nbsp;</div>
                         <div class="invalid-feedback">&nbsp;</div>
@@ -90,13 +78,11 @@
                     <div class="form-group mt-0 mb-0">
                         <label class="mb-0 font-weight-bold">Purchase Date</label>
                         <input type="date" class="form-control rounded-10" id="purchase_date" name="purchase_date"
-                            required value="{{ old('purchase_date', optional($purchase)->date_added) }}">
+                            required value="{{ old('purchase_date', optional($purchase)->date_added ?? now()->format('Y-m-d')) }}">
                         <div class="valid-feedback">&nbsp;</div>
                         <div class="invalid-feedback">&nbsp;</div>
                     </div>
-                </div>
-
-                <div class="col-6">
+                </div>                <div class="col-6">
                     <div class="form-group mt-0 mb-0">
                         <label class="mb-0 font-weight-bold">Select Item</label>
                         <div class="input-group">
@@ -105,14 +91,21 @@
                                 <option value="">Select Item</option>
 
                                 @foreach ($items as $item)
+                                    <?php
+                                    if ($item->size_name === 'Unit price') {
+                                        $item->size_name = ''; // Clear size_name
+                                    }else{
+                                        $item->size_name = ' - '. $item->size_name;
+                                    }
+                                    ?>
                                     <option value="{{ $item->price_id }}" data-price_id="{{ $item->price_id }}"
                                         data-item_id="{{ $item->item_id }}" data-name="{{ $item->item_name }}"
                                         data-item_size="{{ $item->size_name }}"
-                                        data-cost_price="{{ $item->item_price_cost_price }}">{{ $item->item_name }}
+                                        data-cost_price="{{ $item->item_price_cost_price }}">{{ $item->item_name.$item->size_name }}
                                     </option>
                                 @endforeach
                             </select>
-                            <div class="input-group-append">
+                             <div class="input-group-append">
                                 <button class="btn btn-dark rounded-left rounded-10" type="button" data-toggle="modal"
                                     data-target="#createItemModal">
                                     <i class="fa fa-plus"></i> Add
@@ -121,14 +114,30 @@
                         </div>
                     </div>
                 </div>
-                <table class="table table-custom" style="width:100%">
+
+                <div class="col-6">
+                    <div class="form-group mt-0 mb-0">
+                        <label class="mb-0 font-weight-bold">Select Item</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control rounded-10" id="item_name"
+                                name="item_name" placeholder="Enter Barcode" required>
+                             <div class="input-group-append">
+                                <button class="btn btn-dark rounded-left rounded-10" type="button" id="addItemButton">
+                                    <i class="fa fa-plus"></i> Add
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <table class="table table-custom mt-4" style="width:100%">
                     <thead>
                         <tr>
                             <th>Item</th>
                             <th>Qty</th>
                             <th>Cost Price</th>
                             <th>Total Amount</th>
-                            <th>Discount Amount </th>
+                            <th>Discount</th>
                             <th>Tax %</th>
                             <th>Tax Amount</th>
                             <th>Action</th>
@@ -145,21 +154,20 @@
                                     <input type="hidden" class="item_name" name="item_name[]"
                                         value="{{ $pur_item->product_name }}">
                                     <td class=" t-1">{{ $pur_item->product_name }}</td>
-                                    <td class=" t-1"><input type="number" class="form-control rounded-10"
-                                            placeholder="" name="qty[]" required="" autofocus=""
+                                    <td class=" t-1"><input type="number" class="form-control rounded-10" placeholder=""
+                                            name="qty[]" required="" autofocus=""
                                             value="{{ $pur_item->qty }}" id="qty{{ $key + 1 }}"
                                             onkeyup="changeQty('{{ $key + 1 }}')"></td>
-                                    <td class="t-1">
-                                        <input type="number" class="form-control rounded-10 cost-price-blurred"
-                                            placeholder="" name="cost_price[]" required="" autofocus=""
-                                            value="{{ $pur_item->unit_price }}" id="cost_price{{ $key + 1 }}"
-                                            onfocus="unblurCostPrice('cost_price{{ $key + 1 }}')"
-                                            onkeyup="changeCostPrice('{{ $key + 1 }}')">
-                                    </td>
+                                            <td class="t-1">
+                                                <input type="number" class="form-control rounded-10 cost-price-blurred" placeholder=""
+                                                       name="cost_price[]" required="" autofocus=""
+                                                       value="{{ $pur_item->unit_price }}" id="cost_price{{ $key + 1 }}"
+                                                       onfocus="unblurCostPrice('cost_price{{ $key + 1 }}')"
+                                                       onkeyup="changeCostPrice('{{ $key + 1 }}')">
+                                            </td>
 
-                                    <td class=" t-1"><input type="number"
-                                            class="form-control rounded-10 total_price" placeholder=""
-                                            name="total_price[]" required="" autofocus=""
+                                    <td class=" t-1"><input type="number" class="form-control rounded-10 total_price"
+                                            placeholder="" name="total_price[]" required="" autofocus=""
                                             value="{{ $pur_item->total_amount }}"
                                             id="total_price{{ $key + 1 }}" readonly></td>
                                     <td class=" t-1">
@@ -168,13 +176,12 @@
                                             id="discount{{ $key + 1 }}"
                                             onkeyup="changeDiscount('{{ $key + 1 }}')">
                                     </td>
-                                    <td class=" t-1"><input type="number" class="form-control rounded-10"
-                                            placeholder="" name="tax[]" required="" autofocus=""
+                                    <td class=" t-1"><input type="number" class="form-control rounded-10" placeholder=""
+                                            name="tax[]" required="" autofocus=""
                                             value="{{ $pur_item->tax }}" id="tax{{ $key + 1 }}"
                                             onkeyup="changeTax('{{ $key + 1 }}', '1')"></td>
-                                    <td class=" t-1"><input type="number"
-                                            class="form-control rounded-10 tax_amount" placeholder=""
-                                            name="tax_amount[]" required="" autofocus=""
+                                    <td class=" t-1"><input type="number" class="form-control rounded-10 tax_amount"
+                                            placeholder="" name="tax_amount[]" required="" autofocus=""
                                             value="{{ $pur_item->tax_amount }}" id="tax_amount{{ $key + 1 }}"
                                             onkeyup="changeTax('{{ $key + 1 }}', '2')" readonly></td>
                                     <td class=" t-1">
@@ -182,19 +189,20 @@
                                             onclick="removeRow('{{ $key + 1 }}')"><i
                                                 class="fa fa-remove"></i></a>
                                     </td>
-                                </tr>;
+                                </tr>
                             @endforeach
 
 
                         @endif
                     </tbody>
                 </table>
-                <div class="form-group mt-0 mb-0 col-3">
+           <div class="form-group mt-0 mb-0 col-3">
 
                     <label class="mb-0 font-weight-bold">Total Discount </label>
 
-                    <input type="number" class="form-control rounded-10" name="total_discount" id="total_discount"
-                        value="{{ optional($purchase)->total_discount }}" onkeyup="updateTotal()">
+                    <input type="number" class="form-control rounded-10" name="total_discount"
+                        id="total_discount" value="{{ optional($purchase)->total_discount }}"
+                        onkeyup="updateTotal()">
                 </div>
 
             </div>
@@ -308,6 +316,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title text-uppercase text-center w-100">Create Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="ItemForm" class="was-validated" autocomplete="off">
                 <input type="hidden" name="branch_id" value="{{ $branch_id }}">
@@ -400,11 +409,22 @@
                                 <div class="invalid-feedback">&nbsp;</div>
                             </div>
                         </div>
+                        @if (app('appSettings')['Minimum-stock']->value == 'yes')
+                            <div class="col-6">
+                                <div class="form-group mt-0 mb-0">
+                                    <label class="mb-0">Minimum Stock Quantity</label>
+                                    <input type="number" class="form-control rounded-10" id="minimum_qty"
+                                        placeholder="" name="minimum_qty" autofocus>
+                                    <div class="valid-feedback">&nbsp;</div>
+                                    <div class="invalid-feedback">&nbsp;</div>
+                                </div>
+                            </div>
+                        @endif
 
                         <?php
                         $price_sizes = getPriceSize($branch_id);
                         $count_price_size = count($price_sizes);
-                        $class = $count_price_size == 2 || $count_price_size == 3 ? 'col-md-6 ' : 'col-6'; // Numeric comparison
+                        $class = $count_price_size == 2 || $count_price_size == 3 ? 'col-md-6 ' : 'col-12'; // Numeric comparison
                         ?>
 
                         <div class="row mx-0 ingredient_show"> <!-- Remove default margins from the row -->
@@ -429,21 +449,19 @@
 
 
                                 @if (app('appSettings')['barcode']->value == 'yes')
-                                    <!-- Barcode Column -->
-                                    <div class="{{ $class }}">
-                                        <div class="form-group mt-0 mb-0">
-                                            <label class="mb-1">Barcode
-                                                {{ Str::ucfirst($price_size->size_name) }}</label>
-                                            <input type="text" class="form-control rounded-10"
-                                                @if ($key == '0') id="item_barcode" @endif
-                                                placeholder="Enter barcode"
-                                                name="item_barcode[{{ $price_size->id }}]"
-                                                value="{{ trim(generateBarcode()) }}" required
-                                                onfocus="this.select()">
-                                            <div class="valid-feedback">&nbsp;</div>
-                                            <div class="invalid-feedback">&nbsp;</div>
-                                        </div>
+                                <!-- Barcode Column -->
+                                <div class="{{ $class }}">
+                                    <div class="form-group mt-0 mb-0">
+                                        <label class="mb-1">Barcode
+                                            {{ Str::ucfirst($price_size->size_name) }}</label>
+                                        <input type="text" class="form-control rounded-10"
+                                            @if ($key == '0') id="item_barcode" @endif
+                                            placeholder="Enter barcode" name="item_barcode[{{ $price_size->id }}]"
+                                            value="{{ trim(generateBarcode()) }}" required onfocus="this.select()">
+                                        <div class="valid-feedback">&nbsp;</div>
+                                        <div class="invalid-feedback">&nbsp;</div>
                                     </div>
+                                </div>
                                 @endif
                             @endforeach
                         </div>
@@ -459,21 +477,21 @@
                 <div class="col-12 px-2 ">
                     <div class="d-flex flex-wrap">
                         @if (app('appSettings')['production']->value == 'yes')
-                            <div class="ingredient_show">
-                                <div class="w-auto mr-2  d-flex d-inline-block border mb-3 px-3 py-2 rounded-10">
-                                    <div class="d-flex mr-2 align-items-center justify-content-start">
-                                        <input type="checkbox" class="rounded-10 me-2 " id="ingredient"
-                                            name="ingredient" @if (isset($item) && optional($item)->ingredient == '1') checked @endif
-                                            value="1" onclick="toggleStockApplicable()">
-                                        <label for="ingredient" class="mt-0 mx-1 mb-0">Add Ingredient</label>
-                                    </div>
+                        <div class="ingredient_show">
+                            <div class="w-auto mr-2  d-flex d-inline-block border mb-3 px-3 py-2 rounded-10">
+                                <div class="d-flex mr-2 align-items-center justify-content-start">
+                                    <input type="checkbox" class="rounded-10 me-2 " id="ingredient"
+                                    name="ingredient" @if (isset($item) && optional($item)->ingredient == '1') checked @endif
+                                        value="1" onclick="toggleStockApplicable()">
+                                    <label for="ingredient" class="mt-0 mx-1 mb-0">Add Ingredient</label>
                                 </div>
                             </div>
+                        </div>
                         @endif
                         <div class="w-auto mr-2 d-flex d-inline-block border mb-3 px-3 py-2 rounded-10">
                             <div class="d-flex align-items-center justify-content-start">
                                 <input type="checkbox" class="rounded-10 me-2" id="stock_applicable"
-                                    name="stock_applicable" @if (isset($item) && optional($item)->stock_applicable == '1') checked @endif
+                                name="stock_applicable" @if (isset($item) && optional($item)->stock_applicable == '1') checked @endif
                                     value="1">
                                 <label for="stock_applicable" class="mt-0 mx-1 mb-0">Stock Applicable</label>
                             </div>
@@ -547,14 +565,13 @@
     }
 </script>
 
-<script>
+ <script>
     $(document).ready(function() {
         $(".modal").removeAttr("tabindex");
         focustoid("supplier_id");
         $('#items').select2({
             theme: "bootstrap-5",
-        });
-        $('#supplier_id').select2({
+        }); $('#supplier_id').select2({
             theme: "bootstrap-5",
         });
     });
@@ -571,69 +588,67 @@
 
 
 <script>
-    // Handle Form Submission with AJAX
-    document.getElementById('ItemForm').addEventListener('submit', function(e) {
-        e.preventDefault(); // Prevent form from reloading the page
+  // Handle Form Submission with AJAX
+  document.getElementById('ItemForm').addEventListener('submit', function(e) {
+      e.preventDefault(); // Prevent form from reloading the page
 
-        let form = this;
-        let formData = new FormData(form);
-        formData.append('is_modal', '1'); // Corrected formData append
+      let form = this;
+      let formData = new FormData(form);
+      formData.append('is_modal', '1'); // Corrected formData append
 
-        // Get the item dropdown
-        let itemIdElement = document.getElementById(
-            'items'); // Assuming 'items' is the select dropdown for item_id
-        let selectedItemId = parseInt(itemIdElement.value); // Convert the item_id to an integer
-        formData.append('item_id[]', selectedItemId); // Append the integer item_id as part of an array
+      // Get the item dropdown
+      let itemIdElement = document.getElementById('items'); // Assuming 'items' is the select dropdown for item_id
+      let selectedItemId = parseInt(itemIdElement.value); // Convert the item_id to an integer
+      formData.append('item_id[]', selectedItemId); // Append the integer item_id as part of an array
 
-        let submitButton = form.querySelector('button[type="submit"]');
-        let actionUrl = submitButton.getAttribute(
-            'data-target'); // Get form action URL from the button's data-target attribute
-        let loadingGif = submitButton.getAttribute('data-image'); // Loading gif
+      let submitButton = form.querySelector('button[type="submit"]');
+      let actionUrl = submitButton.getAttribute('data-target'); // Get form action URL from the button's data-target attribute
+      let loadingGif = submitButton.getAttribute('data-image'); // Loading gif
 
-        // Disable the submit button to prevent multiple submissions
-        submitButton.disabled = true;
-        submitButton.innerHTML = `<img src="${loadingGif}" alt="Loading..." width="20" height="20"> Saving...`;
+      // Disable the submit button to prevent multiple submissions
+      submitButton.disabled = true;
+      submitButton.innerHTML = `<img src="${loadingGif}" alt="Loading..." width="20" height="20"> Saving...`;
 
-        // AJAX Request
-        fetch(actionUrl, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value // Add CSRF Token
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                submitButton.disabled = false;
-                submitButton.innerHTML = 'Save';
+      // AJAX Request
+      fetch(actionUrl, {
+              method: 'POST',
+              body: formData,
+              headers: {
+                  'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value // Add CSRF Token
+              }
+          })
+          .then(response => {
+              if (!response.ok) {
+                  throw new Error(`HTTP error! Status: ${response.status}`);
+              }
+              return response.json();
+          })
+          .then(data => {
+              submitButton.disabled = false;
+              submitButton.innerHTML = 'Save';
 
-                if (data.status === 1) {
-                    $('#createItemModal').modal('hide');
-                    form.reset();
+              if (data.status === 1) {
+                  $('#createItemModal').modal('hide');
+                  form.reset();
 
-                    // Append new option to the select dropdown with id 'items'
-                    let itemsDropdown = document.getElementById('items');
-                    let newOption = new Option(data.name, data.id, false, false);
-                    newOption.setAttribute("data-price_id", data.price_id);
-                    newOption.setAttribute("data-item_id", data.id);
-                    newOption.setAttribute("data-name", data.name);
-                    newOption.setAttribute("data-item_size", data.size_name);
-                    newOption.setAttribute("data-cost_price", data.item_price_cost_price);
-                    itemsDropdown.appendChild(newOption);
+                  // Append new option to the select dropdown with id 'items'
+                  let itemsDropdown = document.getElementById('items');
+                  let newOption = new Option(data.name, data.id, false, false);
+                  newOption.setAttribute("data-price_id", data.price_id);
+                  newOption.setAttribute("data-item_id", data.id);
+                  newOption.setAttribute("data-name", data.name);
+                  newOption.setAttribute("data-item_size", data.size_name);
+                  newOption.setAttribute("data-cost_price", data.item_price_cost_price);
+                  itemsDropdown.appendChild(newOption);
 
-                    // Trigger select2 update without reinitializing select2 completely
-                    if ($(itemsDropdown).hasClass("select2-hidden-accessible")) {
-                        // Just trigger an update instead of reapplying select2
-                        $(itemsDropdown).trigger('change');
-                    }
+                  // Trigger select2 update without reinitializing select2 completely
+                  if ($(itemsDropdown).hasClass("select2-hidden-accessible")) {
+                      // Just trigger an update instead of reapplying select2
+                      $(itemsDropdown).trigger('change');
+                  }
 
-                    // Add the new item to the item list (if applicable)
-                    let newItemRow = `
+                  // Add the new item to the item list (if applicable)
+                  let newItemRow = `
                       <tr>
                           <td class="t-1">${data.name}</td>
                           <td class="t-1">${data.price_id}</td>
@@ -641,29 +656,28 @@
                           <td class="t-1">${data.item_price_cost_price ? data.item_price_cost_price : 'N/A'}</td>
                       </tr>`;
 
-                    let itemList = document.getElementById('itemList');
-                    if (itemList) {
-                        itemList.insertAdjacentHTML('beforeend', newItemRow);
-                    } else {
-                        console.error('itemList not found!');
-                    }
-                } else {
-                    alert('Error: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An unexpected error occurred: ' + error.message);
+                  let itemList = document.getElementById('itemList');
+                  if (itemList) {
+                      itemList.insertAdjacentHTML('beforeend', newItemRow);
+                  } else {
+                      console.error('itemList not found!');
+                  }
+              } else {
+                  alert('Error: ' + data.message);
+              }
+          })
+          .catch(error => {
+              console.error('Error:', error);
+              alert('An unexpected error occurred: ' + error.message);
 
-                submitButton.disabled = false;
-                submitButton.innerHTML = 'Save';
-            });
-    });
+              submitButton.disabled = false;
+              submitButton.innerHTML = 'Save';
+          });
+  });
 </script>
 <style>
     .cost-price-blurred {
-        filter: blur(1px);
-        /* Apply blur effect */
+        filter: blur(1px); /* Apply blur effect */
         /* pointer-events: ; Prevent interactions until focused */
     }
 </style>
@@ -675,7 +689,7 @@
         $('#items').select2({
             theme: "bootstrap-5",
         });
-        $('#supplier_id').select2({
+      $('#supplier_id').select2({
             theme: "bootstrap-5",
         });
     });
@@ -695,8 +709,8 @@
             var item_name = item.data('name');
             var item_id = item.data('item_id');
             var price_id = item.data('price_id');
-            var item_size = (item.data('item_size') === 'Unit price' || item.data('item_size') === '1') ? '' :
-                item.data('item_size');
+            var item_size = item.data('item_size');
+            // ( === 'Unit price' || item.data('item_size') === '1') ? '' : " - " + item.data('item_size');
             var cost_price = item.data('cost_price');
 
             // Create the dynamic row HTML
@@ -704,18 +718,14 @@
                 <tr class="tr` + rand + `">
                     <input type="hidden" class="price_id" name="price_id[]" value="` + price_id + `">
                     <input type="hidden" class="item_id" name="item_id[]" value="` + item_id + `">
-                    <input type="hidden" class="item_name" name="item_name[]" value="` + item_name + " - " +
-                item_size + `">
-                    <td class="t-1">` + item_name + `</td>
+                    <input type="hidden" class="item_name" name="item_name[]" value="` + item_name + item_size + `">
+                    <td class="t-1">` + item_name + item_size + `</td>
                     <td class="t-1"><input type="number" class="form-control rounded-10" placeholder="" name="qty[]" required="" autofocus="" value=""
-                        id="qty` + rand + `" onkeyup="changeQty('` + rand +
-                `')"></td>
+                        id="qty` + rand + `" onkeyup="changeQty('` + rand + `')"></td>
                     <td class="t-1"><input type="number" class="form-control rounded-10 cost-price-blurred" placeholder="" name="cost_price[]" required="" autofocus="" value="` +
-                cost_price + `" id="cost_price` + rand + `" onfocus="unblurCostPrice('cost_price` + rand +
-                `')" onkeyup="changeCostPrice('` + rand +
-                `')"></td>
+                        cost_price + `" id="cost_price` + rand + `" onfocus="unblurCostPrice('cost_price` + rand + `')" onkeyup="changeCostPrice('` + rand + `')"></td>
                     <td class="t-1"><input type="number" class="form-control rounded-10 total_price" placeholder="" name="total_price[]" required="" autofocus="" value="" id="total_price` +
-                rand + `" readonly></td>
+                        rand + `" readonly></td>
 
                     <td class="t-1">
                         <input type="number" class="form-control rounded-10" placeholder=""
@@ -723,10 +733,9 @@
                             value="" id="discount` + rand + `" onkeyup="changeDiscount('` + rand + `')">
                     </td>
                     <td class="t-1"><input type="number" class="form-control rounded-10" placeholder="" name="tax[]" required="" autofocus="" value="5"
-                        id="tax` + rand + `" onkeyup="changeTax('` + rand +
-                `', '1')"></td>
+                        id="tax` + rand + `" onkeyup="changeTax('` + rand + `', '1')"></td>
                     <td class="t-1"><input type="number" class="form-control rounded-10 tax_amount" placeholder="" name="tax_amount[]" required="" autofocus="" value="" id="tax_amount` +
-                rand + `" readonly onkeyup="changeTax('` + rand + `', '2')"></td>
+                        rand + `" readonly onkeyup="changeTax('` + rand + `', '2')"></td>
                     <td class="t-1">
                         <a class="btn btn-dark rounded-10" onclick="removeRow('` + rand + `')"><i class="fa fa-remove"></i></a>
                     </td>
@@ -743,48 +752,47 @@
         document.getElementById(id).classList.remove('cost-price-blurred');
         document.getElementById(id).style.pointerEvents = "auto"; // Allow interactions
     }
-
     function updateTotal() {
-        let totalAmount = 0;
-        let totalTaxAmount = 0;
+    let totalAmount = 0;
+    let totalTaxAmount = 0;
 
-        // Calculate total amount from individual item total prices
-        document.querySelectorAll('.total_price').forEach(function(item) {
-            totalAmount += parseFloat(item.value) || 0;
-        });
+    // Calculate total amount from individual item total prices
+    document.querySelectorAll('.total_price').forEach(function(item) {
+        totalAmount += parseFloat(item.value) || 0;
+    });
 
-        // Calculate total tax amount from individual item tax amounts
-        document.querySelectorAll('.tax_amount').forEach(function(item) {
-            totalTaxAmount += parseFloat(item.value) || 0;
-        });
+    // Calculate total tax amount from individual item tax amounts
+    document.querySelectorAll('.tax_amount').forEach(function(item) {
+        totalTaxAmount += parseFloat(item.value) || 0;
+    });
 
-        // Get the total discount value
-        let totalDiscount = parseFloat(document.getElementById('total_discount').value) || 0;
+    // Get the total discount value
+    let totalDiscount = parseFloat(document.getElementById('total_discount').value) || 0;
 
-        // Calculate net total after applying discount
-        let netTotal = (totalAmount) - totalDiscount;
+    // Calculate net total after applying discount
+    let netTotal = (totalAmount ) - totalDiscount;
 
-        // Update the displayed totals
-        document.getElementById('net_total').innerText = netTotal.toFixed(2);
-        document.getElementById('tax_amount').innerText = totalTaxAmount.toFixed(2);
-    }
+    // Update the displayed totals
+    document.getElementById('net_total').innerText = netTotal.toFixed(2);
+    document.getElementById('tax_amount').innerText = totalTaxAmount.toFixed(2);
+}
 
-    function changeDiscount(rand) {
-        var qty = parseFloat($('#qty' + rand).val());
-        var cost_price = parseFloat($('#cost_price' + rand).val());
-        var discount = parseFloat($('#discount' + rand).val());
+function changeDiscount(rand) {
+    var qty = parseFloat($('#qty' + rand).val());
+    var cost_price = parseFloat($('#cost_price' + rand).val());
+    var discount = parseFloat($('#discount' + rand).val());
 
-        qty = !isNaN(qty) ? qty : 0;
-        cost_price = !isNaN(cost_price) ? cost_price : 0;
-        discount = !isNaN(discount) ? discount : 0;
+    qty = !isNaN(qty) ? qty : 0;
+    cost_price = !isNaN(cost_price) ? cost_price : 0;
+    discount = !isNaN(discount) ? discount : 0;
 
-        // Calculate total price with discount for the specific item
-        var total = (qty * cost_price) - discount;
-        $('#total_price' + rand).val(total.toFixed(2));
+    // Calculate total price with discount for the specific item
+    var total = (qty * cost_price) - discount;
+    $('#total_price' + rand).val(total.toFixed(2));
 
-        // Update the grand total when the item discount changes
-        updateTotal();
-    }
+    // Update the grand total when the item discount changes
+    updateTotal();
+}
 
 
     function changeQty(rand) {
@@ -900,6 +908,128 @@
                     alert('There was an error adding the supplier.');
                 }
             });
+        });
+    });
+</script>
+<script>
+    $(document).ready(function() {
+        // When the barcode input loses focus, fetch the item details
+        $('#item_name').on('change', function() {
+            let barcode = $(this).val();
+            let branchId = "{{ $branch_id }}"; // Pass the branch ID
+            let url = "{{ url('admin/item-by-barcode') }}"; // Define the route for fetching item details
+
+            if (barcode) {
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    data: { barcode: barcode, branch_id: branchId },
+                    success: function(response) {
+                        if (response.status === 1) {
+                            let item = response.data;
+                            let rand = Math.floor(Math.random() * 100000);
+
+                            // Check if the item already exists in the table
+                            let found = true;
+                            $('#item_body .price_id').each(function() {
+                                if ($(this).val() == item.price_id) {
+                                    found = false;
+                                }
+                            });
+
+                            if (found) {
+                                // Append the dynamic row
+                                let dynamicRowHTML = `
+                                    <tr class="tr${rand}">
+                                        <input type="hidden" class="price_id" name="price_id[]" value="${item.price_id}">
+                                        <input type="hidden" class="item_id" name="item_id[]" value="${item.item_id}">
+                                        <input type="hidden" class="item_name" name="item_name[]" value="${item.item_name}">
+                                        <td class="t-1">${item.item_name}</td>
+                                        <td class="t-1"><input type="number" class="form-control rounded-10" placeholder="" name="qty[]" required="" autofocus="" value="1"
+                                            id="qty${rand}" onkeyup="changeQty('${rand}')"></td>
+                                        <td class="t-1"><input type="number" class="form-control rounded-10 cost-price-blurred" placeholder="" name="cost_price[]" required="" autofocus="" value="${item.item_price_cost_price}"
+                                            id="cost_price${rand}" onfocus="unblurCostPrice('cost_price${rand}')" onkeyup="changeCostPrice('${rand}')"></td>
+                                        <td class="t-1"><input type="number" class="form-control rounded-10 total_price" placeholder="" name="total_price[]" required="" autofocus="" value="${item.item_price_cost_price}" id="total_price${rand}" readonly></td>
+                                        <td class="t-1"><input type="number" class="form-control rounded-10" placeholder="" name="discount[]" value="0" id="discount${rand}" onkeyup="changeDiscount('${rand}')"></td>
+                                        <td class="t-1"><input type="number" class="form-control rounded-10" placeholder="" name="tax[]" required="" autofocus="" value="5" id="tax${rand}" onkeyup="changeTax('${rand}', '1')"></td>
+                                        <td class="t-1"><input type="number" class="form-control rounded-10 tax_amount" placeholder="" name="tax_amount[]" required="" autofocus="" value="0" id="tax_amount${rand}" readonly></td>
+                                        <td class="t-1"><a class="btn btn-dark rounded-10" onclick="removeRow('${rand}')"><i class="fa fa-remove"></i></a></td>
+                                    </tr>`;
+                                $('#item_body').append(dynamicRowHTML);
+                                $('#item_name').val(''); // Clear the barcode input
+                            }
+                        } else {
+                            alert(response.message || 'Item not found.');
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error(xhr);
+                        alert('An error occurred while fetching the item.');
+                    }
+                });
+            }
+        });
+    });
+</script>
+<script>
+    $(document).ready(function() {
+        // When the "Add" button is clicked
+        $('#addItemButton').on('click', function() {
+            let barcode = $('#item_name').val();
+            let branchId = "{{ $branch_id }}"; // Pass the branch ID
+            let url = "{{ url('admin/item-by-barcode') }}"; // Define the route for fetching item details
+
+            if (barcode) {
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    data: { barcode: barcode, branch_id: branchId },
+                    success: function(response) {
+                        if (response.status === 1) {
+                            let item = response.data;
+                            let rand = Math.floor(Math.random() * 100000);
+
+                            // Check if the item already exists in the table
+                            let found = true;
+                            $('#item_body .price_id').each(function() {
+                                if ($(this).val() == item.price_id) {
+                                    found = false;
+                                }
+                            });
+
+                            if (found) {
+                                // Append the dynamic row
+                                let dynamicRowHTML = `
+                                    <tr class="tr${rand}">
+                                        <input type="hidden" class="price_id" name="price_id[]" value="${item.price_id}">
+                                        <input type="hidden" class="item_id" name="item_id[]" value="${item.item_id}">
+                                        <input type="hidden" class="item_name" name="item_name[]" value="${item.item_name}">
+                                        <td class="t-1">${item.item_name}</td>
+                                        <td class="t-1"><input type="number" class="form-control rounded-10" placeholder="" name="qty[]" required="" autofocus="" value="1"
+                                            id="qty${rand}" onkeyup="changeQty('${rand}')"></td>
+                                        <td class="t-1"><input type="number" class="form-control rounded-10 cost-price-blurred" placeholder="" name="cost_price[]" required="" autofocus="" value="${item.item_price_cost_price}"
+                                            id="cost_price${rand}" onfocus="unblurCostPrice('cost_price${rand}')" onkeyup="changeCostPrice('${rand}')"></td>
+                                        <td class="t-1"><input type="number" class="form-control rounded-10 total_price" placeholder="" name="total_price[]" required="" autofocus="" value="${item.item_price_cost_price}" id="total_price${rand}" readonly></td>
+                                        <td class="t-1"><input type="number" class="form-control rounded-10" placeholder="" name="discount[]" value="0" id="discount${rand}" onkeyup="changeDiscount('${rand}')"></td>
+                                        <td class="t-1"><input type="number" class="form-control rounded-10" placeholder="" name="tax[]" required="" autofocus="" value="5" id="tax${rand}" onkeyup="changeTax('${rand}', '1')"></td>
+                                        <td class="t-1"><input type="number" class="form-control rounded-10 tax_amount" placeholder="" name="tax_amount[]" required="" autofocus="" value="0" id="tax_amount${rand}" readonly></td>
+                                        <td class="t-1"><a class="btn btn-dark rounded-10" onclick="removeRow('${rand}')"><i class="fa fa-remove"></i></a></td>
+                                    </tr>`;
+                                $('#item_body').append(dynamicRowHTML);
+                                $('#item_name').val(''); // Clear the barcode input
+                            }
+                        } else {
+                            alert(response.message || 'Item not found.');
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error(xhr);
+                        alert('An error occurred while fetching the item.');
+                    }
+                });
+            } else {
+                alert('Please enter a barcode.');
+            }
         });
     });
 </script>

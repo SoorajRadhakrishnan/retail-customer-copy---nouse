@@ -349,23 +349,45 @@ class ItemsController extends Controller
             ]);
 
             $item_prices = [];
-            foreach ($request->item_price as $key => $item_price) {
-                // If item price is missing or empty, set it to 0
-                $item_price = !empty($item_price) ? $item_price : 0;
+           if($request->item_type == '2'){
 
-                // Handle barcode value based on the settings
-                $value = app('appSettings')['barcode']->value == 'yes' ? $request->item_barcode[$key] : '';
+                // if item type is raw material no need multiple price size, so no loop
 
-                // Add the item price to the array for insertion
-                $item_prices[] = [
-                    'branch_id' => $request->branch_id,
-                    'item_id' => $item->id,
-                    'price_size_id' => $key,
-                    'price' => $item_price,
-                    'stock' => '0', // Set stock to 0 if needed, or adjust this based on your logic
-                    'barcode' => $value,
-                    'price_item_type' => $request->item_type,
-                ];
+                $first_key = key($request->item_price);
+                $item_price = $request->item_price[$first_key] ?? 0;
+
+                    // Handle barcode value based on the settings
+                    $value = app('appSettings')['barcode']->value == 'yes' ? $request->item_barcode[$first_key] : '';
+
+                    // Add the item price to the array for insertion
+                    $item_prices[] = [
+                        'branch_id' => $request->branch_id,
+                        'item_id' => $item->id,
+                        'price_size_id' => $first_key,
+                        'price' => $item_price,
+                        'stock' => '0', // Set stock to 0 if needed, or adjust this based on your logic
+                        'barcode' => $value,
+                        'price_item_type' => $request->item_type,
+                    ];
+            }else{
+                foreach ($request->item_price as $key => $item_price) {
+                    // If item price is missing or empty, set it to 0
+                    $item_price = !empty($item_price) ? $item_price : 0;
+
+                    // Handle barcode value based on the settings
+                    $value = app('appSettings')['barcode']->value == 'yes' ? $request->item_barcode[$key] : '';
+
+                    // Add the item price to the array for insertion
+                    $item_prices[] = [
+                        'branch_id' => $request->branch_id,
+                        'item_id' => $item->id,
+                        'price_size_id' => $key,
+                        'price' => $item_price,
+                        'stock' => '0', // Set stock to 0 if needed, or adjust this based on your logic
+                        'barcode' => $value,
+                        'price_item_type' => $request->item_type,
+                    ];
+                }
             }
 
             // Insert the prices into the item_prices table
@@ -407,8 +429,9 @@ class ItemsController extends Controller
         if (!(checkUserPermission('item_delete'))) {
             return $this->sendResponse(1, config('constant.UNAUTHORIZED_ACCESS'), '', url('admin/item'));
         }
-        $item->delete();
+       
         $result = $item->itemprice()->delete();
+       $item->delete();
         if ($result) {
             return $this->sendResponse(1, 'Item Deleted succussfully', '', url('admin/item'));
         } else {

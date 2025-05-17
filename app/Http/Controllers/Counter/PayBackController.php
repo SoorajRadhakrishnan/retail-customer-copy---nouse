@@ -7,6 +7,8 @@ use App\Models\SaleOrders;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+// use App\Http\Services\PaymentTranscationService;
+use App\Models\Admin\ItemPrice;
 use App\Traits\ResponseTraits;
 
 class PayBackController extends Controller
@@ -74,13 +76,14 @@ class PayBackController extends Controller
         $discount_percent = $request->discount_percent ?? [];
         $tax_amt = $request->tax_amt ?? [];
         $final_price = $request->final_price ?? [];
+        $cost_price = $request->cost_price ?? [];
         $receipt_id = $request->key;
 
         $return_id = [];
 
         foreach ($return_qty as $key => $value) {
             if ($value && isset($sale_order_item_id[$key], $sale_order_id[$key], $item_id[$key], $final_price[$key])) {
-                $id = DB::table('pay_back')->insertGetId([
+                $id = PayBack::insertGetId([
                     'shop_id' => auth()->user()->branch_id,
                     'user_id' => auth()->user()->id,
                     'sale_order_item_id' => $sale_order_item_id[$key],
@@ -95,6 +98,7 @@ class PayBackController extends Controller
                     'tax_type' => $request->tax_type[$key] ?? null,
                     'payback_date' => now(),
                     'payment_type' => $request->payment_type,
+                    'cost_price' => $cost_price[$key],
                 ]);
 
                 $item_id_key = $item_id[$key];
@@ -102,31 +106,48 @@ class PayBackController extends Controller
                 $user_id = auth()->user()->id;
                 $shop_id = auth()->user()->branch_id;
 
-                $latest_stock = DB::table('stock_management_history')
-                    ->where('item_id', $item_id_key)
-                    ->orderBy('date_added', 'desc')
-                    ->first();
 
-                $open_stock = $latest_stock ? $latest_stock->closing_stock : 0;
-                $closing_stock = $open_stock + $value;
+                $itemsPrice = ItemPrice::where('id', $price_size_id_key)->first();
+                $stock_applicable = $itemsPrice->item->stock_applicable;
+                if ($stock_applicable) {
+                    $old_stock = $itemsPrice->stock;
+                    if ($old_stock > 0) {
+                        $closing_stock = $value + $old_stock;
+                        $totalAmount = $cost_price[$key] * $value;
+                        $finalTotalCostPrice = $itemsPrice->total_cost_price + $totalAmount;
+                        $finalCostPrice = $finalTotalCostPrice / $closing_stock;
+                    } else {
+                        $closing_stock = $old_stock + $value;
+                        $finalCostPrice = $cost_price[$key];
+                        $finalTotalCostPrice = $cost_price[$key] * $closing_stock;
 
-                DB::table('stock_management_history')->insert([
-                    'shop_id' => $shop_id,
-                    'user_id' => $user_id,
-                    'item_id' => $item_id_key,
-                    'item_price_id' => $price_size_id_key,
-                    'action_type' => 'add',
-                    'reference_no' => $receipt_id,
-                    'reference_key' => 'pay_back',
-                    'open_stock' => $open_stock,
-                    'closing_stock' => $closing_stock,
-                    'stock_value' => $closing_stock * ($price[$key] ?? 0),
-                    'date_added' => now(),
-                ]);
+                        if ($closing_stock <= 0) {
+                            $finalTotalCostPrice = 0;
+                        }
+                    }
 
-                DB::table('item_prices')
-                    ->where('id', $price_size_id_key)
-                    ->increment('stock', $value);
+                    $itemsPrice->update([
+                        'stock' => $closing_stock,
+                        'cost_price' => $finalCostPrice,
+                        'total_cost_price' => $finalTotalCostPrice,
+                    ]);
+
+                    DB::table('stock_management_history')->insert([
+                        'shop_id' => $shop_id,
+                        'user_id' => $user_id,
+                        'item_id' => $item_id_key,
+                        'item_price_id' => $price_size_id_key,
+                        'action_type' => 'add',
+                        'reference_no' => $id,
+                        'reference_key' => 'pay_back',
+                        'open_stock' => $old_stock,
+                        'closing_stock' => $closing_stock,
+                        'stock_value' => $value,
+                        'date_added' => now(),
+                        'cost_price' => $finalCostPrice,
+                        'total_cost_price' => $finalTotalCostPrice
+                    ]);
+                }
 
                 $return_id[] = $id;
             }
@@ -138,11 +159,10 @@ class PayBackController extends Controller
             return redirect('pay-back')->withMessage('Payback success');
         }
     }
-  
-      public function create()
+
+
+    public function create()
     {
         return view("Counter.payback_print");
     }
-
-
 }

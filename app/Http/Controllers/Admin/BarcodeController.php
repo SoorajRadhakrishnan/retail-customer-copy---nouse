@@ -32,7 +32,7 @@ class BarcodeController extends Controller
                 })->when($branch_id, function ($query,$branch_id) {
                     $query->where('items.branch_id',$branch_id);
                 })->where('items.stock_applicable', '1')
-                ->where('items.item_type', '1')
+                // ->where('items.item_type', '1')
                 ->where('item_prices.barcode', '!=', '')
                 // ->where('items.active', 'yes')
                 // ->where('item_prices.price', '>', 0)

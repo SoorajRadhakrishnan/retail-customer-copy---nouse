@@ -103,6 +103,9 @@
                                                                 <input type="hidden"
                                                                     name="final_price[{{ $values->id }}]"
                                                                     value="{{ $values->total_price / $values->qty }}">
+                                                                <input type="hidden"
+                                                                    name="cost_price[{{ $values->id }}]"
+                                                                    value="{{ $values->cost_price }}">
                                                                 <td>{{ $key + 1 }}</td>
                                                                 <td>{{ $values->item_name }}</td>
                                                                 <td>{{ getPaybackqty($values->qty, $values->id) }}</td>

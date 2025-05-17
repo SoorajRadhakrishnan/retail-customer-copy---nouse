@@ -28,16 +28,19 @@ use App\Http\Controllers\Admin\ExpenseCategoryController;
 use App\Http\Controllers\Admin\IngredientController;
 use App\Http\Controllers\Admin\ItemStockController;
 use App\Http\Controllers\Admin\WastageUsageController;
+use App\Http\Controllers\Admin\InventoryController;
 
 use App\Http\Controllers\Admin\ProductionController;
 use App\Http\Controllers\Admin\PurchaseController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SaleOrdersController;
+use App\Http\Controllers\Admin\StockAddController;
 use App\Http\Controllers\Admin\StockTransferController;
 use App\Http\Controllers\Admin\TestController;
 use App\Http\Controllers\Counter\CreditSaleController;
 use App\Http\Controllers\Counter\CrmController;
 use App\Http\Controllers\Counter\DeliverySaleController;
+
 // Counter
 use App\Http\Controllers\Counter\SaleController;
 use App\Http\Controllers\Counter\ExpenseController;
@@ -126,10 +129,13 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin']], function 
     Route::delete('sale-order/{sale_order}', [SaleOrdersController::class, 'destroy']);
 
     Route::resource('wastage-usage', WastageUsageController::class);
-
+Route::resource('stock-add', StockAddController::class);
+   Route::resource('inventory', InventoryController::class);
+    Route::get('barcode-search', [InventoryController::class, 'barcode_search']);
 
     // Route::post('admin/sale-order', [SaleOrdersController::class, 'updatePaymentType']);
       Route::resource('wastage-usage', WastageUsageController::class);
+    Route::get('item-by-barcode', [PurchaseController::class, 'getItemByBarcode']);
 
 
     // Reports
@@ -161,6 +167,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin']], function 
     Route::get('customer-outstanding', [ReportController::class,'customer']);
     Route::get('driver-outstanding', [ReportController::class,'driver']);
     Route::get('profit-loss', [ReportController::class,'profit_loss']);
+  Route::get('stock-out-report', [ReportController::class, 'stock_out']);
     // Route::resource('testing',TestController::class);
 });
 
@@ -179,7 +186,8 @@ Route::group(['middleware' => ['auth', 'counter']], function () {
     Route::get('delivery-list', [SaleController::class, 'delivery_list']);
     Route::get('hold-list', [SaleController::class, 'hold_list']);
     Route::post('change-delivery-status', [SaleController::class, 'change_delivery_status']);
-
+    Route::get('fetch-items', [SaleController::class, 'fetchItems']);
+    
     Route::resource('expense', ExpenseController::class);
     Route::resource('credit-sale', CreditSaleController::class);
     Route::resource('recent-sale', RecentSaleController::class);

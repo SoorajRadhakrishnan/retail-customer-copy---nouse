@@ -25,6 +25,7 @@
                             <input type="hidden" name="item_name[{{ $item->id }}]" value="{{ $item->getItem->item_slug }}">
                             <input type="hidden" name="item_price_name[{{ $item->id }}]" value="{{ $item->getItemPriceSize->size_slug }}">
                             <input type="hidden" name="qty[{{ $item->id }}]" value="{{ $item->qty }}">
+                            <input type="hidden" name="cost_price[{{ $item->id }}]" value="{{ $item->cost_price }}">
                             <td class="py-2 bg-transparent text-center" style="width: 10%">{{ $key + 1 }}</td>
                             <td class="py-2 bg-transparent text-center" style="width: 40%">
                                 {{ str_replace(' - Unit price', '', getItemNameSize($item->item_price_id)) }}

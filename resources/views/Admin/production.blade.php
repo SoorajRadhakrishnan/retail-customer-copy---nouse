@@ -19,8 +19,8 @@
                         <div class="az-content-header-right">
                             <nav class="nav">
                                 <a id="createbtn"
-                                   class="nav-linkk btn btn-dark rounded-10 shadoww mr-2 mb-2 d-flex justify-content-center align-items-center"
-                                href="{{ url('admin/ingredient') }}"> Ingredient</a>
+                                    class="nav-linkk btn btn-dark rounded-10 shadoww mr-2 mb-2 d-flex justify-content-center align-items-center"
+                                    href="{{ url('admin/ingredient') }}"> Ingredient</a>
                             </nav>
                         </div>
                     </div>
@@ -30,16 +30,18 @@
                             <div class="card-header">
                                 <form>
                                     <div class="row">
-                                        <div class="w-auto ml-3">
+                                        <div class="w-auto col-md-3">
                                             <div class="form-group mt-0 mb-0">
                                                 <label class="mb-0 small">Select Item</label>
                                                 <select class="form-control rounded-10 select2 addITem" id="items"
                                                     name="items">
                                                     <option value="">Select Item</option>
                                                     @foreach ($items as $item)
-                                                  <?php
+                                                        <?php
                                                         if ($item->size_name === 'Unit price') {
                                                             $item->size_name = ''; // Clear size_name
+                                                        }else{
+                                                            $item->size_name = ' - '. $item->size_name;
                                                         }
                                                         ?>
                                                         <option value="{{ $item->price_id }}"
@@ -49,7 +51,8 @@
                                                             data-item_size="{{ $item->size_name }}"
                                                             data-cost_price="{{ $item->item_price_cost_price }}"
                                                             data-barcode="{{ $item->item_barcode }}">
-                                                             {{ $item->item_name }}{{ $item->size_name ? ' - ' . $item->size_name : '' }}</option>
+                                                            {{ $item->item_name.$item->size_name }}
+                                                        </option>
                                                     @endforeach
                                                 </select>
                                                 <div class="valid-feedback">&nbsp;</div>
@@ -77,7 +80,8 @@
                             <div class="col-12">
                                 <div class="card rounded-10 shadow">
                                     <div class="card-body overflow-auto">
-<table class="table table-hover table-custom border-bottom-0" style="width:100%">                                            <thead>
+                                        <table class="table table-hover table-custom border-bottom-0" style="width:100%">
+                                            <thead>
                                                 <tr>
                                                     {{-- <th style="width:10%">S.No</th> --}}
                                                     <th style="width:60%">Item</th>
@@ -97,8 +101,9 @@
                     <div class="col-12 mt-4">
                         <div class="az-dashboard-nav border-0">
                             <button type="submit" class="btn btn-dark px-4 text-uppercase rounded-10 submitForm"
-                                data-method="ProductionForm" data-form="ProductionForm" data-target="{{ url('admin/production') }}"
-                                data-returnaction="reload" data-image="{{ url(config('constant.LOADING_GIF')) }}"
+                                data-method="ProductionForm" data-form="ProductionForm"
+                                data-target="{{ url('admin/production') }}" data-returnaction="reload"
+                                data-image="{{ url(config('constant.LOADING_GIF')) }}"
                                 data-processing="Please wait, saving...">Submit</button>
                         </div>
                     </div>
@@ -139,10 +144,11 @@
                 <tr class="tr` + rand + `">
                     <input type="hidden" class="price_id" name="price_id[]" value="` + price_id + `">
                     <input type="hidden" class="item_id" name="item_id[]" value="` + item_id + `">
-                    <input type="hidden" class="item_name" name="item_name[]" value="` + item_name +" - " +item_size +`">
-                    <td style="width:60%">` + item_name + " - " + item_size + `</td>
+                    <input type="hidden" class="item_name" name="item_name[]" value="` + item_name + item_size + `">
+                    <td style="width:60%">` + item_name + item_size +
+                    `</td>
                     <td style="width:20%">
-                        <input type="number" class="form-control rounded-10 qty" placeholder="" name="qty[]" required="" autofocus="" value="1" id="qty` +rand + `"></td>
+                        <input type="number" class="form-control rounded-10 qty" placeholder="" name="qty[]" required="" autofocus="" value="1" id="qty` + rand + `"></td>
                     <td style="width:20%">
                         <a class="btn btn-dark rounded-10" onclick="removeRow('` + rand + `')"><i class="fa fa-remove"></i></a></td>
                 </tr>`;

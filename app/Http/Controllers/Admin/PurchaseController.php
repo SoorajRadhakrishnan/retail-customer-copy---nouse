@@ -6,228 +6,89 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Traits\ResponseTraits;
 use App\Http\Controllers\Controller;
-use App\Models\Admin\Item;
-use App\Models\Admin\ItemPrice;
+use App\Models\Admin\{Item, ItemPrice};
 use App\Models\Purchase;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\{DB, Validator, Log};
 use Carbon\Carbon;
+
 class PurchaseController extends Controller
 {
     use ResponseTraits;
-    /**
-     * Display a listing of the resource.
-     */
-    // public function index(Request $request)
-    // {
-    //     $from_date = $request->input('from_date')
-    //         ? Carbon::parse($request->input('from_date'))->startOfDay()
-    //         : Carbon::now()->startOfDay();
 
-    //     $to_date = $request->input('to_date')
-    //         ? Carbon::parse($request->input('to_date'))->endOfDay()
-    //         : Carbon::now()->endOfDay();
-    //     $supplier = $request->supplier;
-    //     $payment_status = $request->payment_status ?? 'un_paid'; // Default to 'un_paid' if not set
+    public function index(Request $request)
+    {
+        // Parse date range from request if available - from_date blank by default, to_date set to today
+        $from_date = $request->input('from_date') ? Carbon::parse($request->input('from_date')) : null;
+        $to_date = $request->input('to_date') ? Carbon::parse($request->input('to_date'))->endOfDay() : Carbon::today()->endOfDay();
+        $supplier = $request->input('supplier');
+        $payment_status = $request->input('payment_status') ?? '';
+        $status = $request->input('status');
+        $invoice_number = $request->input('invoice_number'); // Get invoice number from request
 
-    //     // Authorization check
-    //     if (!checkUserPermission('purchases')) {
-    //         return redirect('admin/dashboard')->withMessage('Unauthorized Access');
-    //     }
+        // Authorization check
+        if (!checkUserPermission('purchases')) {
+            return redirect('admin/dashboard')->withMessage('Unauthorized Access');
+        }
 
-    //     $query = Purchase::query();
+        $query = Purchase::query();
+        $shop_id = auth()->user()->branch_id ?? getSessionBranch();
 
-    //     $shop_id = auth()->user()->branch_id ?? getSessionBranch();
+        if ($shop_id) {
+            $query->where('shop_id', $shop_id);
+        }
 
-    //     if ($shop_id) {
-    //         $query->where('shop_id', $shop_id);
-    //     }
-
-    //     $query->when($supplier, function ($query) use ($supplier) {
-    //         return $query->where('supplier_id', $supplier);
-    //     })
-    //         ->when($payment_status, function ($query) use ($payment_status) {
-    //             return $query->where('payment_status', $payment_status);
-    //         })
-    //         ->whereBetween('date_added', [$from_date, $to_date]); // Ensure date range is applied
-
-    //     \DB::enableQueryLog();
-    //     $purchases = $query->get();
-    //     \Log::info('Executed Query: ', \DB::getQueryLog());
-
-    //     $suppliers = getSuppliers($shop_id);
-
-    //     $totalOutstanding = Purchase::where('payment_status', 'un_paid')
-    //         ->whereBetween('created_at', [$from_date, $to_date])
-    //         ->sum('total_amount');
-
-    //     \Log::info('Request Parameters: ', $request->all());
-
-    //     // Return the view with the data
-    //     return view('Admin.purchase', compact('purchases', 'suppliers', 'payment_status', 'totalOutstanding', 'from_date', 'to_date'));
-    // }
-
-
-
-//      public function index(Request $request)
-//     {
-//         // Parse date range from request if available
-// // Parse date range from request if available - from_date blank by default, to_date set to today
-// $from_date = $request->input('from_date') ? Carbon::parse($request->input('from_date')) : null;
-//     $to_date = $request->input('to_date') ? Carbon::parse($request->input('to_date'))->endOfDay() : Carbon::today()->endOfDay();
-
-//         $supplier = $request->input('supplier');
-//         $payment_status = $request->input('payment_status') ?? '';
-//         $status = $request->input('status');
-//         $invoice_number = $request->input('invoice_number'); // Get invoice number from request
-
-//         // Authorization check
-//         if (!checkUserPermission('purchases')) {
-//             return redirect('admin/dashboard')->withMessage('Unauthorized Access');
-//         }
-
-//         $query = Purchase::query();
-//         $shop_id = auth()->user()->branch_id ?? getSessionBranch();
-
-//         if ($shop_id) {
-//             $query->where('shop_id', $shop_id);
-//         }
-
-//         // Filter by supplier, invoice number, and conditional date range
-//         $query->when($supplier, function ($query, $supplier) {
-//                 return $query->where('supplier_id', $supplier);
-//             })
-//             ->when($invoice_number, function ($query, $invoice_number) {
-//                 return $query->where('invoice_no', 'LIKE', "%{$invoice_number}%");
-//             })
-//             ->when($from_date && $to_date, function ($query) use ($from_date, $to_date) {
-//                 return $query->whereBetween('date_added', [$from_date, $to_date]);
-//             });
-
-//         // Conditional filtering for payment status
-//         if ($payment_status) {
-//             $query->where(function ($query) use ($payment_status) {
-//                 if ($payment_status === 'paid') {
-//                     $query->where('payment_status', 'paid');
-//                 } elseif ($payment_status === 'un_paid') {
-//                     $query->where('payment_status', 'un_paid');
-//                 } elseif ($payment_status === 'partial_paid') {
-//                     $query->where('payment_status', 'partial_paid');
-//                 } elseif ($payment_status === 'pending') {
-//                     $query->whereIn('payment_status', ['un_paid', 'partial_paid']);
-//                 }
-//             });
-//         }
-//            if ($status) {
-//         $query->where('status', $status); // Adjust this based on how you store statuses in the database
-//     }
-
-
-//         \DB::enableQueryLog();
-//         $purchases = $query->get();
-//         \Log::info('Executed Query: ', \DB::getQueryLog());
-
-//         // Get suppliers
-//         $suppliers = getSuppliers($shop_id);
-
-//         // Calculate total outstanding amounts based on supplier selection
-//         // Calculate total outstanding amounts based on supplier selection
-// $totalOutstanding = Purchase::select(DB::raw('SUM(total_amount) - SUM(paid_amount) as amount_due'))
-// ->when($from_date && $to_date, function ($query) use ($from_date, $to_date) {
-//     return $query->whereBetween('date_added', [$from_date, $to_date]);
-// })
-// ->when($supplier, function ($query, $supplier) {
-//     return $query->where('supplier_id', $supplier);
-// })->first()->amount_due;
-
-
-
-//         $PaymentLists = PaymentList($shop_id);
-
-//         \Log::info('Request Parameters: ', $request->all());
-
-//         // Return the view with the data
-//         return view('Admin.purchase', compact('purchases', 'suppliers', 'payment_status', 'totalOutstanding', 'from_date', 'to_date', 'shop_id', 'PaymentLists'));
-//     }
-
-
-
-
-public function index(Request $request)
-{
-    // Parse date range from request if available - from_date blank by default, to_date set to today
-    $from_date = $request->input('from_date') ? Carbon::parse($request->input('from_date')) : null;
-    $to_date = $request->input('to_date') ? Carbon::parse($request->input('to_date'))->endOfDay() : Carbon::today()->endOfDay();
-
-    $supplier = $request->input('supplier');
-    $payment_status = $request->input('payment_status') ?? '';
-    $status = $request->input('status');
-    $invoice_number = $request->input('invoice_number'); // Get invoice number from request
-
-    // Authorization check
-    if (!checkUserPermission('purchases')) {
-        return redirect('admin/dashboard')->withMessage('Unauthorized Access');
-    }
-
-    $query = Purchase::query();
-    $shop_id = auth()->user()->branch_id ?? getSessionBranch();
-
-    if ($shop_id) {
-        $query->where('shop_id', $shop_id);
-    }
-
-    // Filter by supplier, invoice number, and conditional date range
-    $query->when($supplier, function ($query, $supplier) {
+        // Filter by supplier, invoice number, and conditional date range
+        $query->when($supplier, function ($query, $supplier) {
             return $query->where('supplier_id', $supplier);
         })
-        ->when($invoice_number, function ($query, $invoice_number) {
-            return $query->where('invoice_no', 'LIKE', "%{$invoice_number}%");
-        })
-        ->when($from_date && $to_date, function ($query) use ($from_date, $to_date) {
-            return $query->whereBetween('date_added', [$from_date, $to_date]);
-        });
+            ->when($invoice_number, function ($query, $invoice_number) {
+                return $query->where('invoice_no', 'LIKE', "%{$invoice_number}%");
+            })
+            ->when($from_date && $to_date, function ($query) use ($from_date, $to_date) {
+                return $query->whereBetween('date_added', [$from_date, $to_date]);
+            });
 
-    // Conditional filtering for payment status
-    if ($payment_status) {
-        $query->where(function ($query) use ($payment_status) {
-            if ($payment_status === 'paid') {
-                $query->where('payment_status', 'paid');
-            } elseif ($payment_status === 'un_paid') {
-                $query->where('payment_status', 'un_paid');
-            } elseif ($payment_status === 'partial_paid') {
-                $query->where('payment_status', 'partial_paid');
-            } elseif ($payment_status === 'pending') {
-                $query->whereIn('payment_status', ['un_paid', 'partial_paid']);
-            }
-        });
+        // Conditional filtering for payment status
+        if ($payment_status) {
+            $query->where(function ($query) use ($payment_status) {
+                if ($payment_status === 'paid') {
+                    $query->where('payment_status', 'paid');
+                } elseif ($payment_status === 'un_paid') {
+                    $query->where('payment_status', 'un_paid');
+                } elseif ($payment_status === 'partial_paid') {
+                    $query->where('payment_status', 'partial_paid');
+                } elseif ($payment_status === 'pending') {
+                    $query->whereIn('payment_status', ['un_paid', 'partial_paid']);
+                }
+            });
+        }
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        // DB::enableQueryLog();
+        $purchases = $query->get();
+        // Log::info('Executed Query: ', DB::getQueryLog());
+
+        $suppliers = getSuppliers($shop_id);
+
+        $totalOutstanding = Purchase::select(DB::raw('SUM(total_amount) - SUM(paid_amount) as amount_due'))
+            ->when($from_date && $to_date, function ($query) use ($from_date, $to_date) {
+                return $query->whereBetween('date_added', [$from_date, $to_date]);
+            })
+            ->when($supplier, function ($query, $supplier) {
+                return $query->where('supplier_id', $supplier);
+            })->first()->amount_due;
+
+        $PaymentLists = PaymentList($shop_id);
+
+        // Log::info('Request Parameters: ', $request->all());
+
+        return view('Admin.purchase', compact('purchases', 'suppliers', 'payment_status', 'totalOutstanding', 'from_date', 'to_date', 'shop_id', 'PaymentLists'));
     }
-    if ($status) {
-        $query->where('status', $status);
-    }
-
-    \DB::enableQueryLog();
-    $purchases = $query->get();
-    \Log::info('Executed Query: ', \DB::getQueryLog());
-
-    $suppliers = getSuppliers($shop_id);
-
-    $totalOutstanding = Purchase::select(DB::raw('SUM(total_amount) - SUM(paid_amount) as amount_due'))
-    ->when($from_date && $to_date, function ($query) use ($from_date, $to_date) {
-        return $query->whereBetween('date_added', [$from_date, $to_date]);
-    })
-    ->when($supplier, function ($query, $supplier) {
-        return $query->where('supplier_id', $supplier);
-    })->first()->amount_due;
-
-    $PaymentLists = PaymentList($shop_id);
-
-    \Log::info('Request Parameters: ', $request->all());
-
-    return view('Admin.purchase', compact('purchases', 'suppliers', 'payment_status', 'totalOutstanding', 'from_date', 'to_date', 'shop_id', 'PaymentLists'));
-}
 
 
-        /**
+    /**
      * Show the form for creating a new resource.
      */
     public function create(Request $request)
@@ -254,222 +115,7 @@ public function index(Request $request)
     /**
      * Store a newly created resource in storage.
      */
-    // public function store(Request $request)
-    // {
-    //     $validation = Validator::make($request->all(), [
-    //         'branch_id' => 'required',
-    //         'supplier_id' => 'required',
-    //         'invoice_no' => 'required',
-    //         'payment_status' => 'required',
-    //         'status' => 'required',
-    //         'purchase_date' => 'nullable|date',
-    //         'price_id.*' => 'required|integer', // Validate each price_id
-    //         'item_id.*' => 'required|integer',   // Validate each item_id
-    //         'item_name.*' => 'required|string',   // Validate each item_name
-    //         'qty.*' => 'required|integer|min:1',  // Validate each quantity
-    //         'cost_price.*' => 'required|numeric', // Validate each cost_price
-    //         'total_price.*' => 'required|numeric', // Validate each total_price
-    //         'discount' => 'nullable|array',
-
-    //         'tax.*' => 'nullable|numeric',         // Validate each tax if provided
-    //         'tax_amount.*' => 'nullable|numeric',  // Validate each tax_amount if provided
-    //     ]);
-
-    //     if ($validation->fails()) {
-    //         return $this->sendResponse(0, '', $validation->errors(), '');
-    //     }
-
-    //     // Use the purchase_date from the request or default to now()
-    //     $dateAdded = $request->purchase_date ? $request->purchase_date : now();
-
-    //     if ($request->id) {
-    //         if (!(checkUserPermission('purchase_edit'))) {
-    //             return $this->sendResponse(1, config('constant.UNAUTHORIZED_ACCESS'), '', url('admin/purchase'));
-    //         }
-
-    //         DB::table('purchase_order_items')->where('purchase_id', $request->id)->delete();
-
-    //         $price_id = $request->price_id;
-    //         $tax_amount = $total_amount = 0;
-
-    //         foreach ($price_id as $key => $values) {
-    //             // Check if required data is not undefined before inserting
-    //             if (
-    //                 !isset($values) || !isset($request->item_id[$key]) || !isset($request->item_name[$key]) ||
-    //                 !isset($request->qty[$key]) || !isset($request->cost_price[$key]) || !isset($request->total_price[$key])
-    //             ) {
-    //                 continue; // Skip this iteration if any required data is missing
-    //             }
-    //             $discounts = $request->discount; // Get the discount array
-    //             $discount = is_array($discounts) ? array_sum($discounts) : $discounts; // Sum if it's an array
-    //             $discount = (float) $discount; // Convert to float
-
-    //             $purchase_item_id = DB::table('purchase_order_items')->insertGetId([
-    //                 'purchase_id' => $request->id,
-    //                 'price_id' => $values,
-    //                 'item_id' => $request->item_id[$key],
-    //                 'product_name' => $request->item_name[$key],
-    //                 'qty' => $request->qty[$key],
-    //                 'unit_price' => $request->cost_price[$key],
-    //                 'total_amount' => $request->total_price[$key],
-    //                 'discount' => $request->discount[$key] ?? 0,
-    //                 'tax' => $request->tax[$key] ?? 0, // Default tax to 0 if not provided
-    //                 'tax_amount' => $request->tax_amount[$key] ?? 0.00, // Default tax_amount to 0 if not provided
-    //             ]);
-
-    //             // Update stock logic...
-    //             if ('received' == $request->status) {
-    //                 $items = ItemPrice::where('id', $values)->first();
-    //                 if ($items) { // Ensure the item exists
-    //                     $old_stock = $items->stock;
-    //                     $current_stock = $request->qty[$key] + $items->stock;
-
-    //                     ItemPrice::where('id', $values)->update([
-    //                         'stock' => $current_stock,
-    //                         'cost_price' => $request->cost_price[$key],
-    //                     ]);
-
-    //                     DB::table('stock_management_history')->insert([
-    //                         'user_id' => auth()->user()->id,
-    //                         'item_id' => $request->item_id[$key],
-    //                         'item_price_id' => $values,
-    //                         'action_type' => 'add',
-    //                         'open_stock' => $old_stock,
-    //                         'stock_value' => $request->qty[$key],
-    //                         'closing_stock' => $current_stock,
-    //                         'date_added' => $dateAdded,
-    //                         'reference_no' => $purchase_item_id,
-    //                         'reference_key' => 'Purchase Order',
-    //                         'shop_id' => $request->branch_id
-    //                     ]);
-    //                 }
-    //             }
-
-    //             $tax_amount += $request->tax_amount[$key] ?? 0; // Add tax amount
-    //             $total_amount += $request->total_price[$key];
-    //         }
-    //         // Retrieve the discount from the request
-    //         $discount = $request->discount;
-
-    //         // Check if the discount is an array
-    //         if (is_array($discount)) {
-    //             // Sum all discount values
-    //             $discount = array_sum(array_map('floatval', $discount)); // Convert each discount value to float
-    //         } else {
-    //             // Ensure the discount is a float if it's not an array
-    //             $discount = (float) $discount;
-    //         }
-    //         // Update purchase record
-    //         $purchase_id = Purchase::where('id', $request->id)->update([
-    //             'supplier_id' => $request->supplier_id,
-    //             'supplier_name' => supplierByID($request->supplier_id)->supplier_name,
-    //             'invoice_no' => $request->invoice_no,
-    //             'status' => $request->status,
-    //             'tax_amount' => $tax_amount,
-    //             'total_amount' => $total_amount,
-    //             'discount' => $discount,
-    //             'payment_status' => $request->payment_status,
-    //             'date_added' => $dateAdded,
-    //         ]);
-
-    //         return $this->sendResponse(1, 'Purchase Updated', '', '');
-    //     } else {
-    //         if (!(checkUserPermission('purchase_create'))) {
-    //             return $this->sendResponse(1, config('constant.UNAUTHORIZED_ACCESS'), '', url('admin/purchase'));
-    //         }
-
-    //         $price_id = $request->price_id;
-
-    //         if ($price_id == null) {
-    //             return $this->sendResponse(0, 'Please add item', '', '');
-    //         }
-
-    //         $discounts = $request->discount; // Get the discount array
-    //         $discount = is_array($discounts) ? array_sum($discounts) : $discounts; // Sum if it's an array
-    //         $discount = (float) $discount; // Convert to float
-
-    //         // Create new purchase record
-    //         $purchase_id = Purchase::insertGetId([
-    //             'supplier_id' => $request->supplier_id,
-    //             'supplier_name' => supplierByID($request->supplier_id)->supplier_name,
-    //             'invoice_no' => $request->invoice_no,
-    //             'status' => $request->status,
-    //             'tax_amount' => $request->vat_amt,
-    //             'total_amount' => $request->amount,
-    //             'discount' => $discount, // Store the total discount
-    //             'payment_status' => $request->payment_status,
-    //             'user_id' => auth()->user()->id,
-    //             'shop_id' => $request->branch_id,
-    //             'uuid' => Str::uuid(),
-    //             'created_at' => $dateAdded,
-    //             'date_added' => $dateAdded,
-    //         ]);
-
-    //         $tax_amount = $total_amount = 0;
-
-    //         foreach ($price_id as $key => $values) {
-    //             // Check if required data is not undefined before inserting
-    //             if (
-    //                 !isset($values) || !isset($request->item_id[$key]) || !isset($request->item_name[$key]) ||
-    //                 !isset($request->qty[$key]) || !isset($request->cost_price[$key]) || !isset($request->total_price[$key])
-    //             ) {
-    //                 continue; // Skip this iteration if any required data is missing
-    //             }
-
-    //             $purchase_item_id = DB::table('purchase_order_items')->insertGetId([
-    //                 'purchase_id' => $purchase_id,
-    //                 'price_id' => $values,
-    //                 'item_id' => $request->item_id[$key],
-    //                 'product_name' => $request->item_name[$key],
-    //                 'qty' => $request->qty[$key],
-    //                 'unit_price' => $request->cost_price[$key],
-    //                 'total_amount' => $request->total_price[$key],
-    //                 'discount' => $request->discount[$key] ?? 0,
-    //                 'tax' => $request->tax[$key] ?? 0,
-    //                 'tax_amount' => $request->tax_amount[$key] ?? 0.00,
-    //             ]);
-
-    //             $tax_amount += $request->tax_amount[$key] ?? 0;
-    //             $total_amount += $request->total_price[$key];
-
-    //             // Update stock logic...
-    //             if ('received' == $request->status) {
-    //                 $items = ItemPrice::where('id', $values)->first();
-    //                 if ($items) { // Ensure the item exists
-    //                     $old_stock = $items->stock;
-    //                     $current_stock = $request->qty[$key] + $items->stock;
-
-    //                     ItemPrice::where('id', $values)->update([
-    //                         'stock' => $current_stock,
-    //                         'cost_price' => $request->cost_price[$key],
-    //                     ]);
-
-    //                     DB::table('stock_management_history')->insert([
-    //                         'user_id' => auth()->user()->id,
-    //                         'item_id' => $request->item_id[$key],
-    //                         'item_price_id' => $values,
-    //                         'action_type' => 'add',
-    //                         'open_stock' => $old_stock,
-    //                         'stock_value' => $request->qty[$key],
-    //                         'closing_stock' => $current_stock,
-    //                         'date_added' => $dateAdded,
-    //                         'reference_no' => $purchase_item_id,
-    //                         'reference_key' => 'Purchase Order',
-    //                         'shop_id' => $request->branch_id
-    //                     ]);
-    //                 }
-    //             }
-    //         }
-
-    //         Purchase::where("id", $purchase_id)->update([
-    //             'total_amount' => $total_amount,
-    //             'tax_amount' => $tax_amount,
-    //         ]);
-
-    //         return $this->sendResponse(1, 'Purchase Created', '', '');
-    //     }
-    // }
-        public function store(Request $request)
+    public function store(Request $request)
     {
         // Validate the incoming request
         $validation = Validator::make($request->all(), [
@@ -542,14 +188,27 @@ public function index(Request $request)
                 ]);
 
                 if ('received' == $request->status) {
-                    $items = ItemPrice::where('id', $values)->first();
-                    if ($items) {
-                        $old_stock = $items->stock;
-                        $current_stock = $request->qty[$key] + $items->stock;
+                    $itemsPrice = ItemPrice::where('id', $values)->first();
+                    if ($itemsPrice) {
+                        $old_stock = $itemsPrice->stock;
+                        if ($old_stock > 0) {
+                            $current_stock = $request->qty[$key] + $old_stock;
+                            $finalTotalCostPrice = $itemsPrice->total_cost_price + $request->total_price[$key];
+                            $finalCostPrice = $finalTotalCostPrice / $current_stock;
+                        } else {
+                            $current_stock = $old_stock + $request->qty[$key];
+                            $finalCostPrice = $request->cost_price[$key];
+                            $finalTotalCostPrice = $request->cost_price[$key] * $current_stock;
 
-                        ItemPrice::where('id', $values)->update([
+                            if ($current_stock <= 0) {
+                                $finalTotalCostPrice = 0;
+                            }
+                        }
+
+                        $itemsPrice->update([
                             'stock' => $current_stock,
-                            'cost_price' => $request->cost_price[$key],
+                            'cost_price' => $finalCostPrice,
+                            'total_cost_price' => $finalTotalCostPrice,
                         ]);
 
                         DB::table('stock_management_history')->insert([
@@ -563,7 +222,9 @@ public function index(Request $request)
                             'date_added' => $dateAdded,
                             'reference_no' => $purchase_item_id,
                             'reference_key' => 'Purchase Order',
-                            'shop_id' => $request->branch_id
+                            'shop_id' => $request->branch_id,
+                            'cost_price' => $finalCostPrice,
+                            'total_cost_price' => $finalTotalCostPrice
                         ]);
                     }
                 }
@@ -582,7 +243,7 @@ public function index(Request $request)
                 'total_amount' => $total_amount,
                 'discount' => $discount,
                 'total_discount' => $total_discount,
-                'payment_status' => 'un_paid',//$request->payment_status,
+                'payment_status' => 'un_paid', //$request->payment_status,
                 'date_added' => $dateAdded,
             ]);
 
@@ -608,7 +269,7 @@ public function index(Request $request)
                 'total_amount' => 0, // Temporarily set total to 0, will calculate below
                 'discount' => $discount,
                 'total_discount' => $total_discount,
-                'payment_status' => 'un_paid',//$request->payment_status,
+                'payment_status' => 'un_paid', //$request->payment_status,
                 'user_id' => auth()->user()->id,
                 'shop_id' => $request->branch_id,
                 'uuid' => Str::uuid(),
@@ -643,14 +304,27 @@ public function index(Request $request)
                 $total_amount += $request->total_price[$key];
 
                 if ('received' == $request->status) {
-                    $items = ItemPrice::where('id', $values)->first();
-                    if ($items) {
-                        $old_stock = $items->stock;
-                        $current_stock = $request->qty[$key] + $items->stock;
+                    $itemsPrice = ItemPrice::where('id', $values)->first();
+                    if ($itemsPrice) {
+                        $old_stock = $itemsPrice->stock;
+                        if ($old_stock > 0) {
+                            $current_stock = $request->qty[$key] + $old_stock;
+                            $finalTotalCostPrice = $itemsPrice->total_cost_price + $request->total_price[$key];
+                            $finalCostPrice = $finalTotalCostPrice / $current_stock;
+                        } else {
+                            $current_stock = $old_stock + $request->qty[$key];
+                            $finalCostPrice = $request->cost_price[$key];
+                            $finalTotalCostPrice = $request->cost_price[$key] * $current_stock;
 
-                        ItemPrice::where('id', $values)->update([
+                            if ($current_stock <= 0) {
+                                $finalTotalCostPrice = 0;
+                            }
+                        }
+
+                        $itemsPrice->update([
                             'stock' => $current_stock,
-                            'cost_price' => $request->cost_price[$key],
+                            'cost_price' => $finalCostPrice,
+                            'total_cost_price' => $finalTotalCostPrice,
                         ]);
 
                         DB::table('stock_management_history')->insert([
@@ -664,7 +338,9 @@ public function index(Request $request)
                             'date_added' => $dateAdded,
                             'reference_no' => $purchase_item_id,
                             'reference_key' => 'Purchase Order',
-                            'shop_id' => $request->branch_id
+                            'shop_id' => $request->branch_id,
+                            'cost_price' => $finalCostPrice,
+                            'total_cost_price' => $finalTotalCostPrice
                         ]);
                     }
                 }
@@ -688,7 +364,6 @@ public function index(Request $request)
     {
         if (!(checkUserPermission('purchase_edit'))) {
             return view('Helper.unauthorized_access');
-            ;
         }
         $branch_id = $request->shop;
         $items = Item::leftJoin('item_prices', function ($join) {
@@ -751,13 +426,26 @@ public function index(Request $request)
                 $purchase_items = DB::table('purchase_order_items')->where('purchase_id', $purchase_id)->get();
                 foreach ($purchase_items as $values) {
 
-                    $items = ItemPrice::where('id', $values->price_id)->first();
-                    $old_stock = $items->stock;
-                    $current_stock = $values->qty + $items->stock;
+                    $itemsPrice = ItemPrice::where('id', $values->price_id)->first();
+                    $old_stock = $itemsPrice->stock;
+                    if ($old_stock > 0) {
+                        $current_stock = $values->qty + $old_stock;
+                        $finalTotalCostPrice = $itemsPrice->total_cost_price + $values->total_amount;
+                        $finalCostPrice = $finalTotalCostPrice / $current_stock;
+                    } else {
+                        $current_stock = $old_stock + $values->qty;
+                        $finalCostPrice = $values->unit_price;
+                        $finalTotalCostPrice = $values->unit_price * $current_stock;
 
-                    ItemPrice::where('id', $values->price_id)->update([
+                        if ($current_stock <= 0) {
+                            $finalTotalCostPrice = 0;
+                        }
+                    }
+
+                    $itemsPrice->update([
                         'stock' => $current_stock,
-                        'cost_price' => $values->unit_price,
+                        'cost_price' => $finalCostPrice,
+                        'total_cost_price' => $finalTotalCostPrice,
                     ]);
 
                     DB::table('stock_management_history')->insert([
@@ -771,7 +459,9 @@ public function index(Request $request)
                         'date_added' => date("Y-m-d H:i:s"),
                         'reference_no' => $values->id,
                         'reference_key' => 'Purchase Order',
-                        'shop_id' =>  $branch_id
+                        'shop_id' =>  $branch_id,
+                        'cost_price' => $finalCostPrice,
+                        'total_cost_price' => $finalTotalCostPrice
                     ]);
                 }
             }
@@ -797,11 +487,11 @@ public function index(Request $request)
         return response()->json(['message' => 'Payment status updated successfully!'], 200);
     }
     // PurchaseController.php
-// PurchaseController.php
+    // PurchaseController.php
     public function show(Request $request, $id)
     {
         // Log the request to help with debugging
-        // \Log::info('Fetching recent purchase items for purchase ID: ' . $id);
+        // Log::info('Fetching recent purchase items for purchase ID: ' . $id);
 
         try {
             // Fetch purchase items directly from the purchase_order_items table using the correct purchase_id
@@ -812,12 +502,12 @@ public function index(Request $request)
                 ->get();
 
             // Log the fetched items for debugging
-            // \Log::info('Fetched purchase items: ', $item_list->toArray());
+            // Log::info('Fetched purchase items: ', $item_list->toArray());
 
             // Return the view with the fetched items
             return view('Admin.Model.items-list', compact('item_list'));
         } catch (\Exception $e) {
-            \Log::error('Error fetching purchase items:', [
+            Log::error('Error fetching purchase items:', [
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
@@ -832,12 +522,11 @@ public function index(Request $request)
                 'line' => $e->getLine(),
             ], 500);
         }
-
     }
 
     public function purchasePay(Request $request)
     {
-        $validation = Validator::make($request->all(),[
+        $validation = Validator::make($request->all(), [
             'purchase_id' => 'required',
             'payment_type' => 'required',
             'amount' => 'required|numeric|gt:0',
@@ -845,13 +534,12 @@ public function index(Request $request)
             'balance' => 'required',
         ]);
 
-        if($validation->fails())
-        {
-            return $this->sendResponse(0,'',$validation->errors(),'');
+        if ($validation->fails()) {
+            return $this->sendResponse(0, '', $validation->errors(), '');
         }
 
         $payment_status = 'partial_paid';
-        if($request->total_amount == ($request->amount + ($request->total_amount - $request->balance))){
+        if ($request->total_amount == ($request->amount + ($request->total_amount - $request->balance))) {
             $payment_status = 'paid';
         }
 
@@ -871,18 +559,18 @@ public function index(Request $request)
                 'price' => $request->amount,
                 'created_at' => now(),
             ]);
-        }else{
+        } else {
             return $this->sendResponse(1, 'Something Went Wrong! please try again.', '', url('admin/purchase'));
         }
 
 
-        return $this->sendResponse(1,'Payment Paid Success','','');
+        return $this->sendResponse(1, 'Payment Paid Success', '', '');
     }
 
     public function purchasePayMultiple(Request $request)
     {
         // Debugging: Log the incoming request
-        \Log::info($request->all()); // Check what is being sent
+        Log::info($request->all()); // Check what is being sent
 
         // Validate the incoming data
         $validation = Validator::make($request->all(), [
@@ -950,4 +638,32 @@ public function index(Request $request)
             'response' => '',
         ]);
     }
+    public function getItemByBarcode(Request $request)
+    {
+        $barcode = $request->input('barcode');
+
+        $item = DB::table('item_prices')
+            ->join('items', 'item_prices.item_id', '=', 'items.id')
+            ->leftJoin('price_size', 'item_prices.price_size_id', '=', 'price_size.id')
+            ->where('item_prices.barcode', $barcode) // Ensure barcode exists in item_prices
+            ->where('items.stock_applicable', '1')
+            ->where('items.ingredient', '0')
+            ->select(
+                'items.id as item_id',
+                'items.item_name',
+                'item_prices.id as price_id',
+                'item_prices.price_size_id',
+                'item_prices.price',
+                'item_prices.stock as item_stock',
+                'item_prices.cost_price as item_price_cost_price',
+                'price_size.size_name'
+            )
+            ->first();
+
+        if ($item) {
+            return response()->json(['status' => 1, 'data' => $item]);
+        } else {
+            return response()->json(['status' => 0, 'message' => 'Item not found.']);
         }
+    }
+}

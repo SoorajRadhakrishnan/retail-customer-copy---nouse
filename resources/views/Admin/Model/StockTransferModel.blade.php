@@ -134,6 +134,8 @@
                                             value="{{ $trans_item->item_id }}">
                                         <input type="hidden" class="price_size_id" name="price_size_id[]"
                                             value="{{ $trans_item->item_price_size_id }}">
+                                        <input type="hidden" class="cost_price" name="cost_price[]"
+                                            value="{{ $trans_item->cost_price }}">
                                         <td class=" t-1" style="width:30%;text-align:center">{{ $item_name.$price_size }}
                                         </td>
                                         <td class=" t-1" style="width:20%;text-align:center">
@@ -538,6 +540,7 @@
                 <input type="hidden" class="price_id" name="price_id[]" value="` + price_id + `">
                 <input type="hidden" class="item_id" name="item_id[]" value="` + item_id + `">
                 <input type="hidden" class="price_size_id" name="price_size_id[]" value="` + price_size_id + `">
+                <input type="hidden" class="cost_price" name="cost_price[]" value="` + cost_price + `">
                 <td class="t-1" style="width:30%;text-align:center">` + item_name + item_size+ `</td>
                 <td class="t-1" style="width:20%;text-align:center">` + item_stock + `</td>
                 <td class="t-1" style="width:25%;text-align:center"><input type="number" class="form-control rounded-10" placeholder="" name="qty[]" required="" autofocus="" value=""

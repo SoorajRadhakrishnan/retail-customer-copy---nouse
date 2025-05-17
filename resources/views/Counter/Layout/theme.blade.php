@@ -75,11 +75,12 @@
         <div class="container-fluid">
             <div class="az-header-left">
                 <!-- Menu Button -->
-                <a href="javascript:void(0)"
-                    class="menu-button mt-1 btn rounded-10 mr-2 btn-dark animate__animatedd animate__flipInX">
+                        </style>
+<a href="javascript:void(0)"
+                    class="menu-button mt-1 btn rounded-10 mr-2 btn-dark animate__animatedd animate__flipInX" onclick="toggleDives()">
                     <span class="material-symbols-outlined" id="home_show" aria-hidden="true"
-                        onclick="toggleDives()">menu</span>
-                    <span class="material-symbols-outlined" id="home_hide" aria-hidden="true" onclick="toggleDives()"
+                         style="display: block">menu</span>
+                    <span class="material-symbols-outlined" id="home_hide" aria-hidden="true"
                         style="display:none;">close</span>
                 </a>
 
