@@ -211,7 +211,12 @@ Route::group(['middleware' => ['auth', 'counter']], function () {
     // Password change
     Route::post('change-password', [UserController::class, 'changePassword']);
 });
-
+Route::get('artisan/{command}', function($command) {
+    // if (app()->environment('local')) {
+        Artisan::call($command);
+        return Artisan::output();
+    // }
+});
 // excel route moved to excel.php file
 include 'excel.php';
 
