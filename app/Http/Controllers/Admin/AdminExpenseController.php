@@ -28,8 +28,7 @@ class AdminExpenseController extends Controller
         $branch_id = $this->getBranchId();
         $expenses = Expense::when($branch_id, function ($query,$branch_id) {
                         $query->where('branch_id',$branch_id);
-                    })->whereBetween('date', [$from_date, $to_date])->orderBy('id', 'desc')
-                    ->get();
+                    })->whereBetween('created_at', [$from_date, $to_date])->orderBy('id', 'desc')->get();
 
         return view('Admin.expense',compact('expenses'));
     }

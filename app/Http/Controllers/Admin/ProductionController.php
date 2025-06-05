@@ -127,9 +127,8 @@ $itemName = Item::withTrashed()->where('id', $values['item_id'])->value('item_na
                 $current_stock = $qty + $old_stock;
 
                 $finalTotalCostPrice = $items->total_cost_price + $totalNewStockValue;
-                // dd($finalTotalCostPrice);
                 $finalCostPrice = $finalTotalCostPrice / $current_stock;
-                // dd($finalCostPrice);
+
                 ItemPrice::where('id', $value)->update([
                     'stock' => $current_stock,
                     'cost_price' => $finalCostPrice,
@@ -140,7 +139,7 @@ $itemName = Item::withTrashed()->where('id', $values['item_id'])->value('item_na
                 Production::where('id', $production_id)->update([
                     'production_cost' => $finalCostPrice * $qty,
                   'unit_cost_price' => $finalCostPrice,
-                  
+
                 ]);
 
                 DB::table('stock_management_history')->insert([

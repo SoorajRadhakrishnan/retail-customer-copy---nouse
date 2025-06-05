@@ -176,24 +176,37 @@
                                                     <img src="{{ url('assets/icons/customer.svg') }}" " class="mr-1">
                                                     Customers
                                                 </a>
- @endif
+                                            @endif
 
-                                                    @if (checkUserPermission('expense_category'))
-                                                        <a href="{{ url('admin/expense-category') }}"
-                                                            class="nav-link">
-                                                            <img src="{{ url('assets/icons/expense_ctgry.svg') }}"
+                                            @if (checkUserPermission('expense_category'))
+                                                <a href="{{ url('admin/expense-category') }}"
+                                                    class="nav-link">
+                                                    <img src="{{ url('assets/icons/expense_ctgry.svg') }}"
+                                                        class="mr-1">
+                                                    Expense Categories
+                                                </a>
+                                            @endif
+
+                                            @if (app('appSettings')['production']->value == 'yes' && checkUserPermission('production'))
+                                                <a href="{{ url('admin/ingredient') }}" class="nav-link">
+                                                    <img src="{{ url('assets/icons/items.svg') }}"
+                                                        class="mr-1">
+                                                    Add
+                                                    Ingredient / Production</a>
+                                            @endif
+
+                                            @if (app('appSettings')['delivery_sale']->value == 'yes' && checkUserPermission('delivery_service'))
+                                                <a href="{{ url('admin/delivery-service') }}"
+                                                    class="nav-link">
+                                                    <img src="{{ url('assets/icons/items.svg') }}"
+                                                        class="mr-1">
+                                                    Delivery Service</a>
+                                            @endif
+                                                                    <a href="{{ url('admin/offers') }}" class="nav-link">
+                                                            <img src="{{ url('assets/icons/offers.svg') }}"
                                                                 class="mr-1">
-                                                            Expense Categories
-                                                        </a>
-                                                    @endif
-                                                    @if (app('appSettings')['production']->value == 'yes' && checkUserPermission('production'))
-                                                        <a href="{{ url('admin/ingredient') }}" class="nav-link">
-                                                            <img src="{{ url('assets/icons/items.svg') }}"
-                                                                class="mr-1">
-                                                            Add
-                                                            Ingredient / Production</a>
-                                                    @endif
-                                                                            <a href="{{ url('admin/loyalty') }}" class="nav-link">
+                                                            Offers</a>
+                                                            <a href="{{ url('admin/loyalty') }}" class="nav-link">
                                                         <img src="{{ url('assets/icons/customer.svg') }}" " class="mr-1">
                                                                 Loyalty
                                                             </a>
@@ -253,13 +266,14 @@
                                                 <a href="{{ url('admin/stock-transfer') }}" class="nav-link">
                                                     <img src="{{ url('assets/icons/stock_report.svg') }}"
                                                         class="mr-1 d-none d-md-inline-block">
-                                                        Stock Transfer</a>
+                                                    Stock Transfer</a>
                                             @endif
+
                                             {{-- @if (checkUserPermission('stock_add'))
                                                 <a href="{{ url('admin/stock-add') }}" class="nav-link">
                                                     <img src="{{ url('assets/icons/stock_report.svg') }}"
                                                         class="mr-1 d-none d-md-inline-block">
-                                                        Stock Add</a>
+                                                    Stock Add</a>
                                             @endif --}}
                                             <a href="{{ url('admin/inventory') }}" class="nav-link">
                                                 <img src="{{ url('assets/icons/stock.svg') }}"
@@ -320,12 +334,26 @@
 
                                                     Wise Report</a>
                                             @endif
+                                            {{-- @if (app('appSettings')['customize_item']->value == 'yes')
+                                            <a href="{{ url('admin/combo-item') }}" class="nav-link">
+                                                <img src="{{ url('assets/icons/itemwise_report.svg') }}"
+                                                    class="mr-1">
+                                                Combo item Report</a>
+
+                                            @endif --}}
 
                                             @if (checkUserPermission('order_type_wise_report'))
                                                 <a href="{{ url('admin/order-type-wise-report') }}" class="nav-link">
                                                     <img src="{{ url('assets/icons/orderwise_report.svg') }}"
                                                         class="mr-1">
                                                     Order Type Wise Report</a>
+                                            @endif
+                                            @if (app('appSettings')['delivery_sale']->value == 'yes' && checkUserPermission('delivery_service'))
+
+                                            <a href="{{ url('admin/delivery-wise') }}" class="nav-link">
+                                                <img src="{{ url('assets/icons/orderwise_report.svg') }}"
+                                                    class="mr-1">
+                                               Delivery Wise Report</a>
                                             @endif
 
                                             @if (app('appSettings')['staff_pin']->value == 'yes' && checkUserPermission('staff_wise_report'))
@@ -358,13 +386,19 @@
                                                         class="mr-1">
                                                     Customer Wise Report</a>
                                             @endif
+                                            @if (checkUserPermission('open_drawer_log'))
+                                            <a href="{{ url('admin/open-drawer-log') }}" class="nav-link">
+                                                <img src="{{ url('assets/icons/customerwise_report.svg') }}"
+                                                    class="mr-1">
+                                                Open Drawer Log</a>
+                                        @endif
 
                                             {{-- @if (checkUserPermission('customer_wise_report')) --}}
                                             <a href="{{ url('admin/payback-log') }}" class="nav-link">
                                                 <img src="{{ url('assets/icons/customerwise_report.svg') }}"
                                                     class="mr-1">
                                                 Pay Back Log</a>
-                                        {{-- @endif --}}
+                                            {{-- @endif --}}
 
                                             @if (checkUserPermission('perfomance_report'))
                                                 <a href="{{ url('admin/perfomance-report') }}" class="nav-link">
@@ -404,7 +438,7 @@
                                                         class="mr-1">
                                                     Stock moving Report</a>
                                             @endif
-                                            @if (checkUserPermission('stock_report'))
+                                                                    @if (checkUserPermission('stock_report'))
                                                 <a href="{{ url('admin/stock-out-report') }}" class="nav-link">
                                                     <img src="{{ url('assets/icons/stock_report.svg') }}"
                                                         class="mr-1">
@@ -417,12 +451,12 @@
                                                     Minimum-stock Report</a>
                                             @endif
 
-                                             @if (app('appSettings')['wastage-usage']->value == 'yes')
-                                            <a href="{{ url('admin/wastage-usage-report') }}" class="nav-link">
-                                                <img src="{{ url('assets/icons/stock_report.svg') }}"
-                                                    class="mr-1 d-none d-md-inline-block">
-                                                Wastage & Usage Report</a>
-                                        @endif
+                                            @if (app('appSettings')['wastage-usage']->value == 'yes')
+                                                <a href="{{ url('admin/wastage-usage-report') }}" class="nav-link">
+                                                    <img src="{{ url('assets/icons/stock_report.svg') }}"
+                                                        class="mr-1 d-none d-md-inline-block">
+                                                    Wastage & Usage Report</a>
+                                            @endif
 
                                             @if (checkUserPermission('settle_sale_report'))
                                                 <a href="{{ url('admin/settle-sale-report') }}" class="nav-link">
@@ -501,7 +535,8 @@
                             @endif
 
                             @if (checkUserPermission('barcode_print'))
-                                <li><a href="{{ url('admin/barcode-print') }}">{{ Str::upper('Barcode Print') }}</a>
+                                <li><a
+                                        href="{{ url('admin/barcode-print') }}">{{ Str::upper('Barcode Print') }}</a>
                                 </li>
                             @endif
                             @if (checkUserPermission('units'))
@@ -534,6 +569,12 @@
                                 </li>
                             @endif
 
+                            @if (app('appSettings')['delivery_sale']->value == 'yes' && checkUserPermission('delivery_service'))
+                                <li><a
+                                        href="{{ url('admin/delivery-service') }}">{{ Str::upper('Delivery Service') }}</a>
+                                </li>
+                            @endif
+
                             @if (checkUserPermission('sales'))
                                 <li><a href="{{ url('admin/sale-order') }}">{{ Str::upper('Recent Sales') }}</a>
                                 </li>
@@ -552,11 +593,15 @@
                             @endif
 
                             @if (checkUserPermission('stock_transfer'))
-                                <li><a href="{{ url('admin/stock-transfer') }}">{{ Str::upper('Stock Transfer') }}</a></li>
+                                <li><a
+                                        href="{{ url('admin/stock-transfer') }}">{{ Str::upper('Stock Transfer') }}</a>
+                                </li>
                             @endif
-                            @if (checkUserPermission('stock_add'))
-                            <li><a href="{{ url('admin/stock-add') }}">{{ Str::upper('Stock Add') }}</a></li>
-                        @endif
+
+                            {{-- @if (checkUserPermission('stock_add'))
+                                <li><a href="{{ url('admin/stock-add') }}">{{ Str::upper('Stock Add') }}</a></li>
+                            @endif --}}
+
                             @if (checkUserPermission('bill_wise_report'))
                                 <li><a
                                         href="{{ url('admin/bill-wise-report') }}">{{ Str::upper('Bill Wise Report') }}</a>
@@ -614,11 +659,11 @@
                                 </li>
                             @endif
 
-                             @if (app('appSettings')['purchase']->value == 'yes' && checkUserPermission('purchase_wise_report'))
-                            <li><a
-                                    href="{{ url('admin/purchase-pay-log') }}">{{ Str::upper('Purchase Pay Log') }}</a>
-                            </li>
-                        @endif
+                            @if (app('appSettings')['purchase']->value == 'yes' && checkUserPermission('purchase_wise_report'))
+                                <li><a
+                                        href="{{ url('admin/purchase-pay-log') }}">{{ Str::upper('Purchase Pay Log') }}</a>
+                                </li>
+                            @endif
 
                             @if (checkUserPermission('stock_report'))
                                 <li><a
@@ -634,6 +679,11 @@
                             @if (checkUserPermission('settle_sale_report'))
                                 <li><a
                                         href="{{ url('admin/settle-sale-report') }}">{{ Str::upper('Settle Sale Report') }}</a>
+                            @endif
+
+                            @if (checkUserPermission('payment_book'))
+                                <li><a
+                                        href="{{ url('admin/payment-book') }}">{{ Str::upper('Payment Book') }}</a>
                             @endif
 
                             {{-- @if (checkUserPermission('settle_sale_report')) --}}
@@ -665,11 +715,6 @@
                                         href="{{ url('admin/profit-loss') }}">{{ Str::upper('Profit Loss Report') }}</a>
                                 </li>
                             @endif
-
-                            {{-- @if (checkThemeUserPermission('payment_book')) --}}
-                                <li><a
-                                        href="{{ url('admin/payment-book') }}">{{ Str::upper('Payment Book') }}</a>
-                            {{-- @endif --}}
 
 
                             {{-- @endif --}}
@@ -722,9 +767,7 @@
                             <h6>{{ Str::ucfirst(auth()->user()->name) }}</h6>
                             <span>{{ Str::ucfirst(auth()->user()->usertype) }}</span>
                         </div>
-                        <a href="javascript:void(0)"
-                            class="dropdown-item"
-                            title="Change Password"
+                        <a href="javascript:void(0)" class="dropdown-item" title="Change Password"
                             data-toggle="modal" data-target="#ChangePassword">
                             <span><i class="typcn typcn-pen"></i> Change Password</span>
                         </a>
@@ -858,8 +901,9 @@
                                     <div class="form-group mt-0 mb-0">
                                         <label class="mb-0">Enter New Password</label>
                                         <div class="input-group mb-0">
-                                            <input type="password" class="form-control" style="border-radius: 10px 0 0 10px;"
-                                                id="password" name="password" placeholder="Enter your password" required>
+                                            <input type="password" class="form-control"
+                                                style="border-radius: 10px 0 0 10px;" id="password" name="password"
+                                                placeholder="Enter your password" required>
                                             <div class="input-group-append">
                                                 <button class="btn btn-dark px-2 mt-0" type="button"
                                                     style="border-radius: 0 10px 10px 0;"
@@ -877,13 +921,15 @@
                                     <div class="form-group mt-0 mb-0">
                                         <label class="mb-0">Confirm Password</label>
                                         <div class="input-group mb-0">
-                                            <input type="password" class="form-control" style="border-radius: 10px 0 0 10px;"
-                                                id="password_confirmation" name="password_confirmation" placeholder="Enter your Confirm password" required>
+                                            <input type="password" class="form-control"
+                                                style="border-radius: 10px 0 0 10px;" id="password_confirmation"
+                                                name="password_confirmation" placeholder="Enter your Confirm password"
+                                                required>
                                             <div class="input-group-append">
                                                 <button class="btn btn-dark px-2 mt-0" type="button"
                                                     style="border-radius: 0 10px 10px 0;"
-                                                    onclick="showHidePassword('pas', 'password_confirmation')"><i class="fa fa-eye"
-                                                        id="pas"></i></button>
+                                                    onclick="showHidePassword('pas', 'password_confirmation')"><i
+                                                        class="fa fa-eye" id="pas"></i></button>
                                             </div>
                                         </div>
                                         <div class="valid-feedback">&nbsp;</div>
@@ -893,10 +939,14 @@
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-outline-dark px-4 text-uppercase rounded-10 modalClose" data-dismiss="modal">Cancel</button>
+                            <button type="button"
+                                class="btn btn-outline-dark px-4 text-uppercase rounded-10 modalClose"
+                                data-dismiss="modal">Cancel</button>
                             <button type="submit" class="btn btn-dark px-4 text-uppercase rounded-10 submitForm"
-                                data-method="adminedit" data-form="ChangePasswordForm" data-target="{{ url('admin/change-password') }}"
-                                data-returnaction="reload" data-image="{{ url(config('constant.LOADING_GIF')) }}" data-processing="Please wait, saving...">Save</button>
+                                data-method="adminedit" data-form="ChangePasswordForm"
+                                data-target="{{ url('admin/change-password') }}" data-returnaction="reload"
+                                data-image="{{ url(config('constant.LOADING_GIF')) }}"
+                                data-processing="Please wait, saving...">Save</button>
                         </div>
                     </div>
                 </form>
@@ -966,7 +1016,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
-    <!-- For data and time picker -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <!-- <script src="assets/js/main.min.js"></script> -->
     <script src="{{ url('assets/js/main.js?v=749508564') }}"></script>
@@ -1024,6 +1073,16 @@
                 ]
             });
         });
+
+        flatpickr(".datetimepicker", {
+            enableTime: true,
+            noCalendar: false,
+            enableSeconds: true,
+            dateFormat: "Y-m-d H:i:S",
+            time_24hr: true,
+            secondIncrement: 1,
+            minuteIncrement: 1,
+        });
     </script>
 
     <script>
@@ -1061,16 +1120,6 @@
                     }
                 }
             })
-        });
-
-        flatpickr(".datetimepicker", {
-            enableTime: true,
-            noCalendar: false,
-            enableSeconds: true,
-            dateFormat: "Y-m-d H:i:S",
-            time_24hr: true,
-            secondIncrement: 1,
-            minuteIncrement: 1,
         });
     </script>
     @section('script')

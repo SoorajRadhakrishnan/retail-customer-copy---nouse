@@ -120,8 +120,9 @@
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
                                                     <td>{{ dateFormat($stock_transfer->transaction_date) }}</td>
-                                                     <td>{{ $stock_transfer->getSourcebranch ? Str::ucfirst($stock_transfer->getSourcebranch->branch_name) : 'N/A' }}</td>
-                                                    <td>{{ $stock_transfer->getDestinationbranch ? Str::ucfirst($stock_transfer->getDestinationbranch->branch_name) : 'N/A' }}</td> <td>{{ Str::ucfirst($stock_transfer->notes) }}</td>
+                                                    <td>{{ $stock_transfer->getSourcebranch ? Str::ucfirst($stock_transfer->getSourcebranch->branch_name) : 'N/A' }}</td>
+                                                    <td>{{ $stock_transfer->getDestinationbranch ? Str::ucfirst($stock_transfer->getDestinationbranch->branch_name) : 'N/A' }}</td>
+                                                    <td>{{ Str::ucfirst($stock_transfer->notes) }}</td>
                                                     <td>{{ Str::ucfirst($stock_transfer->status) }}</td>
                                                     <?php $show = 0; ?>
                                                     @if ($stock_transfer->source_branch_id == getbranchid() && $stock_transfer->status != 'received')

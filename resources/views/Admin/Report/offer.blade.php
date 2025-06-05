@@ -1,12 +1,11 @@
 @extends('Admin.theme')
-
 <?php
 
 $from_date = isset($_GET['from_date']) && $_GET['from_date'] != '' ? $_GET['from_date'] : date('Y-m-d');
 $to_date = isset($_GET['to_date']) && $_GET['to_date'] != '' ? $_GET['to_date'] : date('Y-m-d');
 $session_branch = getSessionBranch() ? " - ".getBranchById(getSessionBranch()) : "";
 $branch_name = auth()->user()->branch_id ? " - ".auth()->user()->branch->branch_name : $session_branch;
-$title = 'BILL WISE REPORT'.$branch_name.' - '.$from_date." - ".$to_date;
+$title = 'OFFER WISE REPORT'.$branch_name.' - '.$from_date." - ".$to_date;
 
 ?>
 @section('title',$title)
@@ -18,12 +17,13 @@ $title = 'BILL WISE REPORT'.$branch_name.' - '.$from_date." - ".$to_date;
 @section('content')
 
 
-    <?php
+<?php
 
-    $customer_id = isset($_GET['customer']) && $_GET['customer'] != '' ? $_GET['customer'] : '';
-    $receipt_id = isset($_GET['receipt_id']) && $_GET['receipt_id'] != '' ? $_GET['receipt_id'] : '';
+$offer_id = (isset($_GET['offer_id']) && $_GET['offer_id'] != '') ? $_GET['offer_id'] : '';
+// print_r($offer_id);
+// exit;
+?>
 
-    ?>
 
     <div class="az-content az-content-dashboard  animate__animated animate__fadeIn">
         <div class="container-fluid">
@@ -31,7 +31,7 @@ $title = 'BILL WISE REPORT'.$branch_name.' - '.$from_date." - ".$to_date;
                 <div class="col-12">
                     <div class="az-dashboard-one-title">
                         <div>
-                            <h2 class="az-dashboard-title">Bill Wise Report</h2>
+                            <h2 class="az-dashboard-title">Offer Wise Report</h2>
                             <p class="az-dashboard-text"></p>
                         </div>
                         <div class="az-content-header-right">
@@ -44,35 +44,28 @@ $title = 'BILL WISE REPORT'.$branch_name.' - '.$from_date." - ".$to_date;
                             <form>
                                 <div class="row d-flex flex-wrap">
                                     <div class="w-auto ml-3">
-                                        <label class="mb-0 d-block small font-weight-bold">From Date</label>
+                                        <label class="mb-0 d-block ">From Date</label>
                                         <input type="date" value="{{ $from_date }}" name="from_date"
                                             class="form-control rounded-10" required onchange="this.form.submit()">
                                     </div>
                                     <div class="w-auto ml-3">
-                                        <label class="mb-0 d-block small font-weight-bold">To Date</label>
+                                        <label class="mb-0 d-block ">To Date</label>
                                         <input type="date" value="{{ $to_date }}" name="to_date"
                                             class="form-control rounded-10" required onchange="this.form.submit()">
                                     </div>
                                     <div class="w-auto ml-3">
-                                        <label class="mb-0 d-block small font-weight-bold">Receipt ID</label>
-                                        <input type="text" value="{{ $receipt_id }}" name="receipt_id"
-                                            class="form-control rounded-10">
-                                    </div>
-                                    <div class="w-auto ml-3">
-                                        <label class="mb-0 d-block small font-weight-bold">Customer</label>
-                                        <select class="form-control rounded-10 select2" id="customer_id" name="customer"
+                                        <label class="mb-0 d-block">Offer</label>
+                                        <select name="offer_id" class="form-control rounded-10 select2" required
                                             onchange="this.form.submit()">
-                                            <option value="">Select Customer</option>
-                                            @foreach ($customers as $customer)
-                                                <option value="{{ $customer->id }}"
-                                                    @if ($customer->id == $customer_id) selected="selected" @endif>
-                                                    {{ $customer->customer_number . ' - ' . Str::ucfirst($customer->customer_name) }}
-                                                </option>
+                                            <option value="">Select Offer</option>
+                                            @foreach ($offers as $offer)
+                                                <option value="{{ $offer->id }}" {{ $offer_id == $offer->id ? 'selected' : '' }}>
+                                                    {{ $offer->offer_name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
                                     <div class="w-auto ml-3">
-                                        <label class="mb-0 d-block small font-weight-bold">&nbsp;</label>
+                                        <label class="mb-0 d-block ">&nbsp;</label>
                                         <button type="submit" class="btn btn-dark rounded-10 px-3">
                                             Submit
                                         </button>
@@ -88,12 +81,12 @@ $title = 'BILL WISE REPORT'.$branch_name.' - '.$from_date." - ".$to_date;
                             <div class="card rounded-10 shadow">
                                 <div class="card-body overflow-auto">
                                     {{-- <div class="dt-buttons">
-                                        <a href="{{ url('admin/bill-wiser-excel') }}?from_date={{ $from_date }}&to_date={{ $to_date }}&receipt_id={{ $receipt_id }}&customer={{ $customer_id }}"
+                                        <a href="{{ url('admin/order-type-excel') }}?from_date={{ $from_date }}&to_date={{ $to_date }}&offer_id={{ $offer_id }}"
                                             class="dt-button buttons-excel buttons-html5 btn btn-dark px-3 rounded-10"
                                             tabindex="0" aria-controls="example" type="button"><span><i
                                                     class="fa fa-file-excel-o" style="font-size:1.2rem"></i></span>
                                         </a>
-                                        <a href="{{ url('admin/bill-wiser-print') }}?from_date={{ $from_date }}&to_date={{ $to_date }}&receipt_id={{ $receipt_id }}&customer={{ $customer_id }}" class="dt-button buttons-print btn btn-dark px-3 rounded-10" tabindex="0"
+                                        <a href="{{ url('admin/order-type-print') }}?from_date={{ $from_date }}&to_date={{ $to_date }}&offer_id={{ $offer_id }}" class="dt-button buttons-print btn btn-dark px-3 rounded-10" tabindex="0"
                                             aria-controls="example" type="button"><span><i class="fa fa-file-pdf-o"
                                                     style="font-size:1.2rem"></i></span>
                                         </a>
@@ -101,53 +94,35 @@ $title = 'BILL WISE REPORT'.$branch_name.' - '.$from_date." - ".$to_date;
                                     <table id="example" class="table table-hover table-custom border-bottom-0" style="width:100%">
                                         <thead>
                                             <tr>
-                                                <th>S.No</th>
+                                                <th style="width: 15%">S.No</th>
                                                 @if (!auth()->user()->branch_id)
                                                     <th>Branch</th>
                                                 @endif
-                                                <th>Receipt ID</th>
-                                                <th>Date</th>
-                                                <th>Customer</th>
-                                                @if (app('appSettings')['staff_pin']->value == 'yes')
-                                                    <th>Staff</th>
-                                                @endif
-                                                <th>Payment Type</th>
-                                                <th>Wthout VAT</th>
-                                                <th>VAT Amount</th>
+                                                <th>Reciept Id</th>
+                                                <th>Offer Name</th>
                                                 <th>Gross Total</th>
                                                 <th>Discount</th>
                                                 <th>Net Total</th>
                                             </tr>
                                         </thead>
-                                        <?php $total_amount = $total_without_discount = $total_discount = 0; ?>
+                                        <?php $total_amount = $total_without_discount = $total_discount = 0;?>
                                         <tbody>
-                                            @if (count($data) > 0)
-                                                @foreach ($data as $key => $value)
+                                            @if (count($saleOrders) > 0)
+                                                @foreach ($saleOrders as $key => $value)
                                                     <tr>
-                                                        <td>{{ $key + 1 }}</td>
+                                                        <td style="width: 15%">{{ $key + 1 }}</td>
                                                         @if (!auth()->user()->branch_id)
                                                             <td>{{ getBranchById($value->shop_id) }}</td>
                                                         @endif
-                                                        <td>{{ $value->receipt_id }}</td>
-                                                        <td>{{ dateFormat($value->ordered_date, 1) }}</td>
-                                                        <td>{{ $value->customer_id ? getCustomerDetById($value->customer_id) : '' }}</td>
-                                                        @if (app('appSettings')['staff_pin']->value == 'yes')
-                                                            @if ($value->staff_id)
-                                                                <td>{{ getStaff($value->staff_id)->staff_name }}</td>
-                                                            @else
-                                                                <td></td>
-                                                            @endif
-                                                        @endif
-                                                        <td>{{ Str::ucfirst($value->payment_type) }}</td>
+                                                            <td>{{ Str::ucfirst(str_replace('_',' ',$value->receipt_id)) }}</td>
+                                                        <td>{{ $value->offer_name }}</td>
                                                         <td>{{ showAmount($value->without_tax) }}</td>
-                                                        <td>{{ showAmount($value->vat) }}</td>
-                                                        <td>{{ showAmount($value->with_tax + $value->discount) }}</td>
                                                         <td>{{ showAmount($value->discount) }}</td>
                                                         <td>{{ showAmount($value->with_tax) }}</td>
-                                                        <?php
-                                                        $total_amount += $value->with_tax;
-                                                        $total_discount += $value->discount;
-                                                        $total_without_discount += $value->with_tax + $value->discount;
+                                          <?php
+                                                            $total_amount += $value->with_tax;
+                                                            $total_discount += ($value->discount);
+                                                            $total_without_discount += $value->without_tax;
                                                         ?>
                                                     </tr>
                                                 @endforeach
@@ -155,20 +130,15 @@ $title = 'BILL WISE REPORT'.$branch_name.' - '.$from_date." - ".$to_date;
                                         </tbody>
                                         <tfoot>
                                             <tr>
-                                                <td>Total</td>
+                                                <td style="width: 15%"></td>
                                                 @if (!auth()->user()->branch_id)
                                                     <td></td>
                                                 @endif
                                                 <td></td>
                                                 <td></td>
-                                                @if (app('appSettings')['staff_pin']->value == 'yes')
-                                                    <td></td>
-                                                @endif
-                                                <td></td>
-                                                <td></td>
-                                                <td>{{ showAmount($total_without_discount, 1) }}</td>
-                                                <td>{{ showAmount($total_discount, 1) }}</td>
-                                                <td>{{ showAmount($total_amount, 1) }}</td>
+                                                <td class="font-weight-bold">{{ showAmount($total_without_discount,1) }}</td>
+                                                <td class="font-weight-bold">{{ showAmount($total_discount,1) }}</td>
+                                                <td class="font-weight-bold">{{ showAmount($total_amount,1) }}</td>
                                             </tr>
                                         </tfoot>
                                     </table>
@@ -185,11 +155,9 @@ $title = 'BILL WISE REPORT'.$branch_name.' - '.$from_date." - ".$to_date;
 
 @section('script')
     <script>
-        $(document).ready(function() {
-            $('#customer_id').select2({
-                theme: "bootstrap-5",
-            });
-        });
-    </script>
+    $(document).ready(function() {
+        $('.select2').select2({ theme: "bootstrap-5" });
+    });
+</script>
 
 @endsection

@@ -73,14 +73,8 @@ Submit                                            </button>
                                             <td>Purchase</td>
                                             <td>{{ showAmount(optional($purchase)->total_amount,1) }}</td>
                                         </tr>
-                                        {{-- <tr>
-                                           <td>3</td>
-                                            <td>Production</td>
-                                            <td>{{ showAmount(optional($production)->total_amount,1) }}</td>
-
-                                        </tr>--}}
                                         <tr>
-                                            <td>4</td>
+                                            <td>3</td>
                                             <td>Expense</td>
                                             <td>{{ showAmount(optional($expense)->total_amount,1) }}</td>
                                         </tr>

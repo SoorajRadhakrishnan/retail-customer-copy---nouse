@@ -77,8 +77,8 @@
                                                 <th>Discount</th>
                                                 <th>Amount</th>
                                                 <th>Ordered date</th>
-                                                <th>Payment Type</th>
                                                 <th>Status</th>
+                                                <th>Payment Type</th>
                                                 <th class="text-center">Action</th>
                                             </tr>
                                         </thead>
@@ -93,8 +93,11 @@
                                                         <td data-bs-toggle="tooltip" data-bs-placement="top" title="Customer">
                                                             {{ Str::ucfirst($delivery->customer_name)." (".$delivery->customer_number.")" }}
                                                         </td>
-                                                        <td data-bs-toggle="tooltip" data-bs-placement="top" title="Driver">
-                                                            {{ Str::ucfirst(getDriverByID($delivery->driver_id)->driver_name) }}
+                                                         <td data-bs-toggle="tooltip" data-bs-placement="top" title="Driver">
+                                                            @php
+                                                                $driver = getDriverByID($delivery->driver_id);
+                                                            @endphp
+                                                            {{ $driver ? Str::ucfirst($driver->driver_name) : 'N/A' }}
                                                         </td>
                                                         <td data-bs-toggle="tooltip" data-bs-placement="top" title="Discount">
                                                             {{ showAmount($delivery->discount) }}

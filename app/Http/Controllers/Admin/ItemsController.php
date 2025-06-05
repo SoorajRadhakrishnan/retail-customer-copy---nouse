@@ -349,7 +349,7 @@ class ItemsController extends Controller
             ]);
 
             $item_prices = [];
-            if($request->item_type == '2'){
+           if($request->item_type == '2'){
 
                 // if item type is raw material no need multiple price size, so no loop
 
@@ -408,6 +408,7 @@ class ItemsController extends Controller
             }
         }
     }
+
 
     /**
      * Show the form for editing the specified resource.

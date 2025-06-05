@@ -10,7 +10,6 @@ use Illuminate\Support\Str;
 use App\Models\Admin\ItemPrice;
 use App\Models\Admin\Supplier;
 use App\Models\Branch;
-use App\Models\PaymentTranscation;
 use App\Models\SaleOrderPayment;
 use App\Models\SettleSale;
 use Illuminate\Support\Facades\DB;

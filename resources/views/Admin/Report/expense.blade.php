@@ -131,7 +131,6 @@ Submit                                            </button>
                                                 <th>Added From</th>
                                                 <th>Invoice Number</th>
                                                 <th>Description</th>
-                                                <th>Date</th>
                                                 <th>Payment Status</th>
                                                 <th>Payment Type</th>
                                                 <th>Total Before VAT</th>
@@ -152,7 +151,6 @@ Submit                                            </button>
                                                         <td>{{ Str::ucfirst($expense->action) }}</td>
                                                         <td>{{ Str::ucfirst($expense->invoice_no) }}</td>
                                                         <td>{{ Str::ucfirst($expense->description) }}</td>
-                                                        <td>{{ date('d-m-Y', strtotime($expense->date)) }}</td>
                                                         <td>{{ Str::ucfirst($expense->payment_status) }}</td>
                                                         <td>{{ Str::ucfirst($expense->payment_type) }}</td>
                                                         <td>{{ showAmount($expense->total_before_vat) }}</td>

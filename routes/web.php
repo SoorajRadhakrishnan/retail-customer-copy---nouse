@@ -30,6 +30,7 @@ use App\Http\Controllers\Admin\ItemStockController;
 use App\Http\Controllers\Admin\WastageUsageController;
 use App\Http\Controllers\Admin\PaymentTransferController;
 
+
 use App\Http\Controllers\Admin\ProductionController;
 use App\Http\Controllers\Admin\PurchaseController;
 use App\Http\Controllers\Admin\ReportController;
@@ -40,6 +41,7 @@ use App\Http\Controllers\Admin\TestController;
 use App\Http\Controllers\Counter\CreditSaleController;
 use App\Http\Controllers\Counter\CrmController;
 use App\Http\Controllers\Counter\DeliverySaleController;
+use App\Http\Controllers\Admin\OfferController;
 use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\LoyalityController;
 use App\Http\Controllers\Admin\QuotationController;
@@ -79,6 +81,7 @@ Route::group(['middleware' => ['auth', 'superadmin']], function () {
     Route::get('settings', [SettingsController::class, 'index']);
     Route::get('software-settings', [SettingsController::class, 'softwaresettingview']);
     Route::post('software-settings', [SettingsController::class, 'storesoftwaresetting']);
+    Route::resource('payment-method', PaymentMethodController::class);
     Route::resource('price-size', PriceSizeController::class);
     Route::resource('branch', BranchController::class);
     Route::get('users', [SettingsController::class, 'users_list'])->name('user');
@@ -114,6 +117,7 @@ Route::get('quotation/print', [QuotationController::class, 'printquote']);
     Route::resource('barcode-print', BarcodeController::class);
     Route::resource('payment-method', PaymentMethodController::class);
     Route::resource('loyalty', LoyalityController::class);
+    Route::resource('offers', OfferController::class);
 
     // Transcation
     Route::resource('stock', ItemStockController::class);
@@ -143,10 +147,14 @@ Route::get('quotation/print', [QuotationController::class, 'printquote']);
     Route::delete('sale-order/{sale_order}', [SaleOrdersController::class, 'destroy']);
 
     Route::resource('wastage-usage', WastageUsageController::class);
-    Route::get('item-by-barcode', [PurchaseController::class, 'getItemByBarcode']);
-    Route::resource('stock-add', StockAddController::class);
+Route::resource('stock-add', StockAddController::class);
+   Route::resource('inventory', InventoryController::class);
+    Route::get('barcode-search', [InventoryController::class, 'barcode_search']);
 
+    // Route::post('admin/sale-order', [SaleOrdersController::class, 'updatePaymentType']);
       Route::resource('wastage-usage', WastageUsageController::class);
+    Route::get('item-by-barcode', [PurchaseController::class, 'getItemByBarcode']);
+    Route::get('getOfferCategories', [OfferController::class, 'getOfferCategories']);
       Route::resource('inventory', InventoryController::class);
       Route::get('barcode-search', [InventoryController::class, 'barcode_search']);
        Route::resource('quotation', QuotationController::class)->names([
@@ -200,6 +208,7 @@ Route::get('quotation/print', [QuotationController::class, 'printquote']);
 Route::group(['middleware' => ['auth', 'counter']], function () {
     Route::get('home', [SaleController::class, 'index']);
     Route::get('home/{uuid}/edit', [SaleController::class, 'edit']);
+    Route::get('getOfferCategories', [OfferController::class, 'getOfferCategories']);
 
     // sale
     Route::post('order-post', [SaleController::class, 'store']);
@@ -211,6 +220,8 @@ Route::group(['middleware' => ['auth', 'counter']], function () {
     Route::get('delivery-list', [SaleController::class, 'delivery_list']);
     Route::get('hold-list', [SaleController::class, 'hold_list']);
     Route::post('change-delivery-status', [SaleController::class, 'change_delivery_status']);
+    Route::get('fetch-items', [SaleController::class, 'fetchItems']);
+
  Route::get('/get-loyalty-data', function () {
         return response()->json(DB::table('loyality')->first());
     });
@@ -227,6 +238,7 @@ Route::group(['middleware' => ['auth', 'counter']], function () {
     Route::resource('crm', CrmController::class);
     Route::resource('open-drawer', OpenDrawer::class);
     Route::resource('pay-back', PayBackController::class)->except(['show']);
+     Route::post('fetch-uuid', [SaleController::class, 'fetchUuid']);
     // Route::get('/pay-back/recent', [PayBackController::class, 'viewRecentPaybacks'])->name('viewRecentPaybacks');
 
     Route::get('pay-back-print', [PayBackController::class, 'create']);

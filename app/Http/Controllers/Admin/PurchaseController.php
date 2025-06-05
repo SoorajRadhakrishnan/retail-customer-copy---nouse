@@ -235,7 +235,7 @@ class PurchaseController extends Controller
                 'total_amount' => $total_amount,
                 'discount' => $discount,
                 'total_discount' => $total_discount,
-                'payment_status' => 'un_paid',//$request->payment_status,
+                'payment_status' => 'un_paid', //$request->payment_status,
                 'date_added' => $dateAdded,
             ]);
 
@@ -261,7 +261,7 @@ class PurchaseController extends Controller
                 'total_amount' => 0, // Temporarily set total to 0, will calculate below
                 'discount' => $discount,
                 'total_discount' => $total_discount,
-                'payment_status' => 'un_paid',//$request->payment_status,
+                'payment_status' => 'un_paid', //$request->payment_status,
                 'user_id' => auth()->user()->id,
                 'shop_id' => $request->branch_id,
                 'uuid' => Str::uuid(),
@@ -339,6 +339,7 @@ class PurchaseController extends Controller
             return $this->sendResponse(1, 'Purchase Added', '', '');
         }
     }
+
     /**
      * Show the form for editing the specified resource.
      */

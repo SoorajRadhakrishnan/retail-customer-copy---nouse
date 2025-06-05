@@ -8,14 +8,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 // use App\Http\Services\PaymentTranscationService;
-use App\Models\Admin\{Item, Staff, Category, Customer, Driver, ItemPrice};
+use App\Models\Admin\{Item, Staff, Category, Customer, Driver, ItemPrice,Offer};
 use App\Models\{SaleOrders, SaleOrderItems, SaleOrderPayment};
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
-
 class SaleController extends Controller
 {
+    // public function __construct(public PaymentTranscationService $paymentService) {}
+
     /**
      * Display a listing of the resource.
      */
@@ -64,8 +65,41 @@ class SaleController extends Controller
         {
             $customer = Customer::where("id",$request->customer)->first();
         }
-        return view("Counter.sale", compact('categorys', 'items', 'drivers', 'sale_orders','customer', 'deliveryService'));
+
+        $offers = Offer::whereDate('from_date', '<=', Carbon::today())
+               ->whereDate('to_date', '>=', Carbon::today())
+               ->get();
+
+        return view("Counter.sale", compact('categorys', 'items', 'drivers', 'sale_orders','customer', 'deliveryService', 'offers'));
     }
+      public function fetchItems(Request $request)
+    {
+        $items = Item::leftJoin('item_prices', 'items.id', '=', 'item_prices.item_id')
+            ->leftJoin('categories', 'items.category_id', '=', 'categories.id')
+            ->leftJoin('price_size', 'item_prices.price_size_id', '=', 'price_size.id')
+            ->where('items.branch_id', auth()->user()->branch_id)
+            ->where('items.item_type', '1')
+            ->where('items.active', 'yes')
+            ->select(
+                'items.*',
+                'item_prices.id as price_id',
+                'item_prices.item_id',
+                'item_prices.price_size_id',
+                'item_prices.price',
+                'item_prices.stock as item_stock',
+                'item_prices.cost_price as item_price_cost_price',
+                'categories.category_slug',
+                'price_size.size_name'
+            )->orderBy('items.item_name')->skip(20)->take(PHP_INT_MAX)->get();
+
+        $html = '';
+        foreach ($items as $item) {
+            $html .= view('Counter.fetchItem', compact('item'))->render();
+        }
+
+        return response()->json(['html' => $html]);
+    }
+
 
     /**
      * Store a newly created resource in storage.
@@ -73,7 +107,7 @@ class SaleController extends Controller
     public function store(Request $request)
     {
         // dd($request->all());
-        // dd($request->measurements, $request->material_id);
+
         // echo "<pre>";print_r($request->all('gross_total', 'item_price', 'final_item_price', 'qty', 'discount_amount', 'total_price'));echo "</pre>";
         $data = $request->all();
         // Retrieve values from the request
@@ -126,9 +160,12 @@ class SaleController extends Controller
             ]);
         }
 
-        // echo "<pre>";print_r($request->all('gross_total', 'item_price', 'final_item_price', 'qty', 'discount_amount', 'total_price'));echo "</pre>";die;
+        // Update the request object
+
+// echo "<pre>";print_r($request->all('gross_total', 'item_price', 'final_item_price', 'qty', 'discount_amount', 'total_price'));echo "</pre>";die;
         if ($request->sale_order_id) {
             if ($request->hold == '1') {
+
                 $sale_insert = $this->getSaleOrderItemDetailsEdit($request->all());
                 return redirect('home')->withMessage('Item added in Hold');
             }
@@ -139,6 +176,8 @@ class SaleController extends Controller
             $order_type = (isset($request->order_type) && $request->order_type != '') ? $request->order_type : 'counter_sale';
             $card_num = (isset($request->card_num) && $request->card_num != '') ? $request->card_num : '0';
 
+            //$customer_id = (isset($request->customer_id) && $request->customer_id !='') ? $request->customer_id : '';
+            //$customer_uuid = (isset($request->customer_uuid) && $request->customer_uuid !='') ? $request->customer_uuid : '';
             $customer_name = (isset($request->customer_name) && $request->customer_name != '') ? $request->customer_name : '';
             $customer_number = (isset($request->customer_number) && $request->customer_number != '') ? $request->customer_number : '0';
             $customer_address = (isset($request->customer_address) && $request->customer_address != '') ? $request->customer_address : '';
@@ -199,24 +238,25 @@ if ($loyalty) {
 
             $sale_insert = $this->getSaleOrderItemDetailsEdit($request->all());
             if ($sale_insert) {
+
                 SaleOrders::where('id', $sale_order_id)->update([
                     'edit_staff_id' => $staff_id,
-                    'card_num' => $card_num,
+                    'card_num'  => $card_num,
                     'customer_name' => $customer_name,
                     'customer_number' => $customer_number,
                     'customer_address' => $customer_address,
                     'customer_email' => $customer_email,
                     'customer_gender' => $customer_gender,
                     'customer_id' => $customer_id,
-                    'amount_given' => $amount_given,
-                    'payment_type' => $payment_type,
-                    'status' => $status,
-                    'payment_status' => $payment_status,
-                    'discount' => $discount,
+                    'amount_given'  => $amount_given,
+                    'payment_type'  => $payment_type,
+                    'status'  => $status,
+                    'payment_status'  => $payment_status,
+                    'discount'  => $discount,
                     'discount_per' => $discount_per,
-                    'without_tax' => $gross_total,
-                    'tax_amount' => $tax_amount,
-                    'with_tax' => $net_total,
+                    'without_tax'  => $gross_total,
+                    'tax_amount'  => $tax_amount,
+                    'with_tax'  => $net_total,
                     'order_type' => $order_type,
                     // 'delivery_type' => $delivery_type
                 ]);
@@ -227,10 +267,10 @@ if ($loyalty) {
                 $request['customer_id'] = $customer_id;
                 $this->multiPaymentInsert($request->all());
                 // return redirect('print?id=' . $sale_order_id . '&re=home');
-                return redirect('home')->with('print', 'yes')->with('print_id', $sale_order_id)->with('re', 'home');
+                return redirect('home')->with('print','yes')->with('print_id',$sale_order_id)->with('re','home');
             }
             // return redirect('print?id=' . $sale_order_id . '&re=home');
-            return redirect('home')->with('print', 'yes')->with('print_id', $sale_order_id)->with('re', 'home');
+            return redirect('home')->with('print','yes')->with('print_id',$sale_order_id)->with('re','home');
         } else {
             $sale_insert = $this->getSaleOrderItemDetails($request->all());
             $sale_order_id = $sale_insert->id;
@@ -256,6 +296,7 @@ if ($loyalty) {
             }
         }
     }
+
     public function getCustomerId($inputs)
     {
         $customer_number = (isset($inputs['customer_number']) && $inputs['customer_number'] != '') ? $inputs['customer_number'] : '';
@@ -265,58 +306,38 @@ if ($loyalty) {
         $customer_gender = (isset($inputs['customer_gender']) && $inputs['customer_gender'] != '') ? $inputs['customer_gender'] : '';
         $customer_id = '';
 
-        DB::beginTransaction();
+        $customer_number_result = Customer::where('customer_number', $customer_number)->first();
 
-        try {
-            Log::info('Starting getCustomerId method with inputs: ', $inputs);
+        if ($customer_number_result !== null) {
 
-            $customer_number_result = Customer::where('customer_number', $customer_number)->first();
+            Customer::where('customer_number', $customer_number)->update([
+                'customer_name' => $customer_name,
+                'customer_address' => $customer_address,
+                'customer_email' => $customer_email,
+                'customer_gender' => $customer_gender
+            ]);
+            $customers = Customer::where('customer_number', $customer_number)->first();
+        } else {
+            if ($customer_number != null) {
 
-            if ($customer_number_result !== null) {
-                Log::info('Customer number exists, updating customer: ' . $customer_number);
-                Customer::where('customer_number', $customer_number)->update([
+                $customers = Customer::create([
                     'customer_name' => $customer_name,
+                    'customer_number' => $customer_number,
                     'customer_address' => $customer_address,
                     'customer_email' => $customer_email,
-                    'customer_gender' => $customer_gender
+                    'customer_gender' => $customer_gender,
+                    'branch_id' => auth()->user()->branch_id,
+                    'uuid' => Str::uuid(),
                 ]);
                 $customers = Customer::where('customer_number', $customer_number)->first();
-            } else {
-                if ($customer_number != null) {
-                    Log::info('Customer number does not exist, creating new customer: ' . $customer_number);
-
-                    // Generate referral code
-
-                    $customers = Customer::create([
-                        'customer_name' => $customer_name,
-                        'customer_number' => $customer_number,
-                        'customer_address' => $customer_address,
-                        'customer_email' => $customer_email,
-                        'customer_gender' => $customer_gender,
-                        'branch_id' => auth()->user()->branch_id,
-                        'uuid' => Str::uuid(),
-                    ]);
-
-                    $customers = Customer::where('customer_number', $customer_number)->first();
-                } else {
-                    Log::info('Customer number is null, skipping creation.');
-                }
             }
-
-            DB::commit();
-            Log::info('Transaction committed successfully');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error creating customer or user: ' . $e->getMessage());
-            return response()->json(['error' => 'Error creating customer or user. Please try again.'], 500);
         }
-
         return $customers;
     }
 
     public function getSaleOrderItemDetailsEdit($inputs)
     {
-        // dd($inputs);
+
         $branch_id = auth()->user()->branch_id;
         $user_id = auth()->user()->id;
         $order_type = $inputs['order_type'];
@@ -337,9 +358,34 @@ if ($loyalty) {
         $gross_total = (isset($inputs['gross_total']) && $inputs['gross_total'] != '') ? $inputs['gross_total'] : 0;
         $tax_amount = (isset($inputs['tax_amount']) && $inputs['tax_amount'] != '') ? $inputs['tax_amount'] : 0;
         $net_total = (isset($inputs['net_total']) && $inputs['net_total'] != '') ? $inputs['net_total'] : 0;
-        $staff_id = (isset($inputs['staff_id']) && $inputs['staff_id'] != '') ? $inputs['staff_id'] : '0';
-        $discount = (isset($inputs['discount']) && $inputs['discount'] != '') ? $inputs['discount'] : '0';
 
+        $staff_id = (isset($inputs['staff_id']) && $inputs['staff_id'] != '') ? $inputs['staff_id'] : '0';
+
+        $discount = (isset($inputs['discount']) && $inputs['discount'] != '') ? $inputs['discount'] : '0';
+   if (isset($inputs['exchange']) && $inputs['exchange'] == 'yes') {
+            // Update the exchange column in the sale_orders table
+            SaleOrders::where('id', $sale_order_id)->update(['exchange_modified' => 'yes']);
+
+            // Mark missing items as deleted and update exchange_modified field
+            $existingItemIds = array_filter($inputs['sale_order_item_id']);
+            // Retrieve the items that are being marked as deleted
+            $itemsToDelete = SaleOrderItems::where('sale_order_id', $sale_order_id)
+                ->whereNotIn('id', $existingItemIds)
+                ->get();
+
+            foreach ($itemsToDelete as $item) {
+                // Add the quantity back to the stock in the item_prices table
+                ItemPrice::where('id', $item->price_size_id)->increment('stock', $item->qty);
+            }
+
+            // Mark the items as deleted and update exchange_modified field
+            SaleOrderItems::where('sale_order_id', $sale_order_id)
+                ->whereNotIn('id', $existingItemIds)
+                ->update([
+                    'deleted_at' => now(),
+                    'exchange_modified' => 'yes'
+                ]);
+        }
         SaleOrders::where('id', $sale_order_id)->update([
             'without_tax' => $gross_total,
             'tax_amount' => $tax_amount,
@@ -392,7 +438,8 @@ if ($loyalty) {
             $sale_order_item_id = (isset($sale_order_item_ids[$i]) && $sale_order_item_ids[$i] != '') ? $sale_order_item_ids[$i] : 0;
             $item_price_cost_price = (isset($item_price_cost_prices[$i]) && $item_price_cost_prices[$i] !== '') ? $item_price_cost_prices[$i] : NULL;
             $old_quantity = (isset($old_quantitys[$i]) && $old_quantitys[$i] != '') ? $old_quantitys[$i] : 0;
-            if (strtolower($item_price_cost_price) == 'nan') {
+            if(strtolower($item_price_cost_price) == 'nan')
+            {
                 $item_price_cost_price = 0;
             }
 
@@ -404,6 +451,7 @@ if ($loyalty) {
             $other_item_name = $item_details->other_item_name;
 
             $item_price_i = $unit_price;
+            // $cost_price_taken = "item"; //TODO:
             $tax_without_price = $unit_price;
             $tax_type = $item_details->tax_type;
             $tax_name = $item_details->tax_name;
@@ -443,6 +491,7 @@ if ($loyalty) {
                     'price' => $item_price_i, // unit-price
                     'qty' => $qty,
                     'tax_without_price' => $tax_without_price,
+                    // 'cost_price' => $cost_price,
                     'notes' => $notes,
                     'discount_percent' => $discount_percent,
                     'discount_amount' => $discount_amount,
@@ -505,14 +554,14 @@ if ($loyalty) {
                     $stock_reaming = $result_stock->stock - $qty;
                     $item_cost_price = $result_stock->cost_price;
                     $finalCostPrice = $item_cost_price * $stock_reaming;
-                    if ($stock_reaming <= 0) {
+                    if($stock_reaming <= 0) {
                         $finalCostPrice = 0;
                     }
 
                     if ($item_id > 0) {
                         $result_stock->update([
                             'stock' => $stock_reaming,
-                            'total_cost_price' => $finalCostPrice,
+                            'total_cost_price' =>  $finalCostPrice,
                         ]);
                         $user_id = $user_id;
                         $item_id = $item_id_i;
@@ -641,11 +690,12 @@ if ($loyalty) {
 
                 $items = SaleOrderItems::where('sale_order_id', $sale_id)->get();
 
-                foreach ($items as $key => $item) {
-                    if ($item->stock_applicable) {
+                foreach($items as $key => $item)
+                {
+                    if($item->stock_applicable) {
                         $itemsPrice = ItemPrice::where('id', $item->price_size_id)->first();
                         $old_stock = $itemsPrice->stock;
-                        if ($old_stock > 0) {
+                        if($old_stock > 0) {
                             $closing_stock = $item->qty + $old_stock;
                             $totalAmount = $item->cost_price * $item->qty;
                             $finalTotalCostPrice = $itemsPrice->total_cost_price + $totalAmount;
@@ -655,7 +705,7 @@ if ($loyalty) {
                             $finalCostPrice = $item->cost_price;
                             $finalTotalCostPrice = $item->cost_price * $closing_stock;
 
-                            if ($closing_stock <= 0) {
+                            if($closing_stock <= 0) {
                                 $finalTotalCostPrice = 0;
                             }
                         }
@@ -677,7 +727,7 @@ if ($loyalty) {
                             'date_added' => date("Y-m-d H:i:s"),
                             'reference_no' => $item->id,
                             'reference_key' => "Delivery Delete",
-                            'shop_id' => auth()->user()->branch_id,
+                            'shop_id' =>  auth()->user()->branch_id,
                             'cost_price' => $finalCostPrice,
                             'total_cost_price' => $finalTotalCostPrice
                         ]);
@@ -830,20 +880,10 @@ if ($loyalty) {
             return $item;
         });
 
-        $sale_orders = SaleOrders::where('uuid', $uuid)->first();
-        //  dd($sale_orders);
+        $sale_orders = SaleOrders::where('uuid', $uuid)->first(); //dd($sale_orders);
         $drivers = Driver::where('branch_id', auth()->user()->branch_id)->get();
         $customer = null;
-
-        return view("Counter.sale", compact(
-            'categorys',
-            'items',
-            'drivers',
-            'sale_orders',
-            'customer',
-            'deliveryService',
-
-        ));
+        return view("Counter.sale", compact('categorys', 'items', 'drivers', 'sale_orders','customer', 'deliveryService'));
     }
 
     public function get_customer(Request $request)
@@ -856,20 +896,6 @@ if ($loyalty) {
         }
     }
 
-    public function getReferralDiscount(Request $request)
-{
-    $referral_code = $request->referral_code;
-    if ($referral_code) {
-        $customer = Customer::where('referal_code', $referral_code)->first();
-        if ($customer) {
-            return response()->json(['success' => true, 'discount' => $customer->referal_discount]);
-        } else {
-            return response()->json(['success' => false, 'message' => 'Invalid referral code.']);
-        }
-    } else {
-        return response()->json(['success' => false, 'message' => 'Referral code is required.']);
-    }
-}
     public function staff_pin_check(Request $request)
     {
         $pin_number = $request->pin_number;
@@ -1280,7 +1306,6 @@ if ($loyalty) {
             $total_amount = $without_tax = $tax_amount = $with_tax = 0;
             for ($i = 0; $i < count($item_ids); $i++) {
                 $item_id = $item_ids[$i];
-                // dd($item_id);
                 $price_size_id = $price_ids[$i];
                 $item_name = $item_names[$i];
                 $qty = $qtys[$i];
@@ -1306,7 +1331,6 @@ if ($loyalty) {
                 $item_price_cost_price = $item_price_cost_price !== null && is_numeric($item_price_cost_price) ? $item_price_cost_price : 0;
                 // $item_type = $item_types[$i];
                 $item_details = Item::where('id', $item_id)->first();
-                // dd($item_details);
                 $item_id_i = $item_details->id;
                 $other_item_name = $item_details->other_item_name;
 
@@ -1584,6 +1608,28 @@ if ($loyalty) {
             return 'failed';
         }
     }
+     public function fetchUuid(Request $request)
+    {
+        $receiptId = $request->input('receipt_id');
+        $item = SaleOrders::where('receipt_id', $receiptId)->first();
+
+        if ($item) {
+            // Get the exchange validity days from app settings
+            $exchangeValidityDays = app('appSettings')['exchange_date']->value;
+
+            // Calculate the valid exchange date
+            $validExchangeDate = Carbon::now()->subDays($exchangeValidityDays);
+
+            // Check if the sale date is within the valid exchange period
+            if (Carbon::parse($item->created_at)->greaterThan($validExchangeDate)) {
+                return response()->json(['uuid' => $item->uuid]);
+            } else {
+                return response()->json(['error' => 'This item cannot be replaced as it exceeds the exchange validity period.'], 400);
+            }
+        } else {
+            return response()->json(['error' => 'UUID not found for the given receipt ID.'], 404);
+        }
+    }
     public function addtocart(Request $request)
 {
     // dd($request->all());
@@ -1641,4 +1687,5 @@ if ($loyalty) {
     }
     return response()->json(['status' => 1, 'items' => $results]);
 }
+
 }

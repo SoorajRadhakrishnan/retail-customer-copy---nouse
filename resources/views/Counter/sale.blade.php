@@ -240,16 +240,15 @@
                                 <?php } else {
                                   if($action == 'edit'){ ?>
                                 <button class="nav-linkk btn btn-dark rounded-10 shadoww mr-2 mb-2" id="rehold_frm">
-                                    <img src="{{ url('assets/img/hold.png') }}" alt="Hold"
+                                    <img src="{{ url('assets/img/hold.png') }}" alt="SAVE HOLD"
                                         style="width: 15px; height: 12px;">
-                                    <b>SAVE
-                                        HOLD</b></button>
+                                    <b>SAVE HOLD</b></button>
                                 <?php } } ?>
                                 <button class="nav-linkk btn btn-dark rounded-10 shadoww mr-2 mb-2 dynamicPopup"
                                     data-pop="xl" data-url="{{ url('hold-list') }}" data-toggle="modal"
                                     data-target="#dynamicPopup-xl" data-image="{{ url(config('constant.LOADING_GIF')) }}"><i
                                         class="mr-1"></i>
-                                    <img src="{{ url('assets/img/gestures.png') }}" alt="Hold"
+                                    <img src="{{ url('assets/img/gestures.png') }}" alt="Hold LIST"
                                         style="width: 15px; height: 12px;">
                                     <b>HOLD LIST</b>
                                 </button>
@@ -292,8 +291,8 @@
                                                 {{-- <th class="py-2 bg-transparent text-center" style="width: 100px;">Dis (%)
                                                 </th> --}}
                                                 <th class="py-2 bg-transparent text-right" style="width:35%">Price</th>
-                                              <th class="py-2 bg-transparent text-right" style="width:35%">remove</th>
-                                              
+                                                <th class="py-2 bg-transparent text-right" style="width:35%">remove</th>
+
                                             </tr>
                                         </thead>
 
@@ -314,6 +313,8 @@
                                             value="{{ $customer_address }}">
                                         <input type="hidden" name="customer_gender" id="customer_gender_form"
                                             value="{{ $customer_gender }}">
+                                        <input type="hidden" name="offers" id="offer_form"
+                                            value="{{ $offers }}">
                                         <input type="hidden" name="grand_total" id="grand_total_form" value="0.0">
 
                                         <input type="hidden" name="amount_given" id="amount_given_form"
@@ -482,7 +483,7 @@
                                                             style="width:35%;font-weight:600">
                                                             {{ formatToDecimals($item->total_price) }}
                                                         </td>
-                                                      <td>
+                                                        <td>
                                                             <button class="btn  remove-row-btn"><i
                                                                     class="fa fa-trash"></i></button>
                                                         </td>
@@ -519,9 +520,6 @@
                     </div>
                     <div class="col-2 p-0">
                         <div class="card card-body shadow rounded-10 mb-0 p-2 pos-category-section">
-                            <?php $restrictedCategoryId = 5; ?>
-                            <?php $restrictedUserId = 3; // Replace with the specific user ID ?>
-
                             <div class="row px-3">
                                 <button
                                     class="btn btn-white btn-block border text-dark rounded-10 shadow mb-2 mt-0 px-2 catlinks"
@@ -531,17 +529,17 @@
                                 </button>
                                 <?php $row = 1; ?>
                                 @foreach ($categorys as $category)
-                                    @if (auth()->user()->id != $restrictedUserId || $category->id != $restrictedCategoryId)
-                                        <button
-                                            class="btn btn-white btn-block border text-dark rounded-10 shadow mb-2 mt-0 px-2 catlinks"
-                                            style="height: 50px;"
-                                            onclick="openCategory(event, '{{ $category->category_slug }}')">
-                                            <h6 class="mb-0 text-left text-truncate">
-                                                {{ Str::ucfirst($category->category_name) }}</h6>
-                                            <h5 class="mb-0 text-right text-truncate">{{ $category->other_name }}</h5>
-                                        </button>
-                                        <?php $row++; ?>
-                                    @endif
+                                    {{-- @if ($category->items->count() > 0) @if ($row == '1') id="defaultOpen" @endif --}}
+                                    <button
+                                        class="btn btn-white btn-block border text-dark rounded-10 shadow mb-2 mt-0 px-2 catlinks"
+                                        style="height: 50px;"
+                                        onclick="openCategory(event, '{{ $category->category_slug }}')">
+                                        <h6 class="mb-0 text-left text-truncate">
+                                            {{ Str::ucfirst($category->category_name) }}</h6>
+                                        <h5 class="mb-0 text-right text-truncate">{{ $category->other_name }}</h5>
+                                    </button>
+                                    <?php $row++; ?>
+                                    {{-- @endif --}}
                                 @endforeach
                             </div>
                         </div>
@@ -571,57 +569,66 @@
                             <div class="d-flex flex-wrap align-items-start align-items-stretch">
 
                                 @foreach ($items as $item)
-    @if (auth()->user()->id != $restrictedUserId || $item->category_id != $restrictedCategoryId)
-        <div class="pos-item p-1 itemcontent {{ $item->category_slug }}">
-            <button
-                class="btn btn-block p-0 btn-white border text-dark rounded-10 shadow text-left pos-item-btn h-100 item-click"
-                data-id="{{ $item->id }}"
-                data-price_size_id="{{ $item->price_size_id }}"
-                data-item_name="{{ $item->item_name }}"
-                data-item_other_name="{{ $item->item_other_name }}"
-                data-category_id="{{ $item->category_id }}"
-                data-item_stock="{{ $item->item_stock }}" data-tax="{{ $item->tax }}"
-                data-tax_percent="{{ $item->tax_percent }}"
-                data-unit_id="{{ $item->unit_id }}"
-                data-item_price_cost_price="{{ $item->item_price_cost_price }}"
-                data-price="{{ $item->price }}"
-                data-stock_applicable="{{ $item->stock_applicable }}"
-                data-price_id="{{ $item->price_id }}">
-                <p class="mb-0 px-2  py-1 text-right pos-item-price z-index-10"><b>
-                        {{ showAmount($item->price, 1) }}</b>
-                </p>
-                                          <div class="item-container">
-                                            <p class="mb-0 px-2 py-1 text-right pos-item-price z-index-10 responsive-margin">
-                                                <b>{{ $item->item_stock }}</b>
+                                    <div class="pos-item p-1 itemcontent {{ $item->category_slug }}">
+                                        <button
+                                            class="btn btn-block p-0 btn-white border text-dark rounded-10 shadow text-left pos-item-btn h-100 item-click"
+                                            data-id="{{ $item->id }}"
+                                            data-price_size_id="{{ $item->price_size_id }}"
+                                            data-item_name="{{ $item->item_name }}"
+                                            data-item_other_name="{{ $item->item_other_name }}"
+                                            data-category_id="{{ $item->category_id }}"
+                                            data-item_stock="{{ $item->item_stock }}" data-tax="{{ $item->tax }}"
+                                            data-tax_percent="{{ $item->tax_percent }}"
+                                            data-unit_id="{{ $item->unit_id }}"
+                                            data-item_price_cost_price="{{ $item->item_price_cost_price }}"
+                                            data-price="{{ $item->price }}"
+                                            data-stock_applicable="{{ $item->stock_applicable }}"
+                                            data-price_id="{{ $item->price_id }}"
+                                            data-item_type="{{ $item->item_type }}">
+                                            <p class="mb-0 px-2  py-1 text-right pos-item-price z-index-10"><b>
+                                                    {{ showAmount($item->price, 1) }}</b>
                                             </p>
-                                        </div>
+                                            @if ($item->stock_applicable)
+                                                <div class="item-container">
+                                                    <p
+                                                        class="mb-0 px-2 py-1 text-right pos-item-price z-index-10 responsive-margin">
+                                                        <b>{{ $item->item_stock }}</b>
+                                                    </p>
+                                                </div>
+                                            @endif
 
-                                        <style>
-                                            /* Container to control absolute positioning */
-                                            .item-container {
-                                                position: relative;
-                                            }
-
-                                            /* Default styling for normal screen sizes */
-                                            .responsive-margin {
-                                                position: absolute;
-                                                right: 3px; /* Set initial right position to keep the element on the right */
-                                                top: 142px; /* Adjust vertical alignment */
-                                                max-width: 80px; /* Control width to avoid overflow */
-                                                overflow: hidden;
-                                                text-overflow: ellipsis;
-                                                white-space: nowrap;
-                                            }
-
-                                            /* Responsive styling for 1366x768 screen size */
-                                            @media (max-width: 1366px) and (max-height: 768px) {
-                                                .responsive-margin {
-                                                    right: 3px; /* Shift further left on smaller screens */
-                                                    top: 120px; /* Adjust vertical alignment for smaller screen */
-                                                    max-width: 70px; /* Adjust width if needed */
+                                            <style>
+                                                /* Container to control absolute positioning */
+                                                .item-container {
+                                                    position: relative;
                                                 }
-                                            }
-                                        </style>
+
+                                                /* Default styling for normal screen sizes */
+                                                .responsive-margin {
+                                                    position: absolute;
+                                                    right: 3px;
+                                                    /* Set initial right position to keep the element on the right */
+                                                    top: 142px;
+                                                    /* Adjust vertical alignment */
+                                                    max-width: 80px;
+                                                    /* Control width to avoid overflow */
+                                                    overflow: hidden;
+                                                    text-overflow: ellipsis;
+                                                    white-space: nowrap;
+                                                }
+
+                                                /* Responsive styling for 1366x768 screen size */
+                                                @media (max-width: 1366px) and (max-height: 768px) {
+                                                    .responsive-margin {
+                                                        right: 3px;
+                                                        /* Shift further left on smaller screens */
+                                                        top: 120px;
+                                                        /* Adjust vertical alignment for smaller screen */
+                                                        max-width: 70px;
+                                                        /* Adjust width if needed */
+                                                    }
+                                                }
+                                            </style>
 
                                             @if ($item->image)
                                                 <div class="image-wrapper">
@@ -648,23 +655,25 @@
                                                     {{ $item->size_name }}
                                                 @endif
 
-                                                <p class="mb-1 border-bottom text-truncate"
-                                                    title="{{ $item->item_stock }}">
-                                                    {{-- {{ getPriceName(auth()->user()->branch_id, $item->price_size_id) }} --}}
-                                                </p>
-                                                <p class="mb-0 text-truncate"
+                                                {{-- <p class="mb-1 border-bottom text-truncate" --}}
+                                                {{-- title="{{ $item->item_stock }}"> --}}
+                                                {{-- {{ getPriceName(auth()->user()->branch_id, $item->price_size_id) }} --}}
+                                                {{-- </p> --}}
+                                                <p class="mb-0 d-flex align-items-center justify-content-between"
+                                                    style="height: 23px !important;  "
                                                     title="{{ Str::ucfirst($item->item_name) }}">
-                                                    <b>{{ Str::ucfirst($item->item_name) }}</b>
+                                                    <b class="flex-grow-1 ">{{ Str::ucfirst($item->item_name) }}</b>
                                                 </p>
-                                                <p class="mb-0 text-truncate text-right" style="height: 23px !important"
+                                                <p class="mb-0 d-flex align-items-center justify-content-between text-right"
+                                                    style="height: 23px !important;  "
                                                     title="{{ $item->item_other_name }}">
-                                                    <b>{{ $item->item_other_name }}</b>
+                                                    <b class="flex-grow-1 ">{{ $item->item_other_name }}</b>
                                                 </p>
+
                                             </div>
                                         </button>
                                     </div>
-                                    @endif
-                                    @endforeach
+                                @endforeach
                             </div>
                         </div>
                     </div>
@@ -678,10 +687,10 @@
             <div class="modal-content rounded-10 popupContent-lg">
                 <div class="modal-body" style="max-height: 70vh !important; overflow-x:auto">
                     <!-- <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                        <span class="material-symbols-outlined">
-                                                            close
-                                                        </span>
-                                                    </button> -->
+                                                            <span class="material-symbols-outlined">
+                                                                close
+                                                            </span>
+                                                        </button> -->
                     <div class="row">
                         <div class="col-sm-12 text-center mb-3 px-3 pt-0">
                             <div class="card rounded-10 bg-dark">
@@ -723,34 +732,46 @@
                                     <option value="female" @if ($customer_gender == 'female') selected @endif>
                                         Female</option>
                                 </select>
+
+                                <select class="form-control border-top-0 px-3 h-auto form-control-lg"
+                                    style="border-radius: 0 0 0 10px;width:33.33%" name="offers" id="offers">">
+                                    <option value="">Choose Offer</option>
+                                    @foreach ($offers as $offer)
+                                        <option value="{{ $offer->id }}" data-type="{{ $offer->offer_type }}"
+                                            data-value="{{ $offer->offer_value }}">
+                                            {{ $offer->offer_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
                                 <input type="text" class="form-control border-top-0 h-auto px-3 form-control-lg"
                                     style="border-radius: 0 0 10px 0;width:66.67%" name="customer_address"
                                     placeholder="Address" id="customer_address" value="{{ $customer_address }}">
                             </div>
-                                            @if (checkUserPermission('loyality_points'))
-                        <div class="col-12">
-                            <div class="row">
-                                {{-- <div class="col-4 pr-1 float-left">
+                            {{-- @if (checkUserPermission('loyality_points')) --}}
+                                <div class="col-12">
+                                    <div class="row">
+                                        {{-- <div class="col-4 pr-1 float-left">
                                     <h5 class="text-center d-block">Referral Code</h5>
                                     <input type="text"
                                         class="form-control form-control-lg py-4 rounded-10 bg-white text-center text-dark"
                                         id="referral_code" style="font-size: 2rem;" name="referral_code">
                                 </div> --}}
-                                <div class="col-4 pr-1 float-left">
-                                    <h5 class="text-center d-block">Points</h5>
-                                    <input type="number" step="any"
-                                        class="form-control form-control-lg py-4 rounded-10 bg-white text-center text-dark "
-                                        id="points" name="points" style="font-size: 2rem;" value="" disabled>
+                                        <div class="col-4 pr-1 float-left">
+                                            <h5 class="text-center d-block">Points</h5>
+                                            <input type="number" step="any"
+                                                class="form-control form-control-lg py-4 rounded-10 bg-white text-center text-dark "
+                                                id="points" name="points" style="font-size: 2rem;" value=""
+                                                disabled>
+                                        </div>
+                                        <div class="col-4 pr-1 float-left">
+                                            <button type="button"
+                                                class="btn btn-dark btn-lg mt-4 rounded-10 form-control form-control-lg p-4 text-center text-uppercase d-flex justify-content-center align-items-center"
+                                                id="redeem_points_button">Redeem Points</button>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="col-4 pr-1 float-left">
-                                    <button type="button"
-                                        class="btn btn-dark btn-lg mt-4 rounded-10 form-control form-control-lg p-4 text-center text-uppercase d-flex justify-content-center align-items-center"
-                                        id="redeem_points_button">Redeem Points</button>
-                                </div>
-                            </div>
-                        </div>
 
-                        @endif
+                            {{-- @endif --}}
                         </div>
                         <div class="col-12">
                             <div class="row">
@@ -1155,7 +1176,7 @@
         <script>
             focustoid("barcodeSearch");
         </script>
-    @endif
+        @endif
         {{-- <script>
         var item_id = '{{ request()->item_id }}';
         if (item_id) {
@@ -1196,193 +1217,193 @@
         }
     </script>
  --}}
-    <script>
-        function discount_model(item_count) {
-            $(".item_count").val(item_count);
-            var amount = parseFloat($("tr:nth-child(" + item_count + ") td:nth-child(1) input.discount-amount").val());
-            var percent = parseFloat($("tr:nth-child(" + item_count + ") td:nth-child(1) input.discount-percent").val());
-            var notes = $("tr:nth-child(" + item_count + ") td:nth-child(1) input.notes").val();
-            if (amount <= 0 || amount == '') {
-                amount = '';
-            }
-            if (percent <= 0 || percent == '') {
-                percent = '';
-            }
-            $('.discount_model_amount').val(amount);
-            $('.discount_model_percent').val(percent);
-            $('.discount_model_notes').val(notes);
-            $("#discount_popup").modal('show');
-        }
-
-        // $('.submit_discount').on('click', function() {
-        //     var item_count = $(".item_count").val();
-        //     var amount = $('.discount_model_amount').val();
-        //     var percent = $('.discount_model_percent').val();
-        //     // var amount = parseFloat($("tr:nth-child(" + item_count + ") td:nth-child(1) input.discount-amount").val(amount));
-        //     // var percent = parseFloat($("tr:nth-child(" + item_count + ") td:nth-child(1) input.discount-percent").val(percent));
-        //     var item_count = $(".item_count").val('');
-        //     var amount = $('.discount_model_amount').val('');
-        //     var percent = $('.discount_model_percent').val('');
-        //     sb_total();
-        //     $("#discount_popup").modal('hide');
-        // })
-
-        document.addEventListener('click', function(event) {
-            let openItems = document.querySelectorAll('ul');
-            openItems.forEach(function(item) {
-                if (!item.contains(event.target)) {
-                    item.style.display = 'none';
+        <script>
+            function discount_model(item_count) {
+                $(".item_count").val(item_count);
+                var amount = parseFloat($("tr:nth-child(" + item_count + ") td:nth-child(1) input.discount-amount").val());
+                var percent = parseFloat($("tr:nth-child(" + item_count + ") td:nth-child(1) input.discount-percent").val());
+                var notes = $("tr:nth-child(" + item_count + ") td:nth-child(1) input.notes").val();
+                if (amount <= 0 || amount == '') {
+                    amount = '';
                 }
-            });
-        });
-
-        document.querySelectorAll('ul').forEach(function(item) {
-            item.addEventListener('click', function(event) {
-                event.stopPropagation();
-            });
-        });
-
-
-        function changeDeliverystatus(sale_id) {
-            // $(document).on("change", ".changedeliverystatus", function (e) {
-            var sale_id = $(this).data("sale_id");
-            var status = $(this).val();
-            if (sale_id && confirm("Are you sure, You want to change status?")) {
-                $.ajax({
-                    url: "{{ url('change-delivery-status') }}",
-                    data: {
-                        _token: "{{ csrf_token() }}",
-                        sale_id: sale_id,
-                        status: status,
-                    },
-                    type: "post",
-                    success: function(response) {
-                        if (response == "success") {
-                            notifyme2("Status Changed succesfully");
-                            // window.location.href = "{{ url('home') }}";
-                        } else {
-                            notifyme2("Something Went Wrong! please try again.");
-                        }
-                    },
-                });
-            } else {
-                return false;
+                if (percent <= 0 || percent == '') {
+                    percent = '';
+                }
+                $('.discount_model_amount').val(amount);
+                $('.discount_model_percent').val(percent);
+                $('.discount_model_notes').val(notes);
+                $("#discount_popup").modal('show');
             }
-        }
-        // });
-        if ("{{ app('appSettings')['delivery_sale']->value }}" == "yes") {
-            document.addEventListener('DOMContentLoaded', (event) => {
-                const button = document.getElementById('checkButton');
-                const radio1 = document.getElementById('radio1');
-                const radio2 = document.getElementById('radio2');
-                // const paymentBody = document.getElementById('tpaymenbody');
-                const deliveryBody = document.getElementById('deliveryBody');
-                // const paymodel_bm_show = document.getElementById('paymodel_bm_show');
 
-                button.addEventListener('click', () => {
-                    if (!radio1.checked && !radio2.checked) {
-                        notifyme2("Delivery Sale Disabled");
-                        radio2.checked = false;
-                        radio1.checked = true;
-                        button.classList.remove('checked');
-                        button.classList.add('btn-dark');
-                        // paymentBody.style.display = 'block';
-                        deliveryBody.style.display = 'none';
-                        // paymodel_bm_show.style.display = 'block';
-                        $('#order_type').val('counter_sale');
-                    } else if (radio1.checked) {
-                        notifyme2("Delivery Sale Enabled");
-                        radio1.checked = false;
-                        radio2.checked = true;
-                        button.classList.remove('btn-dark');
-                        button.classList.add('checked');
-                        // paymentBody.style.display = 'none';
-                        deliveryBody.style.display = 'block';
-                        // paymodel_bm_show.style.display = 'none';
-                        $('#order_type').val('delivery');
-                    } else {
-                        notifyme2("Delivery Sale Disabled");
-                        radio2.checked = false;
-                        radio1.checked = true;
-                        button.classList.remove('checked');
-                        button.classList.add('btn-dark');
-                        // paymentBody.style.display = 'block';
-                        deliveryBody.style.display = 'none';
-                        // paymodel_bm_show.style.display = 'block';
-                        $('#order_type').val('counter_sale');
+            // $('.submit_discount').on('click', function() {
+            //     var item_count = $(".item_count").val();
+            //     var amount = $('.discount_model_amount').val();
+            //     var percent = $('.discount_model_percent').val();
+            //     // var amount = parseFloat($("tr:nth-child(" + item_count + ") td:nth-child(1) input.discount-amount").val(amount));
+            //     // var percent = parseFloat($("tr:nth-child(" + item_count + ") td:nth-child(1) input.discount-percent").val(percent));
+            //     var item_count = $(".item_count").val('');
+            //     var amount = $('.discount_model_amount').val('');
+            //     var percent = $('.discount_model_percent').val('');
+            //     sb_total();
+            //     $("#discount_popup").modal('hide');
+            // })
+
+            document.addEventListener('click', function(event) {
+                let openItems = document.querySelectorAll('ul');
+                openItems.forEach(function(item) {
+                    if (!item.contains(event.target)) {
+                        item.style.display = 'none';
                     }
                 });
             });
-        }
 
-        if ('{{ $action }}' == 'edit' && '{{ $order_type }}' == 'delivery') {
-            const button = document.getElementById('checkButton');
-            const radio1 = document.getElementById('radio1');
-            const radio2 = document.getElementById('radio2');
-            const paymentBody = document.getElementById('tpaymenbody');
-            const deliveryBody = document.getElementById('deliveryBody');
-            const paymodel_bm_show = document.getElementById('paymodel_bm_show');
-            radio1.checked = false;
-            radio2.checked = true;
-            button.classList.remove('btn-dark');
-            button.classList.add('checked');
-            // paymentBody.style.display = 'none';
-            deliveryBody.style.display = 'block';
-            paymodel_bm_show.style.display = 'none';
-            $('#order_type').val('delivery');
-            button.disabled = true;
-        }
+            document.querySelectorAll('ul').forEach(function(item) {
+                item.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                });
+            });
 
-        function openCategory(evt, catSlug) {
-            var i, itemcontent, catlinks;
-            itemcontent = document.getElementsByClassName("itemcontent"); //item
 
-            for (i = 0; i < itemcontent.length; i++) {
-                if (catSlug != 'all_cat') {
-                    itemcontent[i].style.display = "none";
+            function changeDeliverystatus(sale_id) {
+                // $(document).on("change", ".changedeliverystatus", function (e) {
+                var sale_id = $(this).data("sale_id");
+                var status = $(this).val();
+                if (sale_id && confirm("Are you sure, You want to change status?")) {
+                    $.ajax({
+                        url: "{{ url('change-delivery-status') }}",
+                        data: {
+                            _token: "{{ csrf_token() }}",
+                            sale_id: sale_id,
+                            status: status,
+                        },
+                        type: "post",
+                        success: function(response) {
+                            if (response == "success") {
+                                notifyme2("Status Changed succesfully");
+                                // window.location.href = "{{ url('home') }}";
+                            } else {
+                                notifyme2("Something Went Wrong! please try again.");
+                            }
+                        },
+                    });
                 } else {
-                    itemcontent[i].classList.add("all_cat_items");
+                    return false;
                 }
             }
+            // });
+            if ("{{ app('appSettings')['delivery_sale']->value }}" == "yes") {
+                document.addEventListener('DOMContentLoaded', (event) => {
+                    const button = document.getElementById('checkButton');
+                    const radio1 = document.getElementById('radio1');
+                    const radio2 = document.getElementById('radio2');
+                    // const paymentBody = document.getElementById('tpaymenbody');
+                    const deliveryBody = document.getElementById('deliveryBody');
+                    // const paymodel_bm_show = document.getElementById('paymodel_bm_show');
 
-            catlinks = document.getElementsByClassName("catlinks"); //category
-            for (i = 0; i < catlinks.length; i++) {
-                catlinks[i].className = catlinks[i].className.replace(" active-cat btn-dark", "");
+                    button.addEventListener('click', () => {
+                        if (!radio1.checked && !radio2.checked) {
+                            notifyme2("Delivery Sale Disabled");
+                            radio2.checked = false;
+                            radio1.checked = true;
+                            button.classList.remove('checked');
+                            button.classList.add('btn-dark');
+                            // paymentBody.style.display = 'block';
+                            deliveryBody.style.display = 'none';
+                            // paymodel_bm_show.style.display = 'block';
+                            $('#order_type').val('counter_sale');
+                        } else if (radio1.checked) {
+                            notifyme2("Delivery Sale Enabled");
+                            radio1.checked = false;
+                            radio2.checked = true;
+                            button.classList.remove('btn-dark');
+                            button.classList.add('checked');
+                            // paymentBody.style.display = 'none';
+                            deliveryBody.style.display = 'block';
+                            // paymodel_bm_show.style.display = 'none';
+                            $('#order_type').val('delivery');
+                        } else {
+                            notifyme2("Delivery Sale Disabled");
+                            radio2.checked = false;
+                            radio1.checked = true;
+                            button.classList.remove('checked');
+                            button.classList.add('btn-dark');
+                            // paymentBody.style.display = 'block';
+                            deliveryBody.style.display = 'none';
+                            // paymodel_bm_show.style.display = 'block';
+                            $('#order_type').val('counter_sale');
+                        }
+                    });
+                });
             }
 
-            $("." + catSlug).css('display', 'block');
-            if (catSlug == 'all_cat') {
-                $(".all_cat_items").css('display', 'block');
+            if ('{{ $action }}' == 'edit' && '{{ $order_type }}' == 'delivery') {
+                const button = document.getElementById('checkButton');
+                const radio1 = document.getElementById('radio1');
+                const radio2 = document.getElementById('radio2');
+                const paymentBody = document.getElementById('tpaymenbody');
+                const deliveryBody = document.getElementById('deliveryBody');
+                const paymodel_bm_show = document.getElementById('paymodel_bm_show');
+                radio1.checked = false;
+                radio2.checked = true;
+                button.classList.remove('btn-dark');
+                button.classList.add('checked');
+                // paymentBody.style.display = 'none';
+                deliveryBody.style.display = 'block';
+                paymodel_bm_show.style.display = 'none';
+                $('#order_type').val('delivery');
+                button.disabled = true;
             }
-            evt.currentTarget.className += " active-cat btn-dark";
-        }
 
-        // Get the element with id="defaultOpen" and click on it
-        document.getElementById("defaultOpen").click(); //category
+            function openCategory(evt, catSlug) {
+                var i, itemcontent, catlinks;
+                itemcontent = document.getElementsByClassName("itemcontent"); //item
 
-        $("#addButton").on("click", function() {
-            $(".otherPaymentMethod").css('display', '');
-        });
+                for (i = 0; i < itemcontent.length; i++) {
+                    if (catSlug != 'all_cat') {
+                        itemcontent[i].style.display = "none";
+                    } else {
+                        itemcontent[i].classList.add("all_cat_items");
+                    }
+                }
 
-        $("#removeButton").on("click", function() {
-            $(".otherPaymentMethod").css('display', 'none');
-            $("#other_enter_amount").val('');
-            $("#other_payment_id").val('');
-            calculate_payable_amount();
-        });
+                catlinks = document.getElementsByClassName("catlinks"); //category
+                for (i = 0; i < catlinks.length; i++) {
+                    catlinks[i].className = catlinks[i].className.replace(" active-cat btn-dark", "");
+                }
 
-        $("#other_payment_id").on("change", function() {
-            var payment_type = $(this).val();
-            $('#other_enter_amount').data('method', payment_type);
-        });
+                $("." + catSlug).css('display', 'block');
+                if (catSlug == 'all_cat') {
+                    $(".all_cat_items").css('display', 'block');
+                }
+                evt.currentTarget.className += " active-cat btn-dark";
+            }
 
-        var paymentCount = $('#paymentCount').val();
-        $(document).ready(() => {
-            var auto_inc = $('#auto_inc').val();
-            var i = parseInt(auto_inc) + parseInt(1);
-            var count = 1;
-            $('#addBtn').click(function() {
-                let dynamicRowHTML = `
+            // Get the element with id="defaultOpen" and click on it
+            document.getElementById("defaultOpen").click(); //category
+
+            $("#addButton").on("click", function() {
+                $(".otherPaymentMethod").css('display', '');
+            });
+
+            $("#removeButton").on("click", function() {
+                $(".otherPaymentMethod").css('display', 'none');
+                $("#other_enter_amount").val('');
+                $("#other_payment_id").val('');
+                calculate_payable_amount();
+            });
+
+            $("#other_payment_id").on("change", function() {
+                var payment_type = $(this).val();
+                $('#other_enter_amount').data('method', payment_type);
+            });
+
+            var paymentCount = $('#paymentCount').val();
+            $(document).ready(() => {
+                var auto_inc = $('#auto_inc').val();
+                var i = parseInt(auto_inc) + parseInt(1);
+                var count = 1;
+                $('#addBtn').click(function() {
+                    let dynamicRowHTML = `
                 <div class="row removePayment` + count + `">
                     <div class="col-5 mt-2 mb-2 >
                         <label class="mb-0">Select Payment</label>
@@ -1413,81 +1434,84 @@
                         </div>
                     </div>
                 </div>`;
-                // if (paymentCount == count) {
-                //     notifyme2("Maximum Payment method row added");
-                //     return false;
-                // }
-                $('#tpaymenbody').append(dynamicRowHTML);
-                count++;
-            })
-        });
-
-        function removetr(count) {
-            $(".removePayment" + count).remove();
-            calculate_payable_amount();
-        }
-    </script>
-    <script>
-        // Support for multiple item_id (array or comma-separated)
-        var price_ids = '{{ request()->price_ids }}';
-
-        if (price_ids) {
-            // If price_ids is in the format [1,2,3] or 1,2,3, convert to array
-            try {
-                // Try to parse as JSON array (from ?item_id=[1,2,3])
-                var ids = JSON.parse(price_ids);
-                if (!Array.isArray(ids)) {
-                    ids = [ids];
-                }
-            } catch (e) {
-                // Fallback: split by comma (from ?item_id=1,2,3)
-                ids = price_ids.replace('[', '').replace(']', '').split(',');
-            }
-            let stock_check = "{{ app('appSettings')['stock_check']->value }}";
-
-            ids.forEach(function(id) {
-                if (id && !isNaN(id)) {
-                    $.ajax({
-                        url: "{{ url('addtocart') }}",
-                        data: {
-                            _token: "{{ csrf_token() }}",
-                            price_ids: id,
-                        },
-                        type: "post",
-                        success: function(response) {
-                            // alert("Item added to cart successfully!");
-                            if (response && response.status == 1 && response.item) {
-                                var value = {
-                                    id: response.item.id,
-                                    price_size_id: response.item.price_size_id,
-                                    item_name: response.item.item_name,
-                                    item_other_name: response.item.item_other_name,
-                                    category_id: response.item.category_id,
-                                    item_stock: response.item.item_stock,
-                                    tax: response.item.tax,
-                                    tax_percent: response.item.tax_percent,
-                                    unit_id: response.item.unit_id,
-                                    item_price_cost_price: response.item.item_price_cost_price,
-                                    price: response.item.price,
-                                    stock_applicable: response.item.stock_applicable,
-                                    item_id: response.item.item_id,
-                                    price_id: response.item.price_id,
-                                    item_type: response.item.item_type
-                                }
-                                if (value.item_stock <= 0 && stock_check == 'yes' && value.stock_applicable == '1') {
-                                    notifyme2("Some Items are out of stock, please check the stock before adding to cart.");
-                                } else {
-                                    product_add(value);
-                                }
-                            } else {
-                                console.log("Data received:", response);
-                            }
-                        }
-                    });
-                }
+                    // if (paymentCount == count) {
+                    //     notifyme2("Maximum Payment method row added");
+                    //     return false;
+                    // }
+                    $('#tpaymenbody').append(dynamicRowHTML);
+                    count++;
+                })
             });
-            // alert("Items added to cart successfully!");
-        }
-    </script>
-    @include('Counter.salejs')
-@endsection
+
+            function removetr(count) {
+                $(".removePayment" + count).remove();
+                calculate_payable_amount();
+            }
+        </script>
+        <script>
+            // Support for multiple item_id (array or comma-separated)
+            var price_ids = '{{ request()->price_ids }}';
+
+            if (price_ids) {
+                // If price_ids is in the format [1,2,3] or 1,2,3, convert to array
+                try {
+                    // Try to parse as JSON array (from ?item_id=[1,2,3])
+                    var ids = JSON.parse(price_ids);
+                    if (!Array.isArray(ids)) {
+                        ids = [ids];
+                    }
+                } catch (e) {
+                    // Fallback: split by comma (from ?item_id=1,2,3)
+                    ids = price_ids.replace('[', '').replace(']', '').split(',');
+                }
+                let stock_check = "{{ app('appSettings')['stock_check']->value }}";
+
+                ids.forEach(function(id) {
+                    if (id && !isNaN(id)) {
+                        $.ajax({
+                            url: "{{ url('addtocart') }}",
+                            data: {
+                                _token: "{{ csrf_token() }}",
+                                price_ids: id,
+                            },
+                            type: "post",
+                            success: function(response) {
+                                // alert("Item added to cart successfully!");
+                                if (response && response.status == 1 && response.item) {
+                                    var value = {
+                                        id: response.item.id,
+                                        price_size_id: response.item.price_size_id,
+                                        item_name: response.item.item_name,
+                                        item_other_name: response.item.item_other_name,
+                                        category_id: response.item.category_id,
+                                        item_stock: response.item.item_stock,
+                                        tax: response.item.tax,
+                                        tax_percent: response.item.tax_percent,
+                                        unit_id: response.item.unit_id,
+                                        item_price_cost_price: response.item.item_price_cost_price,
+                                        price: response.item.price,
+                                        stock_applicable: response.item.stock_applicable,
+                                        item_id: response.item.item_id,
+                                        price_id: response.item.price_id,
+                                        item_type: response.item.item_type
+                                    }
+                                    if (value.item_stock <= 0 && stock_check == 'yes' && value
+                                        .stock_applicable == '1') {
+                                        notifyme2(
+                                            "Some Items are out of stock, please check the stock before adding to cart."
+                                            );
+                                    } else {
+                                        product_add(value);
+                                    }
+                                } else {
+                                    console.log("Data received:", response);
+                                }
+                            }
+                        });
+                    }
+                });
+                // alert("Items added to cart successfully!");
+            }
+        </script>
+        @include('Counter.salejs')
+    @endsection

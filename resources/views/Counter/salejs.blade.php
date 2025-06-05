@@ -156,6 +156,7 @@
         } else {
             readonly = "";
         }
+
         itemList = $(".item_list tr").length;
         item_design = `
             <tr>
@@ -216,6 +217,10 @@
         $("#item_append").append(item_design);
         sb_total();
         document.getElementById('scroll_list_item').scrollIntoView(true);
+        var offers = $("#offers").val();
+        if (offers != '') {
+            $('#offers').trigger('change');
+        }
     }
 
     $(document).on('click', '.reduce_btn', function(e) {
@@ -288,6 +293,279 @@ $(document).on('click', '.remove-row-btn', function() {
         }
         sb_total();
     });
+
+
+    $(document).ready(function() {
+        let offerDataCache = {};
+
+        // Event handler when offer is changed
+        $('#offers').on('change', function() {
+            let offerId = $(this).val(); // Get the selected offer ID
+
+            if (!offerId) {
+                console.warn("No offer selected.");
+                clearDiscountFields(); // Clear discounts if no offer is selected
+                return;
+            }
+
+            // Fetch or use cached offer data
+            if (offerDataCache[offerId]) {
+                processDiscounts(offerDataCache[offerId]);
+            } else {
+                fetchOfferData(offerId);
+            }
+        });
+
+        /**
+         * Fetch offer details and categories in a single AJAX call.
+         * @param {Number} offerId - The selected offer ID.
+         */
+        function fetchOfferData(offerId) {
+            $.ajax({
+                url: "{{ url('getOfferCategories') }}",
+                type: 'GET',
+                data: {
+                    offer_id: offerId
+                },
+                headers: {
+                    'Accept': 'application/json'
+                },
+                success: function(response) {
+                    if (response && typeof response === 'object' && response.offer_type && response
+                        .discount_value && Array.isArray(response.categories)) {
+                        offerDataCache[offerId] = response; // Cache the data
+                        processDiscounts(response); // Apply discounts to existing rows
+                    } else {
+                        console.warn("Invalid response received:", response);
+                    }
+                },
+                error: function(xhr) {
+                    console.error("Failed to fetch offer data:", xhr.responseJSON || xhr
+                        .responseText);
+                }
+            });
+        }
+
+        /**
+         * Process and apply discounts to all rows based on the fetched offer data.
+         * @param {Object} data - The fetched offer data.
+         */
+        // function processDiscounts(data) {
+        //     const { offer_type: offerType, discount_value: discountValue, categories,min_amount: minAmount } = data;
+        //     const categorySet = new Set(categories.map(cat => parseInt(cat))); // Use Set for fast lookups
+
+        //     clearDiscountFields();
+
+        //     $(".item_list tr").each(function(index) {
+        //         let row = $(this);
+        //         var categoryId = row.find("td:nth-child(1) input.category_id").val(); // Get the category_id of the current row
+
+        //         if (!categoryId) {
+        //             console.warn(`Row ${index + 1}: category_id not found.`);
+        //             return;
+        //         }
+
+        //         if (categorySet.has(parseInt(categoryId))) {
+        //             // console.log(`Match found for Category ID: ${categoryId}`);
+        //             // Apply discount
+        //             if (offerType === 'amount') {
+        //                 row.find("input.discount-amount").val(discountValue);
+        //                 $(".discount-percent").val('');
+        //             } else if (offerType === 'percentage') {
+        //                 row.find("input.discount-percent").val(discountValue);
+        //                 $(".discount-amount").val('');
+        //             }
+        //             sb_total();
+        //         } else {
+        //             console.log(`No matching category found for row ${index + 1}.`);
+        //         }
+        //     });
+        // }
+        // function processDiscounts(data) {
+        //     const {
+        //         offer_type: offerType,
+        //         discount_value: discountValue,
+        //         categories,
+        //         min_amt: minAmount
+        //     } = data;
+
+        //     const categorySet = new Set(categories.map(cat => parseInt(cat))); // Use Set for fast lookups
+
+        //     clearDiscountFields();
+
+        //     $(".item_list tr").each(function(index) {
+        //         let row = $(this);
+        //         var categoryId = row.find("td:nth-child(1) input.category_id").val(); // Get the category_id of the current row
+        //         var price = parseFloat(row.find("input.final_item_price").val()) || 0; // Get the price for the current row
+        //         var minAmount = parseFloat(minAmount) || 0; // Store minAmount in a variable for use like price
+
+        //         if (!categoryId) {
+        //             console.warn(`Row ${index + 1}: category_id not found.`);
+        //             return;
+        //         }
+
+        //         if (categorySet.has(parseInt(categoryId))) {
+        //             console.log(`Match found for Category ID: ${categoryId}`);
+
+        //             // Check if price is greater than or equal to minAmount
+        //             if (price >= minAmount) {
+        //                 console.log(
+        //                     `Row ${index + 1}: Price (${price}) is greater than or equal to Min Amount (${minAmount}).`
+        //                 );
+
+        //                 // Apply discount only if price meets the minAmount condition
+        //                 if (offerType === 'amount') {
+        //                     row.find("input.discount-amount").val(discountValue);
+        //                     row.find("input.discount-percent").val('');
+        //                 } else if (offerType === 'percentage') {
+        //                     row.find("input.discount-percent").val(discountValue);
+        //                     row.find("input.discount-amount").val('');
+        //                 }
+        //             } else {
+        //                 console.log(
+        //                     `Row ${index + 1}: Price (${price}) is less than Min Amount (${minAmount}).`
+        //                 );
+        //             }
+        //             sb_total(); // Update totals regardless of whether the discount is applied
+        //         } else {
+        //             console.log(`No matching category found for row ${index + 1}.`);
+        //         }
+        //     });
+        // }
+        function processDiscounts(data) {
+            const {
+                offer_type: offerType,
+                discount_value: discountValue,
+                categories,
+                min_amt: minAmount
+            } = data;
+
+            const categorySet = new Set(categories.map(cat => parseInt(cat))); // Use Set for fast lookups
+
+            clearDiscountFields();
+
+            $(".item_list tr").each(function(index) {
+                let row = $(this);
+                var categoryId = row.find("td:nth-child(1) input.category_id")
+            .val(); // Get the category_id of the current row
+                var price = parseFloat(row.find("input.final_item_price").val()) || 0; // Get the price for the current row
+                var minAmountValue = parseFloat(minAmount) || 0; // Store minAmount in a variable for use like price
+                var item = row.find("input.item_name").val() || 0; // Get the price for the current row
+
+                if (!categoryId) {
+                    console.warn(`Row ${index + 1}: category_id not found.`);
+                    return;
+                }
+
+                if (categorySet.has(parseInt(categoryId))) {
+                    console.log(`Match found for Category ID: ${categoryId}`);
+
+                    // Check if price is greater than or equal to minAmount
+                    if (price >= minAmountValue) {
+                        console.log(
+                            `Row ${index + 1}: Price (${price}) is greater than or equal to Min Amount (${minAmountValue}).`
+                        );
+
+                        // Apply discount only if offerType is 'amount'
+                        if (offerType === 'amount') {
+                            row.find("input.discount-amount").val(discountValue);
+                            row.find("input.discount-percent").val('');
+                        } else if (offerType === 'percentage') {
+                            row.find("input.discount-percent").val(discountValue);
+                            row.find("input.discount-amount").val('');
+                        }
+                    } else {
+                        // Show an alert if price is less than minAmount
+                        notifyme2(
+                            `The item:${item} has Price ${price} that is  less than the minimum amount ${minAmountValue}. Discount not applied.`
+                            );
+                        console.log(
+                            `Row ${index + 1}: Price (${price}) is less than Min Amount (${minAmountValue}).`
+                        );
+                    }
+
+                    sb_total(); // Update totals regardless of whether the discount is applied
+                } else {
+                    console.log(`No matching category found for row ${index + 1}.`);
+                }
+            });
+        }
+
+        // function processDiscounts(data) {
+        //     const {
+        //         offer_type: offerType,
+        //         discount_value: discountValue,
+        //         categories,
+        //         min_amt: minAmount
+        //     } = data;
+
+        //     const categorySet = new Set(categories.map(cat => parseInt(cat))); // Use Set for fast lookups
+        //     let alertShown = false; // Flag to track if the alert has been shown
+
+        //     clearDiscountFields();
+
+        //     $(".item_list tr").each(function(index) {
+        //         let row = $(this);
+        //         var categoryId = row.find("td:nth-child(1) input.category_id")
+        //     .val(); // Get the category_id of the current row
+        //         var price = parseFloat(row.find("input.final_item_price").val()) ||
+        //         0; // Get the price for the current row
+        //         var minAmountValue = parseFloat(minAmount) ||         //         // Store minAmount in a variable for use like price
+        //         // console.log(`item: ${item}`);
+        //         if (!categoryId) {
+        //             console.warn(`Row ${index + 1}: category_id not found.`);
+        //             return;
+        //         }
+
+        //         if (categorySet.has(parseInt(categoryId))) {
+        //             console.log(`Match found for Category ID: ${categoryId}`);
+
+        //             // Check if price is greater than or equal to minAmount
+        //             if (price >= minAmountValue) {
+        //                 console.log(
+        //                     `Row ${index + 1}: Price (${price}) is greater than or equal to Min Amount (${minAmountValue}).`
+        //                 );
+
+        //                 // Apply discount only if offerType is 'amount'
+        //                 if (offerType === 'amount') {
+        //                     row.find("input.discount-amount").val(discountValue);
+        //                     row.find("input.discount-percent").val('');
+        //                 } else if (offerType === 'percentage') {
+        //                     row.find("input.discount-percent").val(discountValue);
+        //                     row.find("input.discount-amount").val('');
+        //                 }
+        //             } else {
+        //                 // Show the alert only once if price is less than minAmount
+        //                 if (!alertShown) {
+        //                     alert(
+        //                         `the item:${item} has   Price ${price}  less than the minimum amount ${minAmountValue}. Discount not applied.`
+        //                     );
+        //                     alertShown = true; // Set the flag to true after showing the alert
+        //                 }
+        //                 console.log(
+        //                     `Row ${index + 1}: Price ${price} is less than Min Amount ${minAmountValue}.`
+        //                 );
+        //             }
+
+        //             sb_total(); // Update totals regardless of whether the discount is applied
+        //         } else {
+        //             console.log(`No matching category found for row ${index + 1}.`);
+        //         }
+        //     });
+        // }
+
+
+
+        /**
+         * Clear all discount fields when no offer is selected.
+         */
+        function clearDiscountFields() {
+            $(".discount-percent").val('');
+            $(".discount-amount").val('');
+            sb_total();
+        }
+    });
+
 
     // Discount % Key up function
     $(document).on('blur', 'input.discount_model_percent', function() {
@@ -371,12 +649,12 @@ $(document).on('click', '.remove-row-btn', function() {
             var disc_per = parseFloat($("tr:nth-child(" + i + ") td:nth-child(1) input.discount-percent").val());
             var unit_price = parseFloat($("tr:nth-child(" + i + ") td:nth-child(1) input#item_price").val());
 
+            // var unit_price_for_exclusive = unit_price;
             grand_total_show += (unit_price * qty);
             disc_per = !isNaN(disc_per) ? disc_per : 0;
             disc_amt = !isNaN(disc_amt) ? disc_amt : 0;
             qty = !isNaN(qty) ? qty : 0;
-            unit_price = !isNaN(unit_price) ? unit_price : 0;
-
+            unit_price = !isNaN(unit_price) ? unit_price : 0; //alert(unit_price);
             var discount_total = disc_amt;
             if (disc_per != '' && disc_per != 0) {
                 discount_total = unit_price * (parseFloat(disc_per) / 100);
@@ -393,10 +671,12 @@ $(document).on('click', '.remove-row-btn', function() {
             item_tax_count = tax_percentage.length;
             if (discount_total != 0 && discount_total != '') {
                 unit_price = parseFloat(unit_price) - parseFloat(discount_total);
+                // $("tr:nth-child(" + i + ") td:nth-child(1) .unit-price").text((unit_price).toFixed(4));
                 $("tr:nth-child(" + i + ") td:nth-child(3) .unit-price").val((unit_price).toFixed(4));
                 $("tr:nth-child(" + i + ") td:nth-child(1) .final_item_price").val((unit_price).toFixed(4));
             }
 
+            // $("tr:nth-child(" + i + ") td:nth-child(1) .unit-price").text((unit_price).toFixed(2));
             $("tr:nth-child(" + i + ") td:nth-child(3) .unit-price").val(unit_price);
             $("tr:nth-child(" + i + ") td:nth-child(1) .final_item_price").val((unit_price).toFixed(2));
             $("tr:nth-child(" + i + ") td:nth-child(1) input.item_discount").val(showAmt(discount_total));
@@ -435,6 +715,21 @@ $(document).on('click', '.remove-row-btn', function() {
         });
         $('#item_total_amount').val(item_total_amount);
         $('#total_value').val(showAmt(total_price_val));
+        if ($("#discount_in_amt").val() == 0 || $("#discount_in_amt").val() == '') {
+            $('.paymodel_gt').html(showAmt(total_price_val));
+            $('.amount_payable').val(showAmt(total_price_val - enter_amount));
+        } else {
+            if (branchvat == 'exclusive') {
+                $('.paymodel_gt').html(showAmt((parseFloat($('#item_total_amount').val()) + parseFloat(tax_amount)) -
+                    parseFloat($("#discount_in_amt").val())));
+                $('.amount_payable').val(showAmt(((parseFloat($('#item_total_amount').val()) + parseFloat(tax_amount)) -
+                    parseFloat($("#discount_in_amt").val())) - enter_amount));
+            } else {
+                $('.paymodel_gt').html(showAmt($('#item_total_amount').val() - $("#discount_in_amt").val()));
+                $('.amount_payable').val(showAmt(($('#item_total_amount').val() - $("#discount_in_amt").val()) -
+                    enter_amount));
+            }
+        }
         if (points_discount == 0 || points_discount == '') {
             $('.paymodel_gt').html(showAmt(total_price_val));
             $('.amount_payable').val(showAmt(total_price_val - enter_amount));
@@ -450,9 +745,20 @@ $(document).on('click', '.remove-row-btn', function() {
                     enter_amount));
             }
         }
+
         $('#gross_total_form').val(grand_total_show);
         $('#tax_amount_form').val(net_tax_amt);
 
+        if ($("#discount_in_amt").val() == 0 || $("#discount_in_amt").val() == '') {
+            $('#net_total_form').val(total_price_val);
+        } else {
+            if (branchvat == 'exclusive') {
+                $('#net_total_form').val((parseFloat($('#item_total_amount').val()) + parseFloat(tax_amount)) -
+                    parseFloat($("#discount_in_amt").val()));
+            } else {
+                $('#net_total_form').val($('#item_total_amount').val() - $("#discount_in_amt").val());
+            }
+        }
         if (points_discount == 0 || points_discount == '') {
             $('#net_total_form').val(total_price_val);
         } else {
@@ -477,8 +783,6 @@ $(document).on('click', '.remove-row-btn', function() {
             $('.paymodel_gt_total').html(showAmt(grand_total_show));
         }
     }
-
-
 
 
     $(document).on('change paste keyup', '#discount_in_percentage', function() {
@@ -600,6 +904,7 @@ $(document).on('click', '.remove-row-btn', function() {
             $("#customer_email").val('');
             $("#customer_address").val('');
             $("#customer_gender").val('');
+            $("#offers").val('');
             $("#points").val('');
             let input = this.value.toLowerCase();
             let dropdown = document.getElementById('dropdown');
@@ -635,6 +940,7 @@ $(document).on('click', '.remove-row-btn', function() {
                                     .customer_address);
                                 $("#customer_gender").val(item
                                     .customer_gender);
+                                $("#offers").val(item.offers);
                                 $("#points").val(item.points);
 
                                 dropdown.style.display = 'none';
@@ -820,7 +1126,7 @@ $(document).on('click', '.remove-row-btn', function() {
                                     }
                                     product_add(
                                         value
-                                        ); // Call your product add function
+                                    ); // Call your product add function
                                 }
                                 $('#ItemSearch').val(
                                     ''); // Clear input after selection
@@ -860,7 +1166,9 @@ $(document).on('click', '.remove-row-btn', function() {
             $("#customer_email").val('');
             $("#customer_address").val('');
             $("#customer_gender").val('');
+            $("#offers").val('');
             $("#points").val('');
+
         }
     })
 
@@ -1171,6 +1479,7 @@ $(document).on('click', '.remove-row-btn', function() {
         $('#customer_email_form').val($('#customer_email').val());
         $('#customer_address_form').val($('#customer_address').val());
         $('#customer_gender_form').val($('#customer_gender').val());
+        $('#offer_form').val($('#offers').val());
         $('#points_form').val($('#points').val());
         var customer_number = $('#customer_number').val();
         $('#discount_per_form').val($('#discount_in_percentage').val());

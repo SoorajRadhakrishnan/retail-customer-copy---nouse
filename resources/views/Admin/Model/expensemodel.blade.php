@@ -51,7 +51,7 @@
             {{ $type->payment_method_name }}
         </option>
     @endif
-@endforeach         
+@endforeach
 
                     </select>
                     <div class="valid-feedback">&nbsp;</div>
@@ -62,15 +62,6 @@
                         <label class="mb-0">Invoice No</label>
                         <input type="text" class="form-control rounded-10" id="invoice_no" placeholder=""
                             name="invoice_no" autofocus="" value="{{ optional($expense)->invoice_no }}">
-                        <div class="valid-feedback">&nbsp;</div>
-                        <div class="invalid-feedback">&nbsp;</div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group mt-0 mb-0">
-                        <label class="mb-0">Date</label>
-                        <input type="date" class="form-control rounded-10" id="date" placeholder=""
-                            name="date" autofocus="" value="{{ optional($expense)->date }}" required="">
                         <div class="valid-feedback">&nbsp;</div>
                         <div class="invalid-feedback">&nbsp;</div>
                     </div>

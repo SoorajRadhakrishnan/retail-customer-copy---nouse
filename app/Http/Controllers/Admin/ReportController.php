@@ -63,6 +63,7 @@ class ReportController extends Controller
 
         return view('Admin.Report.bill-wise', compact('data', 'customers', 'from_date', 'to_date', 'receipt_id', 'user_id', 'users'));
     }
+
     public function category_wise(Request $request)
     {
         if (!(checkUserPermission('category_wise_report'))) {

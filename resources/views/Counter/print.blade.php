@@ -61,6 +61,30 @@ $payment_types = DB::table('sale_order_payments')->where('sale_order_id', $sale_
         }
     }
 </style>
+<style>
+    .qr-code-container {
+        display: grid;
+        grid-template-columns: 0.5fr 0.5fr;
+        gap: 10px; /* Adds space between the QR codes */
+        justify-items: center; /* Centers the QR codes horizontally */
+        width: 100%; /* Ensures it uses the full width of the container */
+    }
+
+    .qr-code-item {
+        text-align: center; /* Centers the text and QR code inside each item */
+    }
+
+    .qr-code-item img {
+        width: 100px;
+        height: auto;
+    }
+
+    .qr-label {
+        font-size: 12px;
+        /* margin-bottom: 1px; Adds space between the text and the QR code */
+    }
+</style>
+
 <?php
 // $style_print = "font-family: cursive";
 $style_print = '';
@@ -72,9 +96,9 @@ $style_print = '';
     <div style="text-align: center;"><img style="text-align: center;width: 200px;"
             src="{{ url('storage/image/' . $branch_details->image) }}"></div>
     <?php } ?>
-    <h2 style="text-transform:uppercase;font-size:13px; text-align:center;">
+    {{-- <h2 style="text-transform:uppercase;font-size:13px; text-align:center;">
         <strong>{{ $branch_details->branch_name }}</strong>
-    </h2>
+    </h2> --}}
     <p style="font-size:12px; text-align:center;line-height: 1em;">{{ $branch_details->location }}</p>
     <p style="font-size:12px; text-align:center;line-height: 0.5em;">{{ $branch_details->contact_no }}</p>
     <p style="font-size:12px; text-align:center;line-height: 0.5em;">{{ $branch_details->social_media }}</p>
@@ -478,10 +502,23 @@ $style_print = '';
             <p style="font-size:12px;text-align:left;">Staff: {{ optional(getStaff($staff_id))->staff_name }} </p>
         @endif
     <p style="font-size:12px;text-align:center;"><?php echo 'Thank You. Visit Again!'; ?>!</p>
-            <!-- <p style="font-size:12px;text-align:center;">Return the items within 7 days of receiving your order.<br>إرجاع العناصر خلال 7 أيام من استلام طلبك.</p> -->
+             {{-- <p style="font-size:12px;text-align:center;">Exchange the items within 5 days of receiving your order.<br>استبدال المنتجات خلال 5 أيام من استلام طلبك..</p>
+                  <p style="font-size:12px;text-align:center;">Refunds are not available .<br>لا تتوفر إمكانية استرداد المبالغ المدفوعة..</p>
+ --}}
 
         {{-- <p style="font-size:12px;text-align:center;"><strong style="text-align: center;">--- Powered By Overseepos.com --}}
                 {{-- ---</strong></p> --}}
+
+
+                {{-- <div class="qr-code-item" > <!-- Spanning full row -->
+                    <div class="qr-label">Instagram</div>
+                    <img src="{{ url('assets/icons/instagram.jpg') }}" alt="Instagram QR Code">
+                </div> --}}
+
+                {{-- <p style="font-size:12px;text-align:center;"><strong style="text-align: center;">--- Powered By Overseepos.com --}}
+                        {{-- ---</strong></p> --}}
+            {{-- </div> --}}
+
     </div>
 </div>
 <div id="if"></div>
