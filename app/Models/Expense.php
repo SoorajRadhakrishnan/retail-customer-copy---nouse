@@ -12,7 +12,7 @@ class Expense extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = ['expense_cat_id','expense_cat_name','invoice_no','description',
-                            'total_before_vat','vat','total_amount','action','payment_status','user_id','branch_id','uuid'];
+                            'total_before_vat','vat','total_amount','action','payment_status','payment_type','user_id','branch_id','uuid','date'];
 
     public function getRouteKeyName(): string
     {

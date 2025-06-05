@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use App\Models\Admin\ItemPrice;
 use App\Models\Admin\Supplier;
 use App\Models\Branch;
+use App\Models\PaymentTranscation;
 use App\Models\SaleOrderPayment;
 use App\Models\SettleSale;
 use Illuminate\Support\Facades\DB;
@@ -311,7 +312,29 @@ if (!function_exists('getNextReceiptId')) {
         }
     }
 }
-
+if (!function_exists('getNextQuotationId')) {
+    function getNextQuotationId() {
+        $user_id = auth()->user()->id;
+        $branch_id = auth()->user()->branch_id;
+        $prefix = 'Q00';
+        $quotation_id = $prefix . '-' . $branch_id . '-' . $user_id . '-';
+        $query = DB::table('quotations')
+            ->where('branch_id', $branch_id)
+            // ->where('created_by', $user_id) // Remove this line if 'created_by' does not exist
+            ->whereNotNull('quotation_no')
+            ->whereNull('deleted_at')
+            ->orderByDesc('created_at')
+            ->first('quotation_no');
+        if ($query !== null && isset($query->quotation_no)) {
+            $str = $query->quotation_no;
+            $quotation_id_arr = explode('-', $str);
+            $nextID = isset($quotation_id_arr[3]) ? ((int)$quotation_id_arr[3] + 1) : 1;
+            return $quotation_id . $nextID;
+        } else {
+            return $quotation_id . '1';
+        }
+    }
+}
 if(!function_exists('currentItemPriceDetails'))
 {
     function currentItemPriceDetails($price_size_id)
@@ -613,5 +636,15 @@ if (!function_exists('getCurrentStock')) {
     function getCurrentStock($priceId) {
         $price = ItemPrice::find($priceId);
         return $price ? $price->stock : 0;
+    }
+}
+
+if (!function_exists('getPaymentOpeningBalance')) {
+    function getPaymentOpeningBalance($paymentType, $branchId) {
+        return PaymentTranscation::where('payment_type', $paymentType)
+            ->where('status', 'open_balance')
+            ->where('type', 'add')
+            ->where('branch_id', $branchId)
+            ->value('amount');
     }
 }

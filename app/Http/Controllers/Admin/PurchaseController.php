@@ -8,6 +8,7 @@ use App\Traits\ResponseTraits;
 use App\Http\Controllers\Controller;
 use App\Models\Admin\{Item, ItemPrice};
 use App\Models\Purchase;
+use App\Events\PaymentTransactionEvent;
 use Illuminate\Support\Facades\{DB, Validator, Log};
 use Carbon\Carbon;
 
@@ -104,7 +105,7 @@ class PurchaseController extends Controller
             $joins->on('item_prices.price_size_id', '=', 'price_size.id');
         })->where('items.branch_id', $branch_id)
             ->where('items.stock_applicable', '1')
-            ->where('items.ingredient', '0')
+            //->where('items.ingredient', '0')
             // ->where('items.active', 'yes')
             // ->where('item_prices.price', '>', 0)
             ->select(DB::raw('items.*,item_prices.id as price_id,item_prices.item_id,item_prices.price_size_id,item_prices.price,item_prices.stock as item_stock,item_prices.cost_price as item_price_cost_price,price_size.size_name'))
@@ -128,7 +129,7 @@ class PurchaseController extends Controller
             'price_id.*' => 'required|integer', // Validate each price_id
             'item_id.*' => 'required|integer',   // Validate each item_id
             'item_name.*' => 'required|string',   // Validate each item_name
-            'qty.*' => 'required|integer|min:1',  // Validate each quantity
+            'qty.*' => 'required|numeric|min:0.01',
             'cost_price.*' => 'required|numeric', // Validate each cost_price
             'total_price.*' => 'required|numeric', // Validate each total_price
             'discount' => 'nullable|array',
@@ -188,27 +189,18 @@ class PurchaseController extends Controller
                 ]);
 
                 if ('received' == $request->status) {
-                    $itemsPrice = ItemPrice::where('id', $values)->first();
-                    if ($itemsPrice) {
-                        $old_stock = $itemsPrice->stock;
-                        if ($old_stock > 0) {
-                            $current_stock = $request->qty[$key] + $old_stock;
-                            $finalTotalCostPrice = $itemsPrice->total_cost_price + $request->total_price[$key];
-                            $finalCostPrice = $finalTotalCostPrice / $current_stock;
-                        } else {
-                            $current_stock = $old_stock + $request->qty[$key];
-                            $finalCostPrice = $request->cost_price[$key];
-                            $finalTotalCostPrice = $request->cost_price[$key] * $current_stock;
+                    $items = ItemPrice::where('id', $values)->first();
+                    if ($items) {
+                        $old_stock = $items->stock;
+                        $current_stock = $request->qty[$key] + $items->stock;
+                        $finalTotalCostPrice = $items->total_cost_price + $request->total_price[$key];
+                        $finalCostPrice = $finalTotalCostPrice / $current_stock;
 
-                            if ($current_stock <= 0) {
-                                $finalTotalCostPrice = 0;
-                            }
-                        }
-
-                        $itemsPrice->update([
+                        ItemPrice::where('id', $values)->update([
                             'stock' => $current_stock,
                             'cost_price' => $finalCostPrice,
                             'total_cost_price' => $finalTotalCostPrice,
+                            'edit_cost_price' =>  1,
                         ]);
 
                         DB::table('stock_management_history')->insert([
@@ -243,7 +235,7 @@ class PurchaseController extends Controller
                 'total_amount' => $total_amount,
                 'discount' => $discount,
                 'total_discount' => $total_discount,
-                'payment_status' => 'un_paid', //$request->payment_status,
+                'payment_status' => 'un_paid',//$request->payment_status,
                 'date_added' => $dateAdded,
             ]);
 
@@ -269,7 +261,7 @@ class PurchaseController extends Controller
                 'total_amount' => 0, // Temporarily set total to 0, will calculate below
                 'discount' => $discount,
                 'total_discount' => $total_discount,
-                'payment_status' => 'un_paid', //$request->payment_status,
+                'payment_status' => 'un_paid',//$request->payment_status,
                 'user_id' => auth()->user()->id,
                 'shop_id' => $request->branch_id,
                 'uuid' => Str::uuid(),
@@ -304,27 +296,18 @@ class PurchaseController extends Controller
                 $total_amount += $request->total_price[$key];
 
                 if ('received' == $request->status) {
-                    $itemsPrice = ItemPrice::where('id', $values)->first();
-                    if ($itemsPrice) {
-                        $old_stock = $itemsPrice->stock;
-                        if ($old_stock > 0) {
-                            $current_stock = $request->qty[$key] + $old_stock;
-                            $finalTotalCostPrice = $itemsPrice->total_cost_price + $request->total_price[$key];
-                            $finalCostPrice = $finalTotalCostPrice / $current_stock;
-                        } else {
-                            $current_stock = $old_stock + $request->qty[$key];
-                            $finalCostPrice = $request->cost_price[$key];
-                            $finalTotalCostPrice = $request->cost_price[$key] * $current_stock;
+                    $items = ItemPrice::where('id', $values)->first();
+                    if ($items) {
+                        $old_stock = $items->stock;
+                        $current_stock = $request->qty[$key] + $items->stock;
+                        $finalTotalCostPrice = $items->total_cost_price + $request->total_price[$key];
+                        $finalCostPrice = $finalTotalCostPrice / $current_stock;
 
-                            if ($current_stock <= 0) {
-                                $finalTotalCostPrice = 0;
-                            }
-                        }
-
-                        $itemsPrice->update([
+                        ItemPrice::where('id', $values)->update([
                             'stock' => $current_stock,
                             'cost_price' => $finalCostPrice,
                             'total_cost_price' => $finalTotalCostPrice,
+                            'edit_cost_price' =>  1,
                         ]);
 
                         DB::table('stock_management_history')->insert([
@@ -356,7 +339,6 @@ class PurchaseController extends Controller
             return $this->sendResponse(1, 'Purchase Added', '', '');
         }
     }
-
     /**
      * Show the form for editing the specified resource.
      */
@@ -372,7 +354,7 @@ class PurchaseController extends Controller
             $joins->on('item_prices.price_size_id', '=', 'price_size.id');
         })->where('items.branch_id', $branch_id)
             ->where('items.stock_applicable', '1')
-            ->where('items.ingredient', '0')
+            // ->where('items.ingredient', '0')
             // ->where('items.active', 'yes')
             // ->where('item_prices.price', '>', 0)
             ->select(DB::raw('items.*,item_prices.id as price_id,item_prices.item_id,item_prices.price_size_id,item_prices.price,item_prices.stock as item_stock,item_prices.cost_price as item_price_cost_price,price_size.size_name'))
@@ -426,26 +408,17 @@ class PurchaseController extends Controller
                 $purchase_items = DB::table('purchase_order_items')->where('purchase_id', $purchase_id)->get();
                 foreach ($purchase_items as $values) {
 
-                    $itemsPrice = ItemPrice::where('id', $values->price_id)->first();
-                    $old_stock = $itemsPrice->stock;
-                    if ($old_stock > 0) {
-                        $current_stock = $values->qty + $old_stock;
-                        $finalTotalCostPrice = $itemsPrice->total_cost_price + $values->total_amount;
-                        $finalCostPrice = $finalTotalCostPrice / $current_stock;
-                    } else {
-                        $current_stock = $old_stock + $values->qty;
-                        $finalCostPrice = $values->unit_price;
-                        $finalTotalCostPrice = $values->unit_price * $current_stock;
+                    $items = ItemPrice::where('id', $values->price_id)->first();
+                    $old_stock = $items->stock;
+                    $current_stock = $values->qty + $items->stock;
+                    $finalTotalCostPrice = $items->total_cost_price + $values->total_amount;
+                    $finalCostPrice = $finalTotalCostPrice / $current_stock;
 
-                        if ($current_stock <= 0) {
-                            $finalTotalCostPrice = 0;
-                        }
-                    }
-
-                    $itemsPrice->update([
+                    ItemPrice::where('id', $values->price_id)->update([
                         'stock' => $current_stock,
                         'cost_price' => $finalCostPrice,
                         'total_cost_price' => $finalTotalCostPrice,
+                        'edit_cost_price' =>  1,
                     ]);
 
                     DB::table('stock_management_history')->insert([
@@ -469,8 +442,7 @@ class PurchaseController extends Controller
         } else {
             return 'failed';
         }
-    }
-    public function updatePaymentStatus(Request $request)
+    }    public function updatePaymentStatus(Request $request)
     {
         // Validate that purchase_ids exist
         $validatedData = $request->validate([
@@ -559,6 +531,16 @@ class PurchaseController extends Controller
                 'price' => $request->amount,
                 'created_at' => now(),
             ]);
+
+            event(new PaymentTransactionEvent(
+            type: 'sub',
+            amount: $request->amount,
+            refNo: $request->purchase_id,
+            paymentType: $request->payment_type,
+            status: 'purchase',
+            branchId: $purchase->shop_id,
+        ));
+
         } else {
             return $this->sendResponse(1, 'Something Went Wrong! please try again.', '', url('admin/purchase'));
         }

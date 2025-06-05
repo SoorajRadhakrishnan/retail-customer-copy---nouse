@@ -90,7 +90,7 @@ class BarcodeController extends Controller
         $barcodeGenerator->setStorPath(__DIR__.'/cache/');
 
         foreach ($items as &$item) {
-            $item['barcode_html'] = $barcodeGenerator->getBarcodeHTML($item['barcode'], 'C128', 2, 50);
+            $item['barcode_html'] = $barcodeGenerator->getBarcodeHTML($item['barcode'], 'C128', 2, 45);
         }
 
         $pdf = Pdf::loadView('Admin.bar', ['items' => $items]);

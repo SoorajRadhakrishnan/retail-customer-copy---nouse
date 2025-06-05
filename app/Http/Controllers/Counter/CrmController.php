@@ -33,15 +33,43 @@ class CrmController extends Controller
             ->orderBy('qty', 'desc')
             ->limit('5')
             ->get();
-
-        $top_customes = SaleOrders::where('customer_id',"!=","0")->select(DB::raw('count(*) as total_count,customer_id,sum(with_tax) as with_tax'))
-                        ->groupBy('customer_id')->limit('10')->orderBy('with_tax', 'desc')->get();
-        $total_amount = SaleOrders::where('customer_id',$customer_id)->sum('with_tax');
+  $top_customes = SaleOrders::where('customer_id', '!=', '0')
+            ->select(
+                DB::raw('count(*) as total_count'),
+                'customer_id',
+                DB::raw('sum(with_tax) as with_tax'),
+                DB::raw('(SELECT points FROM customers WHERE customers.id = sale_orders.customer_id) as points')
+            )
+            ->groupBy('customer_id')
+            ->orderBy('with_tax', 'desc')
+            ->limit(10)
+            ->get();
+            // dd($top_customers);
+                $total_amount = SaleOrders::where('customer_id',$customer_id)->sum('with_tax');
         $total_count = SaleOrders::where('customer_id',$customer_id)
                         ->where('status',"!=","hold")->where('status',"!=","reject")->count();
 
-        return view('Counter.crm',compact('customer_id','customer','customer_orders','item_orders','total_amount','top_customes','total_count'));
-    }
+$query = SaleOrders::query();
+
+                        // Filter by Customer ID (if provided)
+                        if (!empty($customerId)) {
+                            $query->where('customer_id', $customerId);
+                        }
+
+                        // Exclude records where points_redeemed is 0
+                        $query->whereNot(function ($q) {
+                            $q->where('points_redeemed', 0);
+                        });
+
+                        // Order by created_at in descending order
+                        $query->orderBy('created_at', 'desc');
+
+                        // Fetch filtered data
+                        $redeemHistory = $query->get();
+
+        // dd($redeemHistory);
+
+        return view('Counter.crm',compact('customer_id','customer','customer_orders','item_orders','total_amount','top_customes','total_count','redeemHistory'));    }
 
     /**
      * Show the form for creating a new resource.

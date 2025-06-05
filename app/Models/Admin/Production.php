@@ -12,7 +12,8 @@ class Production extends Model
 
     protected $table = 'item_production';
 
-    protected $fillable = ['item_id', 'price_id', 'qty', 'user_id','branch_id'];
+        protected $fillable = ['item_id', 'price_id', 'qty', 'user_id','branch_id','production_cost','unit_cost_price'];
+
 
     public function branch()
     {

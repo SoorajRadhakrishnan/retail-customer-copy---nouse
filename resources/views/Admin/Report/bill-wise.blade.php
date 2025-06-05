@@ -71,6 +71,19 @@ $title = 'BILL WISE REPORT'.$branch_name.' - '.$from_date." - ".$to_date;
                                             @endforeach
                                         </select>
                                     </div>
+                                   <div class="w-auto ml-3">
+                                        <label class="mb-0 d-block">Users</label>
+                                        <select class="form-control rounded-10 select2" id="user_id" name="user_id"
+                                            onchange="this.form.submit()">
+                                            <option value="">Select User</option>
+                                            @foreach ($users as $user)
+                                                <option value="{{ $user->id }}"
+                                                    @if ($user->id == $user_id) selected="selected" @endif>
+                                                    {{ $user->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
                                     <div class="w-auto ml-3">
                                         <label class="mb-0 d-block small font-weight-bold">&nbsp;</label>
                                         <button type="submit" class="btn btn-dark rounded-10 px-3">
@@ -107,6 +120,8 @@ $title = 'BILL WISE REPORT'.$branch_name.' - '.$from_date." - ".$to_date;
                                                 @endif
                                                 <th>Receipt ID</th>
                                                 <th>Date</th>
+                                              <th>User</th>
+                                              
                                                 <th>Customer</th>
                                                 @if (app('appSettings')['staff_pin']->value == 'yes')
                                                     <th>Staff</th>
@@ -130,6 +145,11 @@ $title = 'BILL WISE REPORT'.$branch_name.' - '.$from_date." - ".$to_date;
                                                         @endif
                                                         <td>{{ $value->receipt_id }}</td>
                                                         <td>{{ dateFormat($value->ordered_date, 1) }}</td>
+                                                       @if ($value->user_id)
+                                                            <td>{{ Str::ucfirst(getUser($value->user_id)->name) }}</td>
+                                                        @else
+                                                            <td></td>
+                                                        @endif
                                                         <td>{{ $value->customer_id ? getCustomerDetById($value->customer_id) : '' }}</td>
                                                         @if (app('appSettings')['staff_pin']->value == 'yes')
                                                             @if ($value->staff_id)

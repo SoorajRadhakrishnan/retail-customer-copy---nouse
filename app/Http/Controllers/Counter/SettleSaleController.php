@@ -33,6 +33,7 @@ class SettleSaleController extends Controller
         $inputs['user_id'] = auth()->user()->id;
         $inputs['discount_type'] = 'amount';
         $inputs['from_date'] = $request->from_date;
+        $inputs['settleId'] = $request->settleId;
         $inputs['to_date'] = date("Y-m-d H:i:s");
         $settle_sale = $settle_sale->getAllSettle($inputs);//dd($settle_sales);
         return view("Counter.settle_print",compact('settle_sale'));
@@ -56,6 +57,6 @@ class SettleSaleController extends Controller
         $inputs['settle_date'] = date("Y-m-d H:i:s");
         $inputs['staff_id'] = (isset($_GET['staff_id']) && $_GET['staff_id'] !='') ? $_GET['staff_id'] : '0';
         $settle_sale = $settle_sale->setSettleSale($inputs);//dd($settle_sales);
-        return redirect('settle-sale')->with('print_date',$inputs['last_settle_date']);
+        return redirect('settle-sale')->with('print_date',$inputs['last_settle_date'])->with('settleId', $settle_sale);
     }
 }

@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Counter;
 
+use App\Events\PaymentTransactionEvent;
 use App\Models\Expense;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Traits\ResponseTraits;
 use App\Http\Controllers\Controller;
+use App\Models\PaymentMethod;
 use Illuminate\Support\Facades\Validator;
 
 class ExpenseController extends Controller
@@ -30,7 +32,9 @@ class ExpenseController extends Controller
             return view('Helper.unauthorized_access');
         }
         $expense = null;
-        return view('Counter.Model.expense',compact('expense'));
+              $payment_methods = PaymentMethod::where('branch_id',auth()->user()->branch_id)->get();
+
+        return view('Counter.Model.expense',compact('expense','payment_methods'));
     }
 
     /**
@@ -44,6 +48,7 @@ class ExpenseController extends Controller
           //  'tot_bf_vat' => 'required',
           //  'vat_amt' => 'required',
             'amount' => 'required',
+          'payment_type'=>'required',
         ],[
          //   'tot_bf_vat.*' => 'Total Before Vat required',
          //   'vat_amt.*' => 'Vat required',
@@ -61,11 +66,12 @@ class ExpenseController extends Controller
             return $this->sendResponse(1,config('constant.UNAUTHORIZED_ACCESS'),'',url('home'));
         }
 
-        Expense::create([
+        $expense = Expense::create([
             'expense_cat_id' => $request->expense_category,
             'expense_cat_name' => expenseCatByID($request->expense_category)->expense_category_name,
             'invoice_no' => $request->invoice_no,
             'description' => $request->description,
+            'payment_type' => $request->payment_type,
             'total_before_vat' => $request->tot_bf_vat,
             'vat' => $request->vat_amt,
             'total_amount' => $request->amount,
@@ -75,6 +81,15 @@ class ExpenseController extends Controller
             'branch_id' => $request->branch_id,
             'uuid' => Str::uuid(),
         ]);
+
+        event(new PaymentTransactionEvent(
+            type: 'sub',
+            amount: $request->amount,
+            refNo: $expense->id,
+            paymentType: $request->payment_type,
+            status: 'expense',
+            branchId: $request->branch_id,
+        ));
 
         return $this->sendResponse(1,'Expense Created','','');
     }

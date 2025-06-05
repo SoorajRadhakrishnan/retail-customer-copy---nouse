@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\PaymentTransactionEvent;
 use Illuminate\Http\Request;
 use App\Traits\ResponseTraits;
 use App\Http\Controllers\Controller;
@@ -116,6 +117,13 @@ class SaleOrdersController extends Controller
                 'payment_type' => $request->payment_type
             ]);
 
+            event(new PaymentTransactionEvent(
+                refNo: $saleOrder->id,
+                paymentType: $request->payment_type,
+                status: 'sale',
+                update: true
+            ));
+
             return response()->json(['status' => 1, 'message' => 'Payment type updated successfully.']);
         }
 
@@ -164,7 +172,25 @@ class SaleOrdersController extends Controller
 
     //     return $this->sendResponse(1, 'Something went wrong! Please try again.', '', url('admin/sale-order'));
     // }
+public function edit(Request $request)
+    {
+        // dd($request->all())arcode;
+        // Get the sale_order_id from the request
+        $sale_order_id = $request->input('sale_order_id');
 
+        // Fetch the data from the exchange_bills table using the sale_order_id
+        $exchangeBill = DB::table('edit_bil')
+            ->where('sale_order_id', $sale_order_id)
+            ->first();
+
+        // Check if data exists
+        if (!$exchangeBill) {
+            return redirect()->back()->with('error', 'No exchange bill found for the given sale order ID.');
+        }
+        // dd($exchangeBill);
+        // Pass the data to the view
+        return view('Admin.Model.exchangebill', compact('exchangeBill'));
+    }
 
     public function destroy(Request $request, string $sale_order)
     {
@@ -238,6 +264,12 @@ class SaleOrdersController extends Controller
                 SaleOrders::where('id', $sale_id)->delete();
                 SaleOrderItems::where('sale_order_id', $sale_id)->delete();
                 SaleOrderPayment::where('sale_order_id', $sale_id)->delete();
+
+                event(new PaymentTransactionEvent(
+                    refNo: $sale_id,
+                    status: 'sale',
+                    delete: true
+                ));
 
                 return $this->sendResponse(1, 'Sale deleted successfully.', '', url('home'));
             }

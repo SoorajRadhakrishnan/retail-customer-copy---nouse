@@ -143,55 +143,7 @@
             object-position: center;
         }
     </style>
-  <style>
-    /* Container to control absolute positioning */
-    .item-container {
-        position: relative;
-    }
-    /* Default styling for normal screen sizes */
-    .responsive-margin {
-        position: absolute;
-        right: 3px; /* Set initial right position to keep the element on the right */
-        top: 142px; /* Adjust vertical alignment */
-        max-width: 80px; /* Control width to avoid overflow */
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    /* Responsive styling for 1366x768 screen size */
-    @media (max-width: 1366px) and (max-height: 768px) {
-        .responsive-margin {
-            right: 3px; /* Shift further left on smaller screens */
-            top: 120px; /* Adjust vertical alignment for smaller screen */
-            max-width: 70px; /* Adjust width if needed */
-        }
-    }
-</style>
 
-<style>
-        /* Container to control absolute positioning */
-        .item-container {
-            position: relative;
-        }
-        /* Default styling for normal screen sizes */
-        .responsive-margin {
-            position: absolute;
-            right: 3px; /* Set initial right position to keep the element on the right */
-            top: 142px; /* Adjust vertical alignment */
-            max-width: 80px; /* Control width to avoid overflow */
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        /* Responsive styling for 1366x768 screen size */
-        @media (max-width: 1366px) and (max-height: 768px) {
-            .responsive-margin {
-                right: 3px; /* Shift further left on smaller screens */
-                top: 120px; /* Adjust vertical alignment for smaller screen */
-                max-width: 70px; /* Adjust width if needed */
-            }
-        }
-    </style>
 
 @endsection
 
@@ -311,21 +263,7 @@
                                         data-target="#dynamicPopup-xl"
                                         data-image="{{ url(config('constant.LOADING_GIF')) }}" ><i
                                             class="fa fa-plus-circle mr-1"></i> <b>DELIVERY LIST</b></button> --}}
-                              <a class="nav-linkk btn btn-dark rounded-10 shadoww mr-2 mb-2" href="{{ url('delivery-log') }}">
-    <i class="fa fa-truck" aria-hidden="true"></i>
-    <b>DELIVERY LOG</b>
-</a>
-
                                 @endif
-                               <a class="nav-linkk btn btn-dark rounded-10 shadoww mr-2 mb-2"
-                                    href="{{ url('recent-sale') }}">
-                                    <i class="fa fa-history" aria-hidden="true"></i>
-                                    <b>RECENT SALE</b>
-                                </a>
-                                <a class="nav-linkk btn btn-dark rounded-10 shadoww mr-2 mb-2" href="{{ url('crm') }}">
-                                    <i class="fa fa-users" aria-hidden="true"></i>
-                                    <b>CRM</b>
-                                </a>
                                 <a class="nav-link rounded-10 mr-2 d-none" href="#"><i
                                         class="fas fa-ellipsis-h"></i></a>
                             </nav>
@@ -354,8 +292,8 @@
                                                 {{-- <th class="py-2 bg-transparent text-center" style="width: 100px;">Dis (%)
                                                 </th> --}}
                                                 <th class="py-2 bg-transparent text-right" style="width:35%">Price</th>
-                                                <th class="py-2 bg-transparent text-right" style="width:35%">remove</th>
-
+                                              <th class="py-2 bg-transparent text-right" style="width:35%">remove</th>
+                                              
                                             </tr>
                                         </thead>
 
@@ -425,6 +363,7 @@
 
                                         <input type="hidden" name="balance_amount" id="balance_amount_form"
                                             value="">
+                                            <input type="hidden" name="converted_points" id="converted_points" value="0">
 
                                         <input type="hidden" id="item_total_amount" value="">
                                         <tbody id="item_append">
@@ -543,8 +482,9 @@
                                                             style="width:35%;font-weight:600">
                                                             {{ formatToDecimals($item->total_price) }}
                                                         </td>
-                                                       <td>
-                                                            <button class="btn  remove-row-btn"><i class="fa fa-trash"></i></button>
+                                                      <td>
+                                                            <button class="btn  remove-row-btn"><i
+                                                                    class="fa fa-trash"></i></button>
                                                         </td>
                                                     </tr>
                                                 @endforeach
@@ -579,6 +519,9 @@
                     </div>
                     <div class="col-2 p-0">
                         <div class="card card-body shadow rounded-10 mb-0 p-2 pos-category-section">
+                            <?php $restrictedCategoryId = 5; ?>
+                            <?php $restrictedUserId = 3; // Replace with the specific user ID ?>
+
                             <div class="row px-3">
                                 <button
                                     class="btn btn-white btn-block border text-dark rounded-10 shadow mb-2 mt-0 px-2 catlinks"
@@ -588,17 +531,17 @@
                                 </button>
                                 <?php $row = 1; ?>
                                 @foreach ($categorys as $category)
-                                    {{-- @if ($category->items->count() > 0) @if ($row == '1') id="defaultOpen" @endif --}}
-                                    <button
-                                        class="btn btn-white btn-block border text-dark rounded-10 shadow mb-2 mt-0 px-2 catlinks"
-                                        style="height: 50px;"
-                                        onclick="openCategory(event, '{{ $category->category_slug }}')">
-                                        <h6 class="mb-0 text-left text-truncate">
-                                            {{ Str::ucfirst($category->category_name) }}</h6>
-                                        <h5 class="mb-0 text-right text-truncate">{{ $category->other_name }}</h5>
-                                    </button>
-                                    <?php $row++; ?>
-                                    {{-- @endif --}}
+                                    @if (auth()->user()->id != $restrictedUserId || $category->id != $restrictedCategoryId)
+                                        <button
+                                            class="btn btn-white btn-block border text-dark rounded-10 shadow mb-2 mt-0 px-2 catlinks"
+                                            style="height: 50px;"
+                                            onclick="openCategory(event, '{{ $category->category_slug }}')">
+                                            <h6 class="mb-0 text-left text-truncate">
+                                                {{ Str::ucfirst($category->category_name) }}</h6>
+                                            <h5 class="mb-0 text-right text-truncate">{{ $category->other_name }}</h5>
+                                        </button>
+                                        <?php $row++; ?>
+                                    @endif
                                 @endforeach
                             </div>
                         </div>
@@ -625,34 +568,60 @@
                             </div>
                         </div>
                         <div class="card card-body shadow rounded-10 mb-2 p-2 pos-items-section">
-                           <div class="d-flex flex-wrap align-items-start align-items-stretch" id="fetch-item-append">
+                            <div class="d-flex flex-wrap align-items-start align-items-stretch">
 
                                 @foreach ($items as $item)
-                                    <div class="pos-item p-1 itemcontent {{ $item->category_slug }}">
-                                        <button
-                                            class="btn btn-block p-0 btn-white border text-dark rounded-10 shadow text-left pos-item-btn h-100 item-click"
-                                            data-id="{{ $item->id }}"
-                                            data-price_size_id="{{ $item->price_size_id }}"
-                                            data-item_name="{{ $item->item_name }}"
-                                            data-item_other_name="{{ $item->item_other_name }}"
-                                            data-category_id="{{ $item->category_id }}"
-                                            data-item_stock="{{ $item->item_stock }}" data-tax="{{ $item->tax }}"
-                                            data-tax_percent="{{ $item->tax_percent }}"
-                                            data-unit_id="{{ $item->unit_id }}"
-                                            data-item_price_cost_price="{{ $item->item_price_cost_price }}"
-                                            data-price="{{ $item->price }}"
-                                            data-stock_applicable="{{ $item->stock_applicable }}"
-                                            data-price_id="{{ $item->price_id }}">
-                                            <p class="mb-0 px-2  py-1 text-right pos-item-price z-index-10"><b>
-                                                    {{ showAmount($item->price, 1) }}</b>
-                                            </p>
+    @if (auth()->user()->id != $restrictedUserId || $item->category_id != $restrictedCategoryId)
+        <div class="pos-item p-1 itemcontent {{ $item->category_slug }}">
+            <button
+                class="btn btn-block p-0 btn-white border text-dark rounded-10 shadow text-left pos-item-btn h-100 item-click"
+                data-id="{{ $item->id }}"
+                data-price_size_id="{{ $item->price_size_id }}"
+                data-item_name="{{ $item->item_name }}"
+                data-item_other_name="{{ $item->item_other_name }}"
+                data-category_id="{{ $item->category_id }}"
+                data-item_stock="{{ $item->item_stock }}" data-tax="{{ $item->tax }}"
+                data-tax_percent="{{ $item->tax_percent }}"
+                data-unit_id="{{ $item->unit_id }}"
+                data-item_price_cost_price="{{ $item->item_price_cost_price }}"
+                data-price="{{ $item->price }}"
+                data-stock_applicable="{{ $item->stock_applicable }}"
+                data-price_id="{{ $item->price_id }}">
+                <p class="mb-0 px-2  py-1 text-right pos-item-price z-index-10"><b>
+                        {{ showAmount($item->price, 1) }}</b>
+                </p>
                                           <div class="item-container">
                                             <p class="mb-0 px-2 py-1 text-right pos-item-price z-index-10 responsive-margin">
                                                 <b>{{ $item->item_stock }}</b>
                                             </p>
                                         </div>
 
-                                        
+                                        <style>
+                                            /* Container to control absolute positioning */
+                                            .item-container {
+                                                position: relative;
+                                            }
+
+                                            /* Default styling for normal screen sizes */
+                                            .responsive-margin {
+                                                position: absolute;
+                                                right: 3px; /* Set initial right position to keep the element on the right */
+                                                top: 142px; /* Adjust vertical alignment */
+                                                max-width: 80px; /* Control width to avoid overflow */
+                                                overflow: hidden;
+                                                text-overflow: ellipsis;
+                                                white-space: nowrap;
+                                            }
+
+                                            /* Responsive styling for 1366x768 screen size */
+                                            @media (max-width: 1366px) and (max-height: 768px) {
+                                                .responsive-margin {
+                                                    right: 3px; /* Shift further left on smaller screens */
+                                                    top: 120px; /* Adjust vertical alignment for smaller screen */
+                                                    max-width: 70px; /* Adjust width if needed */
+                                                }
+                                            }
+                                        </style>
 
                                             @if ($item->image)
                                                 <div class="image-wrapper">
@@ -679,25 +648,23 @@
                                                     {{ $item->size_name }}
                                                 @endif
 
-                                          {{--      <p class="mb-1 border-bottom text-truncate"
+                                                <p class="mb-1 border-bottom text-truncate"
                                                     title="{{ $item->item_stock }}">
-                                                    {{ getPriceName(auth()->user()->branch_id, $item->price_size_id) }}
-                                                </p>--}}
-                                                <p class="mb-0 d-flex align-items-center justify-content-between"
-                                                    style="height: 23px !important;  "
+                                                    {{-- {{ getPriceName(auth()->user()->branch_id, $item->price_size_id) }} --}}
+                                                </p>
+                                                <p class="mb-0 text-truncate"
                                                     title="{{ Str::ucfirst($item->item_name) }}">
-                                                    <b class="flex-grow-1 ">{{ Str::ucfirst($item->item_name) }}</b>
+                                                    <b>{{ Str::ucfirst($item->item_name) }}</b>
                                                 </p>
-                                                <p class="mb-0 d-flex align-items-center justify-content-between text-right"
-                                                    style="height: 23px !important;  "
+                                                <p class="mb-0 text-truncate text-right" style="height: 23px !important"
                                                     title="{{ $item->item_other_name }}">
-                                                    <b class="flex-grow-1 ">{{ $item->item_other_name }}</b>
+                                                    <b>{{ $item->item_other_name }}</b>
                                                 </p>
-
                                             </div>
                                         </button>
                                     </div>
-                                @endforeach
+                                    @endif
+                                    @endforeach
                             </div>
                         </div>
                     </div>
@@ -760,6 +727,30 @@
                                     style="border-radius: 0 0 10px 0;width:66.67%" name="customer_address"
                                     placeholder="Address" id="customer_address" value="{{ $customer_address }}">
                             </div>
+                                            @if (checkUserPermission('loyality_points'))
+                        <div class="col-12">
+                            <div class="row">
+                                {{-- <div class="col-4 pr-1 float-left">
+                                    <h5 class="text-center d-block">Referral Code</h5>
+                                    <input type="text"
+                                        class="form-control form-control-lg py-4 rounded-10 bg-white text-center text-dark"
+                                        id="referral_code" style="font-size: 2rem;" name="referral_code">
+                                </div> --}}
+                                <div class="col-4 pr-1 float-left">
+                                    <h5 class="text-center d-block">Points</h5>
+                                    <input type="number" step="any"
+                                        class="form-control form-control-lg py-4 rounded-10 bg-white text-center text-dark "
+                                        id="points" name="points" style="font-size: 2rem;" value="" disabled>
+                                </div>
+                                <div class="col-4 pr-1 float-left">
+                                    <button type="button"
+                                        class="btn btn-dark btn-lg mt-4 rounded-10 form-control form-control-lg p-4 text-center text-uppercase d-flex justify-content-center align-items-center"
+                                        id="redeem_points_button">Redeem Points</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        @endif
                         </div>
                         <div class="col-12">
                             <div class="row">
@@ -1165,24 +1156,47 @@
             focustoid("barcodeSearch");
         </script>
     @endif
-    <script>
-          $(document).ready(function () {
-            // $('#ajax-loader').fadeIn(); // Fade in loader
+        {{-- <script>
+        var item_id = '{{ request()->item_id }}';
+        if (item_id) {
             $.ajax({
-                url: "{{ url('fetch-items') }}",
-                type: 'GET',
-                success: function (res) {
-                    $('#fetch-item-append').append(res.html);
-                    $('#remaining-items-loader').remove();
+                url: "{{ url('addtocart') }}",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    item_id: item_id,
                 },
-                error: function () {
-                    alert('Something went wrong while loading items. Please try again.');
+                type: "post",
+                success: function(response) {
+                    alert("Item added to cart successfully!");
+                    if (response && response.status == 1 && response.item) {
+                        var value = {
+                            id: response.item.id,
+                            price_size_id: response.item.price_size_id,
+                            item_name: response.item.item_name,
+                            item_other_name: response.item.item_other_name,
+                            category_id: response.item.category_id,
+                            item_stock: response.item.item_stock,
+                            tax: response.item.tax,
+                            tax_percent: response.item.tax_percent,
+                            unit_id: response.item.unit_id,
+                            item_price_cost_price: response.item.item_price_cost_price,
+                            price: response.item.price,
+                            stock_applicable: response.item.stock_applicable,
+                            stock_check: response.item.stock_check,
+                            item_id: response.item.item_id,
+                            price_id: response.item.price_id,
+                            item_type: response.item.item_type
+                        }
+                        product_add(value);
+                    } else {
+                        console.log("Data received:", response);
+                    }
                 },
-                complete: function () {
-                    // $('#ajax-loader').fadeOut();
-                }
             });
-        });
+        }
+    </script>
+ --}}
+    <script>
         function discount_model(item_count) {
             $(".item_count").val(item_count);
             var amount = parseFloat($("tr:nth-child(" + item_count + ") td:nth-child(1) input.discount-amount").val());
@@ -1413,6 +1427,67 @@
             calculate_payable_amount();
         }
     </script>
+    <script>
+        // Support for multiple item_id (array or comma-separated)
+        var price_ids = '{{ request()->price_ids }}';
 
+        if (price_ids) {
+            // If price_ids is in the format [1,2,3] or 1,2,3, convert to array
+            try {
+                // Try to parse as JSON array (from ?item_id=[1,2,3])
+                var ids = JSON.parse(price_ids);
+                if (!Array.isArray(ids)) {
+                    ids = [ids];
+                }
+            } catch (e) {
+                // Fallback: split by comma (from ?item_id=1,2,3)
+                ids = price_ids.replace('[', '').replace(']', '').split(',');
+            }
+            let stock_check = "{{ app('appSettings')['stock_check']->value }}";
+
+            ids.forEach(function(id) {
+                if (id && !isNaN(id)) {
+                    $.ajax({
+                        url: "{{ url('addtocart') }}",
+                        data: {
+                            _token: "{{ csrf_token() }}",
+                            price_ids: id,
+                        },
+                        type: "post",
+                        success: function(response) {
+                            // alert("Item added to cart successfully!");
+                            if (response && response.status == 1 && response.item) {
+                                var value = {
+                                    id: response.item.id,
+                                    price_size_id: response.item.price_size_id,
+                                    item_name: response.item.item_name,
+                                    item_other_name: response.item.item_other_name,
+                                    category_id: response.item.category_id,
+                                    item_stock: response.item.item_stock,
+                                    tax: response.item.tax,
+                                    tax_percent: response.item.tax_percent,
+                                    unit_id: response.item.unit_id,
+                                    item_price_cost_price: response.item.item_price_cost_price,
+                                    price: response.item.price,
+                                    stock_applicable: response.item.stock_applicable,
+                                    item_id: response.item.item_id,
+                                    price_id: response.item.price_id,
+                                    item_type: response.item.item_type
+                                }
+                                if (value.item_stock <= 0 && stock_check == 'yes' && value.stock_applicable == '1') {
+                                    notifyme2("Some Items are out of stock, please check the stock before adding to cart.");
+                                } else {
+                                    product_add(value);
+                                }
+                            } else {
+                                console.log("Data received:", response);
+                            }
+                        }
+                    });
+                }
+            });
+            // alert("Items added to cart successfully!");
+        }
+    </script>
     @include('Counter.salejs')
 @endsection

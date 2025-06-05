@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Counter;
 
+use App\Events\PaymentTransactionEvent;
 use Illuminate\Http\Request;
 use App\Traits\ResponseTraits;
 use Illuminate\Support\Facades\DB;
@@ -73,7 +74,7 @@ class CreditSaleController extends Controller
             return $this->sendResponse(1,config('constant.UNAUTHORIZED_ACCESS'),'',url('home'));
         }
 
-        DB::table('credit_sale')->insertGetId([
+        $id = DB::table('credit_sale')->insertGetId([
             'customer_id' => $request->cus_id,
             'name' => getCustomer($request->cus_id)->customer_name,
             'number' => $request->customer_number,
@@ -85,6 +86,16 @@ class CreditSaleController extends Controller
             'user_id' => auth()->user()->id,
             'shop_id' => auth()->user()->branch_id
         ]);
+
+        event(new PaymentTransactionEvent(
+            type: 'add',
+            amount: $request->amount,
+            refNo: $id,
+            paymentType: $request->payment_type,
+            status: 'credit_recovery',
+            branchId: auth()->user()->branch_id,
+        ));
+
         return $this->sendResponse(1,'Payment Paid Success','','');
     }
 

@@ -42,12 +42,19 @@ class SettleSale extends Model
                 $inputs['from_date'] = (isset($date) && $date != '') ? $date->ordered_date : date("Y-m-d H:i:s");
             }
         }
-        $cash_at_starting = auth()->user()->branch->opening_cash;
+        if(isset($inputs['settleId']) && $inputs['settleId'] != '') {
+            // make day opening as zero
+            Branch::where('id', $inputs['shop_id'])->update([ 'opening_cash' => 0 ]);
+           $cash_at_starting = DB::table('settle_sale')->where('id', $inputs['settleId'])->first()->cash_at_starting;
+        }else {
+            $cash_at_starting = Branch::where('id', $inputs['shop_id'])->first()->opening_cash;
+        }
         // echo "<pre>";print_r($cash_at_starting);echo "</pre>";exit;
         $orders =  $this->getSaleOrderItemDetailsList($inputs);
         $credit_sale = $this->getCreditSale($inputs);
         $pay_back = $this->getAllPayBack($inputs);
         $expense_db = $this->getExpense($inputs);
+        $getPurchaseAmounts = $this->getPurchase($inputs);
         $orders_by_paid_date = $this->deliveryRecovery($inputs);//null; //getSaleOrderItemDetailsListByPaidDate($inputs);
 
         $grand_total_tax = $cash_back_amount = 0;
@@ -93,13 +100,27 @@ class SettleSale extends Model
                 $py_back_tax += $py_back_row->tax_amt;
             }
         }
-
+$expensecash = 0;
         if (!empty($expense_db)) {
             foreach ($expense_db as $expen) {
+                 if ($expen->payment_type == 'cash') {
+                    $expensecash += $expen->total_amount;
+                }
                 $expense += $expen->total_amount;
                 $expense_vat += $expen->vat;
             }
         }
+
+        $purchaseCash = $purchaseTotalAmount = 0;
+        if (!empty($getPurchaseAmounts)) {
+            foreach ($getPurchaseAmounts as $purchaseAmount) {
+                 if ($purchaseAmount->payment_type == 'cash') {
+                    $purchaseCash += $purchaseAmount->price;
+                }
+                $purchaseTotalAmount += $purchaseAmount->price;
+            }
+        }
+
         $sale_order_ids = array();
         if (!empty($orders)) {
             foreach ($orders as $row) {
@@ -139,22 +160,22 @@ class SettleSale extends Model
                             // $CashSaleNoVat+=$gross_total - $discount_price;
                         }
 
-                        if ($row['payment_type'] == 'both') {
-                            $card_amount = $cash_amount = 0;
-                            if ($row['cash'] != 0 && $row['cash'] != '') {
-                                $cash_amount = $net_total;
-                            }
-                            if ($row['card'] != 0 && $row['card'] != '') {
-                                $card_amount  =  $row['card'];
-                                $cash_amount = $net_total - $row['card'];
-                                if ($cash_amount < 0) {
-                                    $cash_amount = 0;
-                                    $card_amount = $net_total;
-                                }
-                            }
-                            $CashSale += $cash_amount;
-                            $CardSale += $card_amount;
-                        }
+                        // if ($row['payment_type'] == 'both') {
+                        //     $card_amount = $cash_amount = 0;
+                        //     if ($row['cash'] != 0 && $row['cash'] != '') {
+                        //         $cash_amount = $net_total;
+                        //     }
+                        //     if ($row['card'] != 0 && $row['card'] != '') {
+                        //         $card_amount  =  $row['card'];
+                        //         $cash_amount = $net_total - $row['card'];
+                        //         if ($cash_amount < 0) {
+                        //             $cash_amount = 0;
+                        //             $card_amount = $net_total;
+                        //         }
+                        //     }
+                        //     $CashSale += $cash_amount;
+                        //     $CardSale += $card_amount;
+                        // }
 
 
                         if ($row['payment_type'] == 'credit') {
@@ -220,7 +241,7 @@ class SettleSale extends Model
         //$CashDrawerAmt = ($CashDrawerAmt + $cash_at_starting) - ($cash_drawer_acct_exp);
         //$CashDrawerAmt = ($CashDrawerAmt + $cash_at_starting);
         //}else{
-        $CashDrawerAmt = ($CashDrawerAmt + $cash_at_starting) - ($expense);
+        $CashDrawerAmt = ($CashDrawerAmt + $cash_at_starting) - ($expensecash) - ($purchaseCash);
         //$CashDrawerAmt = ($CashDrawerAmt + $cash_at_starting);
         //}
 
@@ -255,6 +276,7 @@ class SettleSale extends Model
         $result_ar['cash_back_amount'] = $cash_back_amount;
         $result_ar['multi_payment_types_amount'] = $payment_types_amount;
         $result_ar['pay_back_vat'] = $py_back_tax;
+        $result_ar['purchase'] = $purchaseTotalAmount;
 
         // echo '<pre>'; print_r($result_ar);die;
         return $result_ar;
@@ -404,6 +426,17 @@ class SettleSale extends Model
         return $query;
     }
 
+    public function getPurchase($inputs)
+    {
+        $from_date = $inputs['from_date'];
+        $to_date = $inputs['to_date'];
+        $shop_id = (isset($inputs['shop_id']) && $inputs['shop_id'] != '') ? $inputs['shop_id'] : '';
+
+        return DB::table('purchase_pay_log')->where('branch_id', $shop_id)
+            ->whereBetween('created_at', [$from_date, $to_date])
+            ->whereNull('deleted_at')->get();
+    }
+
     public function getExpense($inputs)
     {
         $from_date = $inputs['from_date'];
@@ -479,6 +512,7 @@ class SettleSale extends Model
         $cash_drawer = $inputs['cash_drawer'];
         $staff_id = $inputs['staff_id'];
         $settle_date = date("Y-m-d H:i:s");
+        $purchase = $inputs['purchase'];
 
         $last_settle_sale = $this->getSettleSale($inputs);
         if ($last_settle_sale !== null) {
@@ -489,7 +523,7 @@ class SettleSale extends Model
         }
         $inputs['to_date'] = $settle_date;
 
-        return DB::table('settle_sale')->insert([
+        return DB::table('settle_sale')->insertGetId([
             "shop_id" => $shop_id,
             "user_id" => $user_id,
             "cash_at_starting" => $cash_at_starting,
@@ -515,6 +549,7 @@ class SettleSale extends Model
             "deposit_amount" => 0,
             "petty_cash_amount" => 0,
             "pay_back_vat" => $pay_back_vat,
+            "purchase" => $purchase,
         ]);
     }
 

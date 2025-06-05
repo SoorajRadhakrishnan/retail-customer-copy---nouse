@@ -349,7 +349,7 @@ class ItemsController extends Controller
             ]);
 
             $item_prices = [];
-           if($request->item_type == '2'){
+            if($request->item_type == '2'){
 
                 // if item type is raw material no need multiple price size, so no loop
 
@@ -409,7 +409,6 @@ class ItemsController extends Controller
         }
     }
 
-
     /**
      * Show the form for editing the specified resource.
      */
@@ -429,9 +428,8 @@ class ItemsController extends Controller
         if (!(checkUserPermission('item_delete'))) {
             return $this->sendResponse(1, config('constant.UNAUTHORIZED_ACCESS'), '', url('admin/item'));
         }
-       
+        $item->delete();
         $result = $item->itemprice()->delete();
-       $item->delete();
         if ($result) {
             return $this->sendResponse(1, 'Item Deleted succussfully', '', url('admin/item'));
         } else {

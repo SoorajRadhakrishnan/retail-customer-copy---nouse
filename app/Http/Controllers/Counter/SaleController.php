@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Counter;
 
+use App\Events\PaymentTransactionEvent;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -9,11 +10,12 @@ use App\Http\Controllers\Controller;
 // use App\Http\Services\PaymentTranscationService;
 use App\Models\Admin\{Item, Staff, Category, Customer, Driver, ItemPrice};
 use App\Models\{SaleOrders, SaleOrderItems, SaleOrderPayment};
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 
 class SaleController extends Controller
 {
-    // public function __construct(public PaymentTranscationService $paymentService) {}
-
     /**
      * Display a listing of the resource.
      */
@@ -64,34 +66,6 @@ class SaleController extends Controller
         }
         return view("Counter.sale", compact('categorys', 'items', 'drivers', 'sale_orders','customer', 'deliveryService'));
     }
-      public function fetchItems(Request $request)
-    {
-        $items = Item::leftJoin('item_prices', 'items.id', '=', 'item_prices.item_id')
-            ->leftJoin('categories', 'items.category_id', '=', 'categories.id')
-            ->leftJoin('price_size', 'item_prices.price_size_id', '=', 'price_size.id')
-            ->where('items.branch_id', auth()->user()->branch_id)
-            ->where('items.item_type', '1')
-            ->where('items.active', 'yes')
-            ->select(
-                'items.*',
-                'item_prices.id as price_id',
-                'item_prices.item_id',
-                'item_prices.price_size_id',
-                'item_prices.price',
-                'item_prices.stock as item_stock',
-                'item_prices.cost_price as item_price_cost_price',
-                'categories.category_slug',
-                'price_size.size_name'
-            )->orderBy('items.item_name')->skip(20)->take(PHP_INT_MAX)->get();
-
-        $html = '';
-        foreach ($items as $item) {
-            $html .= view('Counter.fetchItem', compact('item'))->render();
-        }
-
-        return response()->json(['html' => $html]);
-    }
-
 
     /**
      * Store a newly created resource in storage.
@@ -99,7 +73,7 @@ class SaleController extends Controller
     public function store(Request $request)
     {
         // dd($request->all());
-
+        // dd($request->measurements, $request->material_id);
         // echo "<pre>";print_r($request->all('gross_total', 'item_price', 'final_item_price', 'qty', 'discount_amount', 'total_price'));echo "</pre>";
         $data = $request->all();
         // Retrieve values from the request
@@ -152,12 +126,9 @@ class SaleController extends Controller
             ]);
         }
 
-        // Update the request object
-
-// echo "<pre>";print_r($request->all('gross_total', 'item_price', 'final_item_price', 'qty', 'discount_amount', 'total_price'));echo "</pre>";die;
+        // echo "<pre>";print_r($request->all('gross_total', 'item_price', 'final_item_price', 'qty', 'discount_amount', 'total_price'));echo "</pre>";die;
         if ($request->sale_order_id) {
             if ($request->hold == '1') {
-
                 $sale_insert = $this->getSaleOrderItemDetailsEdit($request->all());
                 return redirect('home')->withMessage('Item added in Hold');
             }
@@ -168,8 +139,6 @@ class SaleController extends Controller
             $order_type = (isset($request->order_type) && $request->order_type != '') ? $request->order_type : 'counter_sale';
             $card_num = (isset($request->card_num) && $request->card_num != '') ? $request->card_num : '0';
 
-            //$customer_id = (isset($request->customer_id) && $request->customer_id !='') ? $request->customer_id : '';
-            //$customer_uuid = (isset($request->customer_uuid) && $request->customer_uuid !='') ? $request->customer_uuid : '';
             $customer_name = (isset($request->customer_name) && $request->customer_name != '') ? $request->customer_name : '';
             $customer_number = (isset($request->customer_number) && $request->customer_number != '') ? $request->customer_number : '0';
             $customer_address = (isset($request->customer_address) && $request->customer_address != '') ? $request->customer_address : '';
@@ -199,27 +168,55 @@ class SaleController extends Controller
             $customer_id = $customers->id;
             $customer_uuid = $customers->uuid;
 
+            // Update customer points if net total is greater than 100
+// Fetch loyalty settings
+$loyalty = DB::table('loyalty')->first();
+
+if ($loyalty) {
+    $min_sale_amount = $loyalty->min_sale_amount;
+    $loyalty_points = $loyalty->loyalty_points;
+
+    // Check if net total exceeds the minimum sale amount for loyalty points
+    if ($net_total >= $min_sale_amount) {
+        $points_to_add = floor($net_total / $min_sale_amount) * $loyalty_points;
+        Log::info('Adding points to customer: ' . $customer_id . ' Points to add: ' . $points_to_add);
+
+        // Log the current points before update
+        $current_points = Customer::where('id', $customer_id)->value('points');
+        Log::info('Current points for customer ' . $customer_id . ': ' . $current_points);
+
+        // Update customer points
+        $updated = Customer::where('id', $customer_id)->increment('points', $points_to_add);
+
+        // Log the new points after update
+        $new_points = Customer::where('id', $customer_id)->value('points');
+        Log::info('New points for customer ' . $customer_id . ': ' . $new_points);
+
+        Log::info('Points update result: ' . $updated);
+    }
+}
+
+
             $sale_insert = $this->getSaleOrderItemDetailsEdit($request->all());
             if ($sale_insert) {
-
                 SaleOrders::where('id', $sale_order_id)->update([
                     'edit_staff_id' => $staff_id,
-                    'card_num'  => $card_num,
+                    'card_num' => $card_num,
                     'customer_name' => $customer_name,
                     'customer_number' => $customer_number,
                     'customer_address' => $customer_address,
                     'customer_email' => $customer_email,
                     'customer_gender' => $customer_gender,
                     'customer_id' => $customer_id,
-                    'amount_given'  => $amount_given,
-                    'payment_type'  => $payment_type,
-                    'status'  => $status,
-                    'payment_status'  => $payment_status,
-                    'discount'  => $discount,
+                    'amount_given' => $amount_given,
+                    'payment_type' => $payment_type,
+                    'status' => $status,
+                    'payment_status' => $payment_status,
+                    'discount' => $discount,
                     'discount_per' => $discount_per,
-                    'without_tax'  => $gross_total,
-                    'tax_amount'  => $tax_amount,
-                    'with_tax'  => $net_total,
+                    'without_tax' => $gross_total,
+                    'tax_amount' => $tax_amount,
+                    'with_tax' => $net_total,
                     'order_type' => $order_type,
                     // 'delivery_type' => $delivery_type
                 ]);
@@ -230,15 +227,16 @@ class SaleController extends Controller
                 $request['customer_id'] = $customer_id;
                 $this->multiPaymentInsert($request->all());
                 // return redirect('print?id=' . $sale_order_id . '&re=home');
-                return redirect('home')->with('print','yes')->with('print_id',$sale_order_id)->with('re','home');
+                return redirect('home')->with('print', 'yes')->with('print_id', $sale_order_id)->with('re', 'home');
             }
             // return redirect('print?id=' . $sale_order_id . '&re=home');
-            return redirect('home')->with('print','yes')->with('print_id',$sale_order_id)->with('re','home');
+            return redirect('home')->with('print', 'yes')->with('print_id', $sale_order_id)->with('re', 'home');
         } else {
             $sale_insert = $this->getSaleOrderItemDetails($request->all());
             $sale_order_id = $sale_insert->id;
             $customer_id = $sale_insert->customer_id;
             $order_type = $sale_insert->order_type;
+            $customer_number = $request->customer_number; // Ensure customer_number is defined here
             $request['sale_order_id'] = $sale_order_id;
             $request['user_id'] = auth()->user()->id;
             $request['shop_id'] = auth()->user()->branch_id;
@@ -258,7 +256,6 @@ class SaleController extends Controller
             }
         }
     }
-
     public function getCustomerId($inputs)
     {
         $customer_number = (isset($inputs['customer_number']) && $inputs['customer_number'] != '') ? $inputs['customer_number'] : '';
@@ -268,38 +265,58 @@ class SaleController extends Controller
         $customer_gender = (isset($inputs['customer_gender']) && $inputs['customer_gender'] != '') ? $inputs['customer_gender'] : '';
         $customer_id = '';
 
-        $customer_number_result = Customer::where('customer_number', $customer_number)->first();
+        DB::beginTransaction();
 
-        if ($customer_number_result !== null) {
+        try {
+            Log::info('Starting getCustomerId method with inputs: ', $inputs);
 
-            Customer::where('customer_number', $customer_number)->update([
-                'customer_name' => $customer_name,
-                'customer_address' => $customer_address,
-                'customer_email' => $customer_email,
-                'customer_gender' => $customer_gender
-            ]);
-            $customers = Customer::where('customer_number', $customer_number)->first();
-        } else {
-            if ($customer_number != null) {
+            $customer_number_result = Customer::where('customer_number', $customer_number)->first();
 
-                $customers = Customer::create([
+            if ($customer_number_result !== null) {
+                Log::info('Customer number exists, updating customer: ' . $customer_number);
+                Customer::where('customer_number', $customer_number)->update([
                     'customer_name' => $customer_name,
-                    'customer_number' => $customer_number,
                     'customer_address' => $customer_address,
                     'customer_email' => $customer_email,
-                    'customer_gender' => $customer_gender,
-                    'branch_id' => auth()->user()->branch_id,
-                    'uuid' => Str::uuid(),
+                    'customer_gender' => $customer_gender
                 ]);
                 $customers = Customer::where('customer_number', $customer_number)->first();
+            } else {
+                if ($customer_number != null) {
+                    Log::info('Customer number does not exist, creating new customer: ' . $customer_number);
+
+                    // Generate referral code
+
+                    $customers = Customer::create([
+                        'customer_name' => $customer_name,
+                        'customer_number' => $customer_number,
+                        'customer_address' => $customer_address,
+                        'customer_email' => $customer_email,
+                        'customer_gender' => $customer_gender,
+                        'branch_id' => auth()->user()->branch_id,
+                        'uuid' => Str::uuid(),
+                    ]);
+
+                    $customers = Customer::where('customer_number', $customer_number)->first();
+                } else {
+                    Log::info('Customer number is null, skipping creation.');
+                }
             }
+
+            DB::commit();
+            Log::info('Transaction committed successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error creating customer or user: ' . $e->getMessage());
+            return response()->json(['error' => 'Error creating customer or user. Please try again.'], 500);
         }
+
         return $customers;
     }
 
     public function getSaleOrderItemDetailsEdit($inputs)
     {
-
+        // dd($inputs);
         $branch_id = auth()->user()->branch_id;
         $user_id = auth()->user()->id;
         $order_type = $inputs['order_type'];
@@ -320,9 +337,7 @@ class SaleController extends Controller
         $gross_total = (isset($inputs['gross_total']) && $inputs['gross_total'] != '') ? $inputs['gross_total'] : 0;
         $tax_amount = (isset($inputs['tax_amount']) && $inputs['tax_amount'] != '') ? $inputs['tax_amount'] : 0;
         $net_total = (isset($inputs['net_total']) && $inputs['net_total'] != '') ? $inputs['net_total'] : 0;
-
         $staff_id = (isset($inputs['staff_id']) && $inputs['staff_id'] != '') ? $inputs['staff_id'] : '0';
-
         $discount = (isset($inputs['discount']) && $inputs['discount'] != '') ? $inputs['discount'] : '0';
 
         SaleOrders::where('id', $sale_order_id)->update([
@@ -377,8 +392,7 @@ class SaleController extends Controller
             $sale_order_item_id = (isset($sale_order_item_ids[$i]) && $sale_order_item_ids[$i] != '') ? $sale_order_item_ids[$i] : 0;
             $item_price_cost_price = (isset($item_price_cost_prices[$i]) && $item_price_cost_prices[$i] !== '') ? $item_price_cost_prices[$i] : NULL;
             $old_quantity = (isset($old_quantitys[$i]) && $old_quantitys[$i] != '') ? $old_quantitys[$i] : 0;
-            if(strtolower($item_price_cost_price) == 'nan')
-            {
+            if (strtolower($item_price_cost_price) == 'nan') {
                 $item_price_cost_price = 0;
             }
 
@@ -390,7 +404,6 @@ class SaleController extends Controller
             $other_item_name = $item_details->other_item_name;
 
             $item_price_i = $unit_price;
-            // $cost_price_taken = "item"; //TODO:
             $tax_without_price = $unit_price;
             $tax_type = $item_details->tax_type;
             $tax_name = $item_details->tax_name;
@@ -430,7 +443,6 @@ class SaleController extends Controller
                     'price' => $item_price_i, // unit-price
                     'qty' => $qty,
                     'tax_without_price' => $tax_without_price,
-                    // 'cost_price' => $cost_price,
                     'notes' => $notes,
                     'discount_percent' => $discount_percent,
                     'discount_amount' => $discount_amount,
@@ -493,14 +505,14 @@ class SaleController extends Controller
                     $stock_reaming = $result_stock->stock - $qty;
                     $item_cost_price = $result_stock->cost_price;
                     $finalCostPrice = $item_cost_price * $stock_reaming;
-                    if($stock_reaming <= 0) {
+                    if ($stock_reaming <= 0) {
                         $finalCostPrice = 0;
                     }
 
                     if ($item_id > 0) {
                         $result_stock->update([
                             'stock' => $stock_reaming,
-                            'total_cost_price' =>  $finalCostPrice,
+                            'total_cost_price' => $finalCostPrice,
                         ]);
                         $user_id = $user_id;
                         $item_id = $item_id_i;
@@ -629,12 +641,11 @@ class SaleController extends Controller
 
                 $items = SaleOrderItems::where('sale_order_id', $sale_id)->get();
 
-                foreach($items as $key => $item)
-                {
-                    if($item->stock_applicable) {
+                foreach ($items as $key => $item) {
+                    if ($item->stock_applicable) {
                         $itemsPrice = ItemPrice::where('id', $item->price_size_id)->first();
                         $old_stock = $itemsPrice->stock;
-                        if($old_stock > 0) {
+                        if ($old_stock > 0) {
                             $closing_stock = $item->qty + $old_stock;
                             $totalAmount = $item->cost_price * $item->qty;
                             $finalTotalCostPrice = $itemsPrice->total_cost_price + $totalAmount;
@@ -644,7 +655,7 @@ class SaleController extends Controller
                             $finalCostPrice = $item->cost_price;
                             $finalTotalCostPrice = $item->cost_price * $closing_stock;
 
-                            if($closing_stock <= 0) {
+                            if ($closing_stock <= 0) {
                                 $finalTotalCostPrice = 0;
                             }
                         }
@@ -666,7 +677,7 @@ class SaleController extends Controller
                             'date_added' => date("Y-m-d H:i:s"),
                             'reference_no' => $item->id,
                             'reference_key' => "Delivery Delete",
-                            'shop_id' =>  auth()->user()->branch_id,
+                            'shop_id' => auth()->user()->branch_id,
                             'cost_price' => $finalCostPrice,
                             'total_cost_price' => $finalTotalCostPrice
                         ]);
@@ -675,6 +686,11 @@ class SaleController extends Controller
                 SaleOrders::where('id', $sale_id)->delete();
                 SaleOrderItems::where('sale_order_id', $sale_id)->delete();
                 SaleOrderPayment::where('sale_order_id', $sale_id)->delete();
+                event(new PaymentTransactionEvent(
+                    refNo: $sale_id,
+                    status: 'sale',
+                    delete: true
+                ));
                 // $this->paymentService->deletePayment($sale_id);
             } elseif ($type == 'status') {
 
@@ -726,11 +742,16 @@ class SaleController extends Controller
                     SaleOrders::where('id', $sale_id)->delete();
                     SaleOrderItems::where('sale_order_id', $sale_id)->delete();
                     SaleOrderPayment::where('sale_order_id', $sale_id)->delete();
+                    event(new PaymentTransactionEvent(
+                        refNo: $sale_id,
+                        status: 'sale',
+                        delete: true
+                    ));
                     // $this->paymentService->deletePayment($sale_id);
                 } else if ($status == 'delivered') {
 
                     $balance = $total - getPaidSaleAmount($sale_id)->amount;
-                    if($balance > 0) {
+                    if ($balance > 0) {
                         SaleOrderPayment::create([
                             'sale_order_id' => $sale_id,
                             'payment_type' => $payment_type,
@@ -745,6 +766,15 @@ class SaleController extends Controller
                             'user_id' => auth()->user()->id,
                             'shop_id' => auth()->user()->branch_id
                         ]);
+
+                        event(new PaymentTransactionEvent(
+                            type: 'add',
+                            amount: $balance,
+                            refNo: $sale_id,
+                            paymentType: $payment_type,
+                            status: 'sale',
+                            branchId: auth()->user()->branch_id,
+                        ));
 
                         // $this->paymentService->processPayment($payment_type, 'Sale', 'add', $sale_id, $balance, auth()->user()->branch_id, auth()->user()->id);
                     }
@@ -800,10 +830,20 @@ class SaleController extends Controller
             return $item;
         });
 
-        $sale_orders = SaleOrders::where('uuid', $uuid)->first(); //dd($sale_orders);
+        $sale_orders = SaleOrders::where('uuid', $uuid)->first();
+        //  dd($sale_orders);
         $drivers = Driver::where('branch_id', auth()->user()->branch_id)->get();
         $customer = null;
-        return view("Counter.sale", compact('categorys', 'items', 'drivers', 'sale_orders','customer', 'deliveryService'));
+
+        return view("Counter.sale", compact(
+            'categorys',
+            'items',
+            'drivers',
+            'sale_orders',
+            'customer',
+            'deliveryService',
+
+        ));
     }
 
     public function get_customer(Request $request)
@@ -816,6 +856,20 @@ class SaleController extends Controller
         }
     }
 
+    public function getReferralDiscount(Request $request)
+{
+    $referral_code = $request->referral_code;
+    if ($referral_code) {
+        $customer = Customer::where('referal_code', $referral_code)->first();
+        if ($customer) {
+            return response()->json(['success' => true, 'discount' => $customer->referal_discount]);
+        } else {
+            return response()->json(['success' => false, 'message' => 'Invalid referral code.']);
+        }
+    } else {
+        return response()->json(['success' => false, 'message' => 'Referral code is required.']);
+    }
+}
     public function staff_pin_check(Request $request)
     {
         $pin_number = $request->pin_number;
@@ -949,6 +1003,11 @@ class SaleController extends Controller
         $i = $net_total;
 
         // delete  inserted data;
+        event(new PaymentTransactionEvent(
+            refNo: $sale_order_id,
+            status: 'sale',
+            delete: true
+        ));
         // $this->paymentService->deletePayment($sale_order_id);
 
         if (!empty($multiple_payment_amount) && ($multiple_payment_amount) != 0) {
@@ -981,6 +1040,14 @@ class SaleController extends Controller
                         ]);
 
                         if ($multiple_payment_type != 'credit') {
+                            event(new PaymentTransactionEvent(
+                                type: 'add',
+                                amount: $value,
+                                refNo: $sale_order_id,
+                                paymentType: $multiple_payment_type,
+                                status: 'sale',
+                                branchId: auth()->user()->branch_id,
+                            ));
                             // $this->paymentService->processPayment($multiple_payment_type, 'sale', 'add', $sale_order_id, $value, $shop_id, $user_id);
                         }
 
@@ -1065,6 +1132,7 @@ class SaleController extends Controller
         $gross_total = (isset($inputs['gross_total']) && $inputs['gross_total'] != '') ? $inputs['gross_total'] : 0;
         $tax_amount = (isset($inputs['tax_amount']) && $inputs['tax_amount'] != '') ? $inputs['tax_amount'] : 0;
         $net_total = (isset($inputs['net_total']) && $inputs['net_total'] != '') ? $inputs['net_total'] : 0;
+        $converted_points = (isset($inputs['converted_points']) && $inputs['converted_points'] != '') ? $inputs['converted_points'] : 0;
         //$cash_back_vat_amount = (isset($inputs['cash_back_vat_amount']) && $inputs['cash_back_vat_amount'] != '') ? $inputs['cash_back_vat_amount'] : 0;
 
         // $cash = (isset($inputs['cash']) && $inputs['cash'] != '') ? $inputs['cash'] : 0;
@@ -1145,10 +1213,45 @@ class SaleController extends Controller
                 'tax_amount' => $tax_amount,
                 'with_tax' => $net_total,
                 'receipt_id' => getNextReceiptId(),
-                'created_at' => $ordered_date
+                'created_at' => $ordered_date,
+                'updated_at' => $ordered_date,
+                'points_redeemed' => $converted_points,
+
+
 
             ]);
-        }
+            $loyalty = DB::table('loyality')->first();
+
+            if ($loyalty) {
+                $min_sale_amount = $loyalty->min_sale_amount;
+                $loyalty_points = $loyalty->loyalty_points;
+
+                // Check if net total exceeds the minimum sale amount for loyalty points
+                if ($net_total >= $min_sale_amount) {
+                    $points_to_add = floor($net_total / $min_sale_amount) * $loyalty_points;
+                    Log::info('Adding points to customer: ' . $customer_id . ' Points to add: ' . $points_to_add);
+
+                    // Log the current points before update
+                    $current_points = Customer::where('id', $customer_id)->value('points');
+                    Log::info('Current points for customer ' . $customer_id . ': ' . $current_points);
+
+                    // Update customer points
+                    $updated = Customer::where('id', $customer_id)->increment('points', $points_to_add);
+
+                    // Log the new points after update
+                    $new_points = Customer::where('id', $customer_id)->value('points');
+                    Log::info('New points for customer ' . $customer_id . ': ' . $new_points);
+
+                    Log::info('Points update result: ' . $updated);
+                }
+            }
+
+            // Handle redeemed points if applicable
+            if ($converted_points > 0) {
+                $points = $converted_points;
+                $updated = Customer::where('id', $customer_id)->decrement('points', $points);
+                Log::info('Points update decremented: ' . $updated);
+            }        }
 
         if ($result == true && $result_date == null) {
             $sale_order_id = $result;
@@ -1177,6 +1280,7 @@ class SaleController extends Controller
             $total_amount = $without_tax = $tax_amount = $with_tax = 0;
             for ($i = 0; $i < count($item_ids); $i++) {
                 $item_id = $item_ids[$i];
+                // dd($item_id);
                 $price_size_id = $price_ids[$i];
                 $item_name = $item_names[$i];
                 $qty = $qtys[$i];
@@ -1202,6 +1306,7 @@ class SaleController extends Controller
                 $item_price_cost_price = $item_price_cost_price !== null && is_numeric($item_price_cost_price) ? $item_price_cost_price : 0;
                 // $item_type = $item_types[$i];
                 $item_details = Item::where('id', $item_id)->first();
+                // dd($item_details);
                 $item_id_i = $item_details->id;
                 $other_item_name = $item_details->other_item_name;
 
@@ -1479,4 +1584,61 @@ class SaleController extends Controller
             return 'failed';
         }
     }
+    public function addtocart(Request $request)
+{
+    // dd($request->all());
+    // Validate the request
+    // Support for multiple item_id (array or comma-separated)
+    $itemIds = $request->price_ids;
+    if (is_string($itemIds)) {
+        // If itemIds is a string like "[1,2,3]" or "1,2,3"
+        $itemIds = trim($itemIds, "[]");
+        $itemIds = explode(',', $itemIds);
+    }
+    if (!is_array($itemIds)) {
+        $itemIds = [$itemIds];
+    }
+    $results = [];
+    foreach ($itemIds as $itemId) {
+        $itemId = trim($itemId);
+        if (empty($itemId)) continue;
+
+        $query = Item::leftJoin('item_prices', function ($join) {
+            $join->on('items.id', '=', 'item_prices.item_id');
+        })->leftJoin('categories', function ($joins) {
+            $joins->on('items.category_id', '=', 'categories.id');
+        })->leftJoin('price_size', function ($joins) {
+            $joins->on('item_prices.price_size_id', '=', 'price_size.id');
+        })->where('items.branch_id', auth()->user()->branch_id)
+            ->where('items.active', 'yes')
+            ->where('items.id', $itemId)
+            ->select(DB::raw('items.*,item_prices.id as price_id,item_prices.item_id,item_prices.price_size_id,item_prices.price,item_prices.stock as item_stock,item_prices.cost_price as item_price_cost_price,categories.category_slug,price_size.size_name'));
+
+        if ($request->service != 'normal' && $request->type == 'delivery') {
+            $query->join('item_delivery_service_price as idsp', 'item_prices.id', '=', 'idsp.item_price_id')
+                ->where('idsp.service_id', $request->service)
+                ->addSelect(
+                    'idsp.id as delivery_service_price_id',
+                    'idsp.price as delivery_service_price'
+                );
+        }
+
+        $item = $query->orderBy('items.item_name')->first();
+
+        if ($item) {
+            if ($request->service != 'normal' && $request->type == 'delivery' && isset($item->delivery_service_price)) {
+                $item->price = $item->delivery_service_price;
+            }
+            $results[] = ['status' => 1, 'item' => $item];
+        } else {
+            $results[] = ['status' => 0, 'message' => 'Item not found', 'item_id' => $itemId];
+        }
+    }
+
+    // If only one item, keep old response for backward compatibility
+    if (count($results) == 1) {
+        return response()->json($results[0]);
+    }
+    return response()->json(['status' => 1, 'items' => $results]);
+}
 }

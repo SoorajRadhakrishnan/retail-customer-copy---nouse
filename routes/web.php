@@ -28,7 +28,7 @@ use App\Http\Controllers\Admin\ExpenseCategoryController;
 use App\Http\Controllers\Admin\IngredientController;
 use App\Http\Controllers\Admin\ItemStockController;
 use App\Http\Controllers\Admin\WastageUsageController;
-use App\Http\Controllers\Admin\InventoryController;
+use App\Http\Controllers\Admin\PaymentTransferController;
 
 use App\Http\Controllers\Admin\ProductionController;
 use App\Http\Controllers\Admin\PurchaseController;
@@ -40,6 +40,9 @@ use App\Http\Controllers\Admin\TestController;
 use App\Http\Controllers\Counter\CreditSaleController;
 use App\Http\Controllers\Counter\CrmController;
 use App\Http\Controllers\Counter\DeliverySaleController;
+use App\Http\Controllers\Admin\InventoryController;
+use App\Http\Controllers\Admin\LoyalityController;
+use App\Http\Controllers\Admin\QuotationController;
 
 // Counter
 use App\Http\Controllers\Counter\SaleController;
@@ -49,6 +52,7 @@ use App\Http\Controllers\Counter\OpenDrawer;
 use App\Http\Controllers\Counter\PayBackController;
 use App\Http\Controllers\Counter\RecentSaleController;
 use App\Http\Controllers\Counter\SettleSaleController;
+use App\Http\Controllers\Counter\CounterQuotationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -75,7 +79,6 @@ Route::group(['middleware' => ['auth', 'superadmin']], function () {
     Route::get('settings', [SettingsController::class, 'index']);
     Route::get('software-settings', [SettingsController::class, 'softwaresettingview']);
     Route::post('software-settings', [SettingsController::class, 'storesoftwaresetting']);
-    Route::resource('payment-method', PaymentMethodController::class);
     Route::resource('price-size', PriceSizeController::class);
     Route::resource('branch', BranchController::class);
     Route::get('users', [SettingsController::class, 'users_list'])->name('user');
@@ -93,7 +96,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin']], function 
     // dashboard
     Route::get('dashboard', [DashboardController::class, 'index']);
     Route::get('dashboard2', [DashboardController::class, 'index2']);
-
+Route::get('quotation/print', [QuotationController::class, 'printquote']);
     // Password Change
     Route::post('change-password', [UserController::class, 'changePassword']);
 
@@ -109,12 +112,14 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin']], function 
     Route::resource('ingredient', IngredientController::class);
     Route::resource('production', ProductionController::class);
     Route::resource('barcode-print', BarcodeController::class);
+    Route::resource('payment-method', PaymentMethodController::class);
+    Route::resource('loyalty', LoyalityController::class);
 
     // Transcation
     Route::resource('stock', ItemStockController::class);
     Route::resource('sale-order', SaleOrdersController::class);
     Route::post('sale-order/change-payment', [SaleOrdersController::class, 'changePaymentType']);
-        Route::resource('expense', AdminExpenseController::class)->names([
+    Route::resource('expense', AdminExpenseController::class)->names([
         'index' => 'admin.expense.index',
         'create' => 'admin.expense.create',
         'store' => 'admin.expense.store',
@@ -123,11 +128,11 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin']], function 
         'update' => 'admin.expense.update',
         'destroy' => 'admin.expense.destroy',
     ]);
-
     Route::resource('purchase', PurchaseController::class);
     Route::post('change-purchase-status', [PurchaseController::class, 'change_purchase_status']);
 
     Route::resource('stock-transfer', StockTransferController::class);
+    Route::resource('payment-transfer', PaymentTransferController::class);
     Route::post('stock-transfer/approve', [StockTransferController::class, 'approveTransfer']);
 
     Route::post('updatePaymentStatus', [PurchaseController::class, 'updatePaymentStatus'])->name('admin.purchases.updatePaymentStatus');
@@ -138,14 +143,22 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin']], function 
     Route::delete('sale-order/{sale_order}', [SaleOrdersController::class, 'destroy']);
 
     Route::resource('wastage-usage', WastageUsageController::class);
-Route::resource('stock-add', StockAddController::class);
-   Route::resource('inventory', InventoryController::class);
-    Route::get('barcode-search', [InventoryController::class, 'barcode_search']);
-
-    // Route::post('admin/sale-order', [SaleOrdersController::class, 'updatePaymentType']);
-      Route::resource('wastage-usage', WastageUsageController::class);
     Route::get('item-by-barcode', [PurchaseController::class, 'getItemByBarcode']);
+    Route::resource('stock-add', StockAddController::class);
 
+      Route::resource('wastage-usage', WastageUsageController::class);
+      Route::resource('inventory', InventoryController::class);
+      Route::get('barcode-search', [InventoryController::class, 'barcode_search']);
+       Route::resource('quotation', QuotationController::class)->names([
+        'index' => 'admin.quotation.index',
+        'create' => 'admin.quotation.create',
+        'store' => 'admin.quotation.store',
+        'show' => 'admin.quotation.show',
+        'edit' => 'admin.quotation.edit',
+        'update' => 'admin.quotation.update',
+        'destroy' => 'admin.quotation.destroy',
+    ]);
+    Route::post('quotation/customer', [QuotationController::class, 'customersave']);
 
     // Reports
     Route::get('bill-wise-report', [ReportController::class, 'bill_wise']);
@@ -176,8 +189,11 @@ Route::resource('stock-add', StockAddController::class);
     Route::get('customer-outstanding', [ReportController::class,'customer']);
     Route::get('driver-outstanding', [ReportController::class,'driver']);
     Route::get('profit-loss', [ReportController::class,'profit_loss']);
-  Route::get('stock-out-report', [ReportController::class, 'stock_out']);
+    Route::get('stock-out-report', [ReportController::class, 'stock_out']);
+    Route::get('payment-book', [ReportController::class, 'paymentBook']);
     // Route::resource('testing',TestController::class);
+  Route::get('production_log', [ReportController::class, 'production_log']);
+  Route::get('points-history', [ReportController::class, 'points_history']);
 });
 
 // Counter
@@ -195,13 +211,13 @@ Route::group(['middleware' => ['auth', 'counter']], function () {
     Route::get('delivery-list', [SaleController::class, 'delivery_list']);
     Route::get('hold-list', [SaleController::class, 'hold_list']);
     Route::post('change-delivery-status', [SaleController::class, 'change_delivery_status']);
-    Route::get('fetch-items', [SaleController::class, 'fetchItems']);
-    
-        Route::resource('expense', ExpenseController::class)->names([
+ Route::get('/get-loyalty-data', function () {
+        return response()->json(DB::table('loyality')->first());
+    });
+    Route::resource('expense', ExpenseController::class)->names([
         'store' => 'expense.store',
         'create' => 'expense.create',
     ]);
-
     Route::resource('credit-sale', CreditSaleController::class);
     Route::resource('recent-sale', RecentSaleController::class);
     Route::post('changePayment', [RecentSaleController::class, 'changePaymentType'])->name('changePaymentType');
@@ -217,13 +233,21 @@ Route::group(['middleware' => ['auth', 'counter']], function () {
     Route::get('driver-log', [DeliverySaleController::class, 'driverLog']);
     Route::post('driver-order-close', [DeliverySaleController::class, 'driver_order_close']);
     Route::post('recent-sale/change-payment', [RecentSaleController::class, 'changePaymentType']);
-
+    Route::POST('addtocart', [SaleController::class, 'addToCart']);
     //print
     Route::get('credit-print', [CreditSaleController::class, 'show']);
 
     // Password change
     Route::post('change-password', [UserController::class, 'changePassword']);
+      // Quotation
+    Route::resource('quotation', CounterQuotationController::class);
+    Route::get('print-quote', [CounterQuotationController::class, 'printquote']);
+    Route::post('quotation/add-to-cart', [CounterQuotationController::class, 'addToCart']);
 });
+
+// excel route moved to excel.php file
+// include 'excel.php';
+
 Route::get('artisan/{command}', function($command) {
     // if (app()->environment('local')) {
         Artisan::call($command);
@@ -231,8 +255,6 @@ Route::get('artisan/{command}', function($command) {
     // }
 });
 
-// excel route moved to excel.php file
-include 'excel.php';
 
 Route::fallback(function () {
     return redirect('/');

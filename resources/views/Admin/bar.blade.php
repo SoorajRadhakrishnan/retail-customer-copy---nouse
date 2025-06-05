@@ -43,14 +43,14 @@ $branch_details = DB::table('branches')->where('id', $branch_id)->whereNull('del
 <body>
 
     @foreach ($items as $item)
-        {{-- <?php if($branch_details->image != '' && file_exists(public_path('storage/image/' . $branch_details->image))) { ?>
+        <?php if($branch_details->image != '' && file_exists(public_path('storage/image/' . $branch_details->image))) { ?>
         <div style="text-align: center; ">
-            <img style="text-align: center;width: 50px;margin-top: 2px;"
-                src="{{ public_path('storage/image/' . $branch_details->image) }}">
+            {{-- <img style="text-align: center;width: 50px;margin-top: 2px;"
+                src=""> --}}
         </div>
-        <?php }  ?> --}}
+        <?php }  ?>
         <div class="label">
-            <div class="name " style="font-weight: bold;margin-top: 17px;  "> {{ strtoupper($item['name']) }} </div>
+            <div class="name " style="font-weight: bold;margin-top: 20px;  "> {{ strtoupper($item['name']) }} </div>
             <div class="barcode"> {!! $item['barcode_html'] !!} </div>
             <div>
                 <span class="barcode" style="font-size: 12px"> {{ showAmount($item['price'], 1) }} </span>

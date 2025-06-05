@@ -206,30 +206,30 @@
                                                         <td class="text-center">
     <div class="btn-group rounded-10" role="group" aria-label="Action Buttons" data-bs-toggle="tooltip" data-bs-placement="top" title="Actions">
         <!-- Open Drawer Button -->
-        <a href="javascript:void(0)" 
-           class="btn btn-dark pt-2 px-3 rounded-10 shadow dynamicPopup" 
-           title="Open Drawer" 
-           data-pop="lg" 
-           data-url="{{ url('admin/sale-order/create') }}?id={{ $value->id }}" 
-           data-toggle="modal" 
-           data-target="#dynamicPopup-lg" 
+        <a href="javascript:void(0)"
+           class="btn btn-dark pt-2 px-3 rounded-10 shadow dynamicPopup"
+           title="Open Drawer"
+           data-pop="lg"
+           data-url="{{ url('admin/sale-order/create') }}?id={{ $value->id }}"
+           data-toggle="modal"
+           data-target="#dynamicPopup-lg"
            data-image="{{ url(config('constant.LOADING_GIF')) }}">
             <i class="fa fa-list"></i>
         </a>
 
         <!-- Print Button -->
-        <a class="btn btn-dark pt-2 px-3 rounded-10" 
-           href="javascript:void(0)" 
-           onclick="printit('{{ sha1(time()) }}','{{ $url }}');" 
+        <a class="btn btn-dark pt-2 px-3 rounded-10"
+           href="javascript:void(0)"
+           onclick="printit('{{ sha1(time()) }}','{{ $url }}');"
            title="Print">
             <i class="fa fa-print"></i>
         </a>
 
         <!-- Delete Button (only if permissions allow) -->
         @if (checkUserPermission('sale_delete') && $settle)
-        <a class="btn btn-dark pt-2 px-3 rounded-10" 
-           href="javascript:void(0)" 
-           onclick="showActionModal('delete', '{{ $value->uuid }}')" 
+        <a class="btn btn-dark pt-2 px-3 rounded-10"
+           href="javascript:void(0)"
+           onclick="showActionModal('delete', '{{ $value->uuid }}')"
            title="Delete">
             <i class="fa fa-trash"></i>
         </a>
@@ -367,7 +367,7 @@
 
             if (action === 'delete') {
                 $.ajax({
-                    url: '/admin/sale-order/' + recordId, // Make sure the correct route is used
+                    url: "{{ url('/admin/sale-order') }}/" + recordId, // Make sure the correct route is used
                     method: 'DELETE',
                     data: {
                         _token: '{{ csrf_token() }}',
@@ -388,7 +388,7 @@
             .val(); // Get the selected payment type
 
                 $.ajax({
-                    url: 'sale-order/change-payment', // Endpoint for payment change
+                    url: "{{ url('sale-order/change-payment') }}", // Endpoint for payment change
                     type: "POST",
                     data: {
                         'id': recordId,

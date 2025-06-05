@@ -88,6 +88,7 @@ Submit                                            </button>
                                                 <th>Payback</th>
                                                 <th>Payback Vat</th>
                                                 <th>Expense</th>
+                                                <th>Purchase</th>
                                                 <th>Gross Total</th>
                                                 <th>Discount</th>
                                                 <th>Sale VAT</th>
@@ -115,6 +116,7 @@ Submit                                            </button>
                                                         <td>{{ showAmount($settle->pay_back) }}</td>
                                                         <td>{{ showAmount($settle->pay_back_vat) }}</td>
                                                         <td>{{ showAmount($settle->expense) }}</td>
+                                                        <td>{{ showAmount($settle->purchase) }}</td>
                                                         <td>{{ showAmount($settle->gross_total) }}</td>
                                                         <td>{{ showAmount($settle->discount) }}</td>
                                                         <td>{{ showAmount($settle->gross_total_tax) }}</td>

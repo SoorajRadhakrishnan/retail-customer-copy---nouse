@@ -81,6 +81,7 @@ Submit                                            </button>
                                                 <th>Invoice Number</th>
                                                 <th>Description</th>
                                                 <th>Payment Status</th>
+                                                <th>Payment type</th>
                                                 <th>Total Before VAT</th>
                                                 <th>VAT Amount</th>
                                                 <th>Final Amount</th>
@@ -89,7 +90,10 @@ Submit                                            </button>
                                                 @endif
                                             </tr>
                                         </thead>
-                                        <tbody>
+                                                                                <tbody>
+                                            @php
+                                                $paymentMethods = PaymentList(auth()->user()->branch_id);
+                                            @endphp
                                             @if (count($expenses) > 0)
                                                 @foreach ($expenses as $key => $expense)
                                                     <tr>
@@ -101,6 +105,16 @@ Submit                                            </button>
                                                         <td>{{ Str::ucfirst($expense->invoice_no) }}</td>
                                                         <td>{{ Str::ucfirst($expense->description) }}</td>
                                                         <td>{{ Str::ucfirst($expense->payment_status) }}</td>
+                                                        <td>
+                                                            @php
+                                                                $method = $paymentMethods->firstWhere('id', $expense->payment_method_id ?? $expense->payment_type);
+                                                                echo $method
+                                                                    ? $method->payment_method_name
+                                                                    : ($expense->payment_type
+                                                                        ? $expense->payment_type
+                                                                        : '-');
+                                                            @endphp
+                                                        </td>
                                                         <td>{{ showAmount($expense->total_before_vat) }}</td>
                                                         <td>{{ showAmount($expense->vat) }}</td>
                                                         <td>{{ showAmount($expense->total_amount) }}</td>
@@ -139,6 +153,7 @@ Submit                                            </button>
                                                 @endforeach
                                             @endif
                                         </tbody>
+
                                     </table>
                                 </div>
                             </div>

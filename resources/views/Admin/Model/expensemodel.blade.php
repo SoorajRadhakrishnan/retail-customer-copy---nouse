@@ -40,10 +40,37 @@
                     </div>
                 </div>
                 <div class="col-md-6">
+                    <label class="form-group mt-0 mb-0">Payment Type</label>
+                    <select class="form-control rounded-10 onChange" id="payment_type" name="payment_type"
+                        required="">
+                        <option value="">Select Payment type</option>
+                       @foreach ($payment_methods as $type)
+     @if (strtolower($type->payment_method_slug) !== 'credit')
+                                <option value="{{ $type->payment_method_slug }}"
+                                    @if ($type->payment_method_slug == optional($expense)->payment_type) selected="selected" @endif>
+            {{ $type->payment_method_name }}
+        </option>
+    @endif
+@endforeach         
+
+                    </select>
+                    <div class="valid-feedback">&nbsp;</div>
+                    <div class="invalid-feedback">&nbsp;</div>
+                </div>
+                <div class="col-md-6">
                     <div class="form-group mt-0 mb-0">
                         <label class="mb-0">Invoice No</label>
                         <input type="text" class="form-control rounded-10" id="invoice_no" placeholder=""
                             name="invoice_no" autofocus="" value="{{ optional($expense)->invoice_no }}">
+                        <div class="valid-feedback">&nbsp;</div>
+                        <div class="invalid-feedback">&nbsp;</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mt-0 mb-0">
+                        <label class="mb-0">Date</label>
+                        <input type="date" class="form-control rounded-10" id="date" placeholder=""
+                            name="date" autofocus="" value="{{ optional($expense)->date }}" required="">
                         <div class="valid-feedback">&nbsp;</div>
                         <div class="invalid-feedback">&nbsp;</div>
                     </div>

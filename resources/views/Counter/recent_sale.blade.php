@@ -22,7 +22,7 @@
     // $PaymentLists = PaymentList(auth()->user()->branch_id);
     ?>
 
-    ?>
+
 
     <div class="az-content az-content-dashboard  animate__animated animate__fadeIn">
         <div class="container-fluid">
@@ -205,6 +205,17 @@
                                                                     <i class="fa fa-list"></i>
                                                                 </a>
                                                             </div>
+                                                            {{-- @if (checkUserPermission('sale_edit') && $settle) --}}
+                                                                <div class="btn-group rounded-10" role="group"
+                                                                    aria-label="Basic example" data-bs-toggle="tooltip"
+                                                                    data-bs-placement="top" title="Edit">
+                                                                    <a href="javascript:void(0)"
+                                                                        class="btn btn-dark pt-2 px-3 rounded-10 shadow"
+                                                                        onclick="showActionModal('edit', '{{ $value->uuid }}')">
+                                                                        <i class="fa fa-edit"></i>
+                                                                    </a>
+                                                                </div>
+                                                            {{-- @endif --}}
                                                             <div class="btn-group rounded-10" role="group"
                                                                 aria-label="Basic example" data-bs-toggle="tooltip"
                                                                 data-bs-placement="top" title="Print">
@@ -294,105 +305,131 @@
 @section('script')
 
 
-<script>
-    function showActionModal(action, id, receiptId = null) {
-        $('#actionType').val(action); // Set action type (delete or payment_change)
-        $('#recordId').val(id); // Set record ID (UUID or Sale ID)
-        $('#receiptId').val(receiptId); // Set receipt ID (for payment change only)
+    <script>
+        function showActionModal(action, id, receiptId = null) {
+            $('#actionType').val(action); // Set action type (delete or payment_change)
+            $('#recordId').val(id); // Set record ID (UUID or Sale ID)
+            $('#receiptId').val(receiptId); // Set receipt ID (for payment change only)
 
-        if (action === 'delete') {
-            $('#actionModalTitle').text('Confirm Deletion');
-            $('#actionButton').text('Delete').removeClass('btn-primary').addClass('btn-danger');
-            $('#staffPinField').show(); // Show staff PIN for delete if required
-        } else if (action === 'payment_change') {
-            $('#actionModalTitle').text('Confirm Payment Change');
-            $('#actionButton').text('Change Payment').removeClass('btn-danger').addClass('btn-primary');
-            $('#staffPinField').hide(); // Hide staff PIN for payment change
-        }
-
-        $('#actionModal').modal('show');
-    }
-
-    // Handle delete or payment change actions
-    $('#actionButton').on('click', function() {
-        const action = $('#actionType').val();
-        const recordId = $('#recordId').val();
-        const reason = $('#reason').val();
-        const staffPin = $('#staff_pin').val();
-        const receiptId = $('#receiptId').val();
-
-        if (!reason) {
-            alert("Please provide a reason.");
-            return;
-        }
-
-        if (action === 'delete') {
-            $.ajax({
-                url: '/recent-sale/' + recordId,
-                method: 'DELETE',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    reason: reason,
-                    staff_pin: staffPin
-                },
-                success: function(response) {
-                    if (response.status === 1) {
-                        alert("Record deleted successfully.");
-                        location.reload();
-                    } else {
-                        alert(response.message || "An error occurred while deleting the record.");
-                    }
-                },
-                error: function(xhr) {
-                    console.error(xhr.responseText);
-                    alert("An error occurred while deleting the record.");
-                }
-            });
-        }
-        else if (action === 'payment_change') {
-    const selectedPaymentType = $('select[name="payment_change"]').val(); // Get the selected payment type
-
-    $.ajax({
-        url: "{{ route('changePaymentType') }}",
-        type: "POST",
-        data: {
-            'id': recordId,
-            'reason': reason,
-            'payment_type': selectedPaymentType, // Include the selected payment type here
-            '_token': "{{ csrf_token() }}",
-        },
-        dataType: "JSON",
-        success: function(data) {
-            if (data.status == 1) {
-                alert(data.message);
-                setTimeout(function() {
-                    location.reload();
-                }, 1000);
-            } else {
-                alert(data.message || 'Error updating payment type.');
+            if (action === 'delete') {
+                $('#actionModalTitle').text('Confirm Deletion');
+                $('#actionButton').text('Delete').removeClass('btn-primary').addClass('btn-danger');
+                $('#staffPinField').show(); // Show staff PIN for delete if required
+            } else if (action === 'payment_change') {
+                $('#actionModalTitle').text('Confirm Payment Change');
+                $('#actionButton').text('Change Payment').removeClass('btn-danger').addClass('btn-primary');
+                $('#staffPinField').hide(); // Hide staff PIN for payment change
+            } else if (action === 'edit') {
+                $('#actionModalTitle').text('Confirm Sale Edit');
+                $('#actionButton').text('Edit').removeClass('btn-danger').addClass('btn-primary');
+                $('#staffPinField').hide(); // Hide staff PIN for edit
             }
-        },
-        error: function(xhr) {
-            console.error(xhr.responseText);
-            alert('An error occurred. Please try again.');
+
+            $('#actionModal').modal('show');
         }
-    });
-}
 
+        // Handle delete or payment change actions
+        $('#actionButton').on('click', function() {
+            const action = $('#actionType').val();
+            const recordId = $('#recordId').val();
+            const reason = $('#reason').val();
+            const staffPin = $('#staff_pin').val();
+            const receiptId = $('#receiptId').val();
 
-        $('#actionModal').modal('hide');
-    });
+            if (!reason) {
+                alert("Please provide a reason.");
+                return;
+            }
 
-    // Event listener for payment type change
-    $(document).on('change', '.payment_change', function() {
-        const selectedPaymentType = $(this).val();
-        const saleId = $(this).data('sale_id');
-        const receiptId = $(this).data('receipt_id');
+            if (action === 'delete') {
+                $.ajax({
+                    url: "{{ url('recent-sale') }}/" + recordId,
+                    method: 'DELETE',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        reason: reason,
+                        staff_pin: staffPin
+                    },
+                    success: function(response) {
+                        if (response.status === 1) {
+                            alert("Record deleted successfully.");
+                            location.reload();
+                        } else {
+                            alert(response.message || "An error occurred while deleting the record.");
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error(xhr.responseText);
+                        alert("An error occurred while deleting the record.");
+                    }
+                });
+            } else if (action === 'payment_change') {
+                const selectedPaymentType = $('select[name="payment_change"]')
+            .val(); // Get the selected payment type
 
-        if (selectedPaymentType) {
-            showActionModal('payment_change', saleId, receiptId);
-        }
-    });
-</script>
+                $.ajax({
+                    url: "{{ route('changePaymentType') }}",
+                    type: "POST",
+                    data: {
+                        'id': recordId,
+                        'reason': reason,
+                        'payment_type': selectedPaymentType, // Include the selected payment type here
+                        '_token': "{{ csrf_token() }}",
+                    },
+                    dataType: "JSON",
+                    success: function(data) {
+                        if (data.status == 1) {
+                            alert(data.message);
+                            setTimeout(function() {
+                                location.reload();
+                            }, 1000);
+                        } else {
+                            alert(data.message || 'Error updating payment type.');
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error(xhr.responseText);
+                        alert('An error occurred. Please try again.');
+                    }
+                });
+            } else if (action === 'edit') {
+                $.ajax({
+                    url: "{{ url('recent-sale/show') }}", // Updated URL
+                    type: "GET",
+                    data: {
+                        'id': recordId,
+                        'reason': reason,
+                        '_token': "{{ csrf_token() }}",
+                    },
+                    dataType: "JSON",
+                    success: function(data) {
+                        if (data.status == 1) {
+                            alert(data.message);
+                            // Redirect to the edit page after saving the reason
+                            window.location.href = `/home/${recordId}/edit?edited=yes`;
+                        } else {
+                            alert(data.message || 'Error saving edit reason.');
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error(xhr.responseText);
+                        alert('An error occurred. Please try again.');
+                    }
+                });
+            }
+            $('#actionModal').modal('hide');
+        });
+
+        // Event listener for payment type change
+        $(document).on('change', '.payment_change', function() {
+            const selectedPaymentType = $(this).val();
+            const saleId = $(this).data('sale_id');
+            const receiptId = $(this).data('receipt_id');
+
+            if (selectedPaymentType) {
+                showActionModal('payment_change', saleId, receiptId);
+            }
+        });
+    </script>
 
 @endsection

@@ -12,6 +12,10 @@ use App\Models\Purchase;
 use App\Models\SettleSale;
 use App\Models\Admin\Driver;
 use App\Models\Admin\ItemPrice;
+use App\Models\Admin\Production;
+use App\Models\PaymentTranscation;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class ReportController extends Controller
 {
@@ -25,7 +29,7 @@ class ReportController extends Controller
         return (isset($request->to_date) && $request->to_date != '') ? $request->to_date." 23:59:59" : date('Y-m-d 23:59:59');
     }
 
-    public function bill_wise(Request $request)
+     public function bill_wise(Request $request)
     {
         if (!(checkUserPermission('bill_wise_report'))) {
             return redirect('admin/dashboard')->withMessage('Unauthorized Access');
@@ -36,6 +40,7 @@ class ReportController extends Controller
         $customer = $request->customer;
         $receipt_id = $request->receipt_id;
         $branch_id = $this->getBranchId();
+        $user_id = $request->user_id;
         $customers = getCustomerall($branch_id);
 
         $data = SaleOrders::whereBetween('ordered_date', [$from_date, $to_date])
@@ -50,11 +55,14 @@ class ReportController extends Controller
             ->when($receipt_id, function ($query, $receipt_id) {
                 $query->where('receipt_id', $receipt_id);
             })
+              ->when($user_id, function ($query, $user_id) {
+            $query->where('user_id', $user_id);
+        })
             ->get();
+        $users = getUserForFilter($branch_id);
 
-        return view('Admin.Report.bill-wise', compact('data', 'customers'));
+        return view('Admin.Report.bill-wise', compact('data', 'customers', 'from_date', 'to_date', 'receipt_id', 'user_id', 'users'));
     }
-
     public function category_wise(Request $request)
     {
         if (!(checkUserPermission('category_wise_report'))) {
@@ -266,7 +274,7 @@ class ReportController extends Controller
             return view('Admin.Report.payback-log', compact('paybacks', 'customers', 'from_date', 'to_date', 'customer_id'));
 
         } catch (\Exception $e) {
-            \Log::error('Error fetching payback log: ' . $e->getMessage());
+            Log::error('Error fetching payback log: ' . $e->getMessage());
             return redirect('admin/dashboard')->withMessage('Error fetching payback log');
         }
     }
@@ -659,17 +667,19 @@ public function minimum_stock(Request $request)
         $payment_status = $request->payment_status;
         $expense_cat_id = $request->expense_cat_id;
         $expenseCats = expenseCatList($branch_id);
+        $payment_type = $request->payment_type;
 
 
         $data = Expense::when($branch_id, function ($query, $branch_id) {
-                    $query->where('branch_id', $branch_id);
-                })->when($expense_cat_id, function ($query, $expense_cat_id) {
-                    $query->where('expense_cat_id', $expense_cat_id);
-                })->when($payment_status, function ($query, $payment_status) {
-                    $query->where('payment_status', $payment_status);
-                })->whereBetween('created_at', [$from_date, $to_date])->orderBy('id', 'desc')->get();
+                     })->when($expense_cat_id, function ($query, $expense_cat_id) {
+                        $query->where('expense_cat_id', $expense_cat_id);
+                    })->when($payment_status, function ($query, $payment_status) {
+                        $query->where('payment_status', $payment_status);
+                    })->when($payment_type, function ($query, $payment_type) {
+                        $query->where('payment_type', $payment_type); // Add the payment type filter
+                    })->whereBetween('created_at', [$from_date, $to_date])->orderBy('id', 'desc')->get();
 
-        return view('Admin.Report.expense', compact('data', 'expenseCats'));
+        return view('Admin.Report.expense', compact('data', 'expenseCats', 'payment_status', 'payment_type', 'expense_cat_id'));
     }
 
     public function profit_loss(Request $request)
@@ -697,6 +707,12 @@ public function minimum_stock(Request $request)
             ->whereBetween('created_at', [$from_date, $to_date])
             ->first();
 
+        $production=Production::when($branch_id, function ($query, $branch_id) {
+            $query->where('branch_id', $branch_id);
+        })->select(DB::raw('SUM(production_cost) as total_amount'))
+            ->whereBetween('created_at', [$from_date, $to_date])
+            ->first();
+// dd($production);
         $sale = SaleOrders::whereBetween('ordered_date', [$from_date, $to_date])
             ->where('status', '!=', 'hold')
             ->where('payment_status', 'paid')
@@ -705,7 +721,7 @@ public function minimum_stock(Request $request)
             })->select(DB::raw('SUM(with_tax) as total_amount'))
             ->first();
 
-        return view('Admin.Report.profit_loss', compact('expense', 'sale', 'purchase'));
+        return view('Admin.Report.profit_loss', compact('expense', 'sale', 'purchase','production'));
     }
 
     public function driver(Request $request)
@@ -742,27 +758,130 @@ public function minimum_stock(Request $request)
         // Return the view with the data
         return view("Admin.Report.driver-amount", compact('data', 'from_date', 'to_date'));
     }
-  public function stock_out(Request $request)
-        {
-            // Initialize the query
-            $query = DB::table('inventory_log')
-                ->leftJoin('items', 'inventory_log.item_id', '=', 'items.id')
-                ->select('inventory_log.*', 'items.item_name');
+    public function stock_out(Request $request)
+    {
+        // Initialize the query
+        $query = DB::table('inventory_log')
+            ->leftJoin('items', 'inventory_log.item_id', '=', 'items.id')
+            ->select('inventory_log.*', 'items.item_name');
 
-            // Apply item filter if provided
-            if ($request->has('item_id') && !empty($request->item_id)) {
-                $query->where('inventory_log.item_id', $request->item_id);
-            }
-
-            // Apply date filter if provided
-            if ($request->has('start_date') && $request->has('end_date') && !empty($request->start_date) && !empty($request->end_date)) {
-                $query->whereBetween('inventory_log.created_at', [$request->start_date, $request->end_date]);
-            }
-
-            // Fetch the filtered data
-            $data = $query->get();
-            $items = getAllItem($this->getBranchId());
-// dd($data);   
-            return view('Admin.Report.stock_out', compact('data','items'));
+        // Apply item filter if provided
+        if ($request->has('item_id') && !empty($request->item_id)) {
+            $query->where('inventory_log.item_id', $request->item_id);
         }
+
+        // Apply date filter if provided
+        if ($request->has('start_date') && $request->has('end_date') && !empty($request->start_date) && !empty($request->end_date)) {
+            $query->whereBetween('inventory_log.created_at', [$request->start_date, $request->end_date]);
+        }
+
+        // Fetch the filtered data
+        $data = $query->get();
+        $items = getAllItem($this->getBranchId());
+// dd($data);
+        return view('Admin.Report.stock_out', compact('data','items'));
+    }
+
+        public function paymentBook(Request $request)
+    {
+        // if (!(checkUserPermission('payment_book'))) {
+        //     return redirect('admin/dashboard')->withMessage('Unauthorized Access');
+        // }
+
+        $from_date = $this->getFromDate($request);
+        $to_date = $this->getToDate($request);
+        $branch_id = $this->getBranchId();
+        $payment_type = $request->payment_type;
+
+        $data = PaymentTranscation::whereBetween('created_at', [$from_date, $to_date])
+                ->when($branch_id, function ($query, $branch_id) {
+                    $query->where('branch_id', $branch_id);
+                })
+                ->when($payment_type, function ($query, $payment_type) {
+                    $query->where('payment_type', $payment_type);
+                })
+                ->get();
+
+        $PaymentLists = PaymentList($branch_id);
+
+        // Calculate grand total balance (without date filter)
+        $grandTotal = PaymentTranscation::when($branch_id, function ($query, $branch_id) {
+            $query->where('branch_id', $branch_id);
+        })
+        ->when($payment_type, function ($query, $payment_type) {
+            $query->where('payment_type', $payment_type);
+        })
+        ->get()
+        ->reduce(function ($carry, $item) {
+            return $carry + ($item->type == 'add' ? $item->amount : -$item->amount);
+        }, 0);
+
+        return view("Admin.Report.payment_book", compact('data', 'PaymentLists', 'payment_type', 'from_date', 'to_date', 'grandTotal'));
+    }
+
+
+    public function production_log(Request $request)
+    {
+        // if (!(checkUserPermission('production_log'))) {
+        //     return redirect('admin/dashboard')->withMessage('Unauthorized Access');
+        // }
+
+        $from_date = $this->getFromDate($request);
+        $to_date = $this->getToDate($request);
+        $item_id = $request->item_id;
+        $branch_id = $this->getBranchId();
+
+        // Fetch production log data with filters
+        $data = DB::table('item_production')
+            ->when($branch_id, function ($query, $branch_id) {
+                return $query->where('branch_id', $branch_id);
+            })
+            ->when($item_id, function ($query, $item_id) {
+                return $query->where('item_id', $item_id);
+            })
+            ->whereBetween('created_at', [$from_date, $to_date])
+            ->get();
+
+        // Fetch all items for the filter dropdown
+        $items = getAllItem($branch_id);
+        // dd($data);
+        return view('Admin.Report.production_log', [
+            'data' => $data,
+            'items' => $items,
+        ]);
+    }
+ public function points_history(Request $request)
+    {
+        // Get filter inputs
+        $customerId = $request->input('customer_id');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $branch_id = $this->getBranchId();
+        $customers = getCustomerForFilter($branch_id);
+
+        // Query SaleOrders model
+        $query = SaleOrders::query();
+
+        // Filter by Customer ID (if provided)
+        if (!empty($customerId)) {
+            $query->where('customer_id', $customerId);
+        }
+
+        // Filter by Date Range (if provided)
+        if (!empty($startDate) && !empty($endDate)) {
+            $query->whereBetween('created_at', [Carbon::parse($startDate)->startOfDay(), Carbon::parse($endDate)->endOfDay()]);
+        }
+
+        // Exclude records where BOTH refered_code is "" AND points_redeemed is 0
+        $query->whereNot(function ($q) {
+            $q->where('points_redeemed', 0);
+        });
+        $query->orderBy('created_at', 'desc');
+
+        // Fetch filtered data
+        $pointsHistory = $query->get();
+
+        return view('Admin.Report.points_history', compact('pointsHistory', 'customers', 'customerId', 'startDate', 'endDate'));
+    }
+
 }

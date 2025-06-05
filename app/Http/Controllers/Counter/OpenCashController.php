@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Counter;
 
+use App\Events\PaymentTransactionEvent;
 use Illuminate\Http\Request;
 use App\Traits\ResponseTraits;
 use Illuminate\Support\Facades\DB;
@@ -66,6 +67,15 @@ class OpenCashController extends Controller
             Branch::where('id', auth()->user()->branch_id)->update([
                 'opening_cash' => $request->opening_balance
             ]);
+
+            event(new PaymentTransactionEvent(
+                type: 'add',
+                amount: $request->opening_balance,
+                refNo: null,
+                paymentType: 'cash',
+                status: 'day_open_balance',
+                branchId: auth()->user()->branch_id,
+            ));
         // }
         return $this->sendResponse(1,'Opening Balance Updated','','');
     }

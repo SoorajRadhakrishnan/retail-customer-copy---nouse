@@ -77,6 +77,21 @@ $expense_cat_id = isset($_GET['expense_cat_id']) && $_GET['expense_cat_id'] != '
                                                     </option>
                                             </select>
                                         </div>
+                                        <div class="w-auto ml-3">
+                                            <label class="mb-0 d-block small font-weight-bold">Payment Type</label>
+                                            <select class="form-control rounded-10 select2" id="payment_type"
+                                                name="payment_type" onchange="this.form.submit()">
+                                                <option value="">Select Payment Type</option>
+                                                <option value="card"
+                                                    @if ('card' == $payment_type) selected="selected" @endif>
+                                                    Card
+                                                </option>
+                                                <option value="cash"
+                                                    @if ('cash' == $payment_type) selected="selected" @endif>
+                                                    Cash
+                                                </option>
+                                            </select>
+                                        </div>
 
                                         <div class="w-auto ml-3">
                                             <label class="mb-0 d-block small font-weight-bold">&nbsp;</label>
@@ -116,7 +131,9 @@ Submit                                            </button>
                                                 <th>Added From</th>
                                                 <th>Invoice Number</th>
                                                 <th>Description</th>
+                                                <th>Date</th>
                                                 <th>Payment Status</th>
+                                                <th>Payment Type</th>
                                                 <th>Total Before VAT</th>
                                                 <th>VAT Amount</th>
                                                 <th>Final Amount</th>
@@ -135,7 +152,9 @@ Submit                                            </button>
                                                         <td>{{ Str::ucfirst($expense->action) }}</td>
                                                         <td>{{ Str::ucfirst($expense->invoice_no) }}</td>
                                                         <td>{{ Str::ucfirst($expense->description) }}</td>
+                                                        <td>{{ date('d-m-Y', strtotime($expense->date)) }}</td>
                                                         <td>{{ Str::ucfirst($expense->payment_status) }}</td>
+                                                        <td>{{ Str::ucfirst($expense->payment_type) }}</td>
                                                         <td>{{ showAmount($expense->total_before_vat) }}</td>
                                                         <td>{{ showAmount($expense->vat) }}</td>
                                                         <td>{{ showAmount($expense->total_amount) }}</td>
@@ -154,6 +173,7 @@ Submit                                            </button>
                                                 @if (!auth()->user()->branch_id)
                                                     <td></td>
                                                 @endif
+                                                <td></td>
                                                 <td></td>
                                                 <td></td>
                                                 <td></td>

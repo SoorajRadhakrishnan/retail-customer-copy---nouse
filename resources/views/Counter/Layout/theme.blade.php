@@ -75,8 +75,7 @@
         <div class="container-fluid">
             <div class="az-header-left">
                 <!-- Menu Button -->
-                        </style>
-<a href="javascript:void(0)"
+                <a href="javascript:void(0)"
                     class="menu-button mt-1 btn rounded-10 mr-2 btn-dark animate__animatedd animate__flipInX" onclick="toggleDives()">
                     <span class="material-symbols-outlined" id="home_show" aria-hidden="true"
                          style="display: block">menu</span>
@@ -234,6 +233,20 @@
                             <img src="https://retail.zaad1.com/assets/img/credit.svg" alt="Icon" class="mr-2"
                                 style="width: 30px; height: 30px;">
                             <span style="font-size: 1.5rem;">CREDIT SALES</span>
+                        </a>
+                    </div>
+                @endif
+            </div>
+               <div class="row">
+                @if (checkUserPermission('quotation') && app('appSettings')['quotation']->value == 'yes')
+                    <div class="px-2  py-1 ml-4 mr-4 d-flex" style="width:350px;">
+
+                        <a href="{{ url('quotation') }}"
+                            class="btn btn-dark rounded-10 d-flex align-items-center py-3 px-4 w-100"
+                            title="Quotation">
+                           <img src="https://retail.zaad1.com/assets/img/log.svg" alt="Icon" class="mr-2"
+                                style="width: 30px; height: 30px;">
+                            <span style="font-size: 1.5rem;">QUOTATION</span>
                         </a>
                     </div>
                 @endif

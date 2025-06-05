@@ -80,17 +80,27 @@ Submit                                            </button>
                                                     <th>Customer</th>
                                                     <th>customer Purchased Amount</th>
                                                     <th>Customer Purchased count</th>
+                                                    @if (checkUserPermission('loyality_points'))
+                                                        <th>Customer Points</th>
+
+                                                    @endif
+
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @if (count($top_customes) > 0)
                                                     @foreach ($top_customes as $key => $cus)
-                                                    <tr onclick="ClickCustomer('{{ $cus->customer_id }}')" class="ClickCustomer">
-                                                        <td>{{ $key + 1 }}</td>
-                                                        <td>{{ getCustomerDetById($cus->customer_id) }}</td>
-                                                        <td>{{ showAmount($cus->with_tax) }}</td>
-                                                        <td>{{ ($cus->total_count) }}</td>
-                                                    </tr>
+                                                        <tr onclick="ClickCustomer('{{ $cus->customer_id }}')"
+                                                            class="ClickCustomer">
+                                                            <td>{{ $key + 1 }}</td>
+                                                            <td>{{ getCustomerDetById($cus->customer_id) }}</td>
+                                                            <td>{{ showAmount($cus->with_tax) }}</td>
+                                                            <td>{{ $cus->total_count }}</td>
+                                                            @if (checkUserPermission('loyality_points'))
+                                                                <td>{{$cus->points}}</td>
+                                                            @endif
+
+                                                        </tr>
                                                     @endforeach
                                                 @endif
                                             </tbody>
@@ -284,7 +294,57 @@ Submit                                            </button>
                             </div>
                         </div>
                     </div>
+                    @if (checkUserPermission('loyality_points'))
 
+                    <div class="row">
+                        <div class="col-12 mt-4">
+                            <div class="row">
+                                <div class="col-12">
+                                    <h5>Points redeem history </h5>
+                                    <div class="card rounded-10 shadow">
+                                        <div class="card-body overflow-auto">
+                                            <table class="table table-custom" style="width:100%">
+                                                <thead>
+                                                    <tr>
+                                                        <th>S.No.</th>
+                                                        <th>date</th>
+                                                        <th>Receipt id </th>
+                                                        <th>Points redeemed</th>
+                                                        <th>Discount</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @if (count($redeemHistory) > 0)
+                                                        @foreach ($redeemHistory as $key => $value)
+                                                            <tr>
+                                                                <td>{{ $key + 1 }}</td>
+                                                                @if (!auth()->user()->branch_id)
+                                                                    <td>{{ getBranchById($value->shop_id) }}</td>
+                                                                @endif
+                                                                <td>{{dateFormat($value->created_at)}}</td>
+                                                                <td>{{ $value->receipt_id }}</td>
+
+                                                                {{-- Show "Points Redeemed" value only if points_redeemed > 0 --}}
+                                                                    <td>{{ $value->points_redeemed }}</td>
+
+
+
+                                                                <td>{{ showAmount($value->discount) }}</td>
+                                                            </tr>
+                                                        @endforeach
+                                                    @endif
+                                                </tbody>
+                                                    </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    @endif
                 @endif
 
             </div>

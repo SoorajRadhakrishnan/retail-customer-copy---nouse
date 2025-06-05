@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Counter;
 
+use App\Events\PaymentTransactionEvent;
 use App\Models\PayBack;
 use App\Models\SaleOrders;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
-// use App\Http\Services\PaymentTranscationService;
+
 use App\Models\Admin\ItemPrice;
 use App\Traits\ResponseTraits;
 
@@ -105,6 +106,15 @@ class PayBackController extends Controller
                 $price_size_id_key = $price_size_id[$key] ?? null;
                 $user_id = auth()->user()->id;
                 $shop_id = auth()->user()->branch_id;
+
+                event(new PaymentTransactionEvent(
+                    type: 'sub',
+                    amount: ($value * $final_price[$key]),
+                    refNo: $id,
+                    paymentType: $request->payment_type,
+                    status: 'payback',
+                    branchId: $shop_id,
+                ));
 
 
                 $itemsPrice = ItemPrice::where('id', $price_size_id_key)->first();

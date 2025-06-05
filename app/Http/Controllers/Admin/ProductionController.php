@@ -79,9 +79,11 @@ $itemName = Item::withTrashed()->where('id', $values['item_id'])->value('item_na
                             $itemName = "Unknown Item"; // Fallback if the item name is not found
                         }
 
-                        $message = "Record not found for item: " . $itemName. ".    Check if the item is deleted or not";
+                                               $message = "Record not found for item: " . $itemName. ".      Check if the item is deleted or not";
+
                         return $this->sendResponse(0, $message, '', '');
                     }
+
                     $old_stock_sub = $items->stock;
                     $subQty = $qty * $values['qty'];
                     $current_stock_sub = $old_stock_sub - $subQty;
@@ -125,13 +127,20 @@ $itemName = Item::withTrashed()->where('id', $values['item_id'])->value('item_na
                 $current_stock = $qty + $old_stock;
 
                 $finalTotalCostPrice = $items->total_cost_price + $totalNewStockValue;
+                // dd($finalTotalCostPrice);
                 $finalCostPrice = $finalTotalCostPrice / $current_stock;
-
+                // dd($finalCostPrice);
                 ItemPrice::where('id', $value)->update([
                     'stock' => $current_stock,
                     'cost_price' => $finalCostPrice,
                     'total_cost_price' => $finalTotalCostPrice,
                     'edit_cost_price' =>  1,
+                ]);
+
+                Production::where('id', $production_id)->update([
+                    'production_cost' => $finalCostPrice * $qty,
+                  'unit_cost_price' => $finalCostPrice,
+                  
                 ]);
 
                 DB::table('stock_management_history')->insert([

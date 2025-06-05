@@ -29,9 +29,4 @@ class ItemPrice extends Model
         return $this->belongsTo(PriceSize::class,'price_size_id','id');
     }
 
-    public function deliveryServicePrice()
-    {
-        return $this->hasMany(ItemDeliveryServicePrice::class, 'item_price_id', 'id');
-    }
-
 }

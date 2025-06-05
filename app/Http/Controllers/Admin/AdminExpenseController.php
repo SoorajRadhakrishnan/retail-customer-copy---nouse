@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\PaymentTransactionEvent;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Traits\ResponseTraits;
 use App\Http\Controllers\Controller;
 use App\Models\Expense;
 use Illuminate\Support\Facades\Validator;
+use App\Models\PaymentMethod;
 
 class AdminExpenseController extends Controller
 {
@@ -26,7 +28,8 @@ class AdminExpenseController extends Controller
         $branch_id = $this->getBranchId();
         $expenses = Expense::when($branch_id, function ($query,$branch_id) {
                         $query->where('branch_id',$branch_id);
-                    })->whereBetween('created_at', [$from_date, $to_date])->orderBy('id', 'desc')->get();
+                    })->whereBetween('date', [$from_date, $to_date])->orderBy('id', 'desc')
+                    ->get();
 
         return view('Admin.expense',compact('expenses'));
     }
@@ -41,7 +44,9 @@ class AdminExpenseController extends Controller
             return view('Helper.unauthorized_access');
         }
         $expense = null;
-        return view('Admin.Model.expensemodel',compact('expense'));
+              $payment_methods = PaymentMethod::where('branch_id',$this->getBranchId())->get();
+
+        return view('Admin.Model.expensemodel',compact('expense','payment_methods'));
     }
 
     /**
@@ -55,6 +60,7 @@ class AdminExpenseController extends Controller
             //'tot_bf_vat' => 'required',
             //'vat_amt' => 'required',
             'amount' => 'required',
+          'payment_type'=>'required',
         ],[
            // 'tot_bf_vat.*' => 'Total Before Vat required',
            // 'vat_amt.*' => 'Vat required',
@@ -79,12 +85,25 @@ class AdminExpenseController extends Controller
                 'expense_cat_name' => expenseCatByID($request->expense_category)->expense_category_name,
                 'invoice_no' => $request->invoice_no,
                 'description' => $request->description,
+                'payment_type' => $request->payment_type,
                 'total_before_vat' => $request->tot_bf_vat,
                 'vat' => $request->vat_amt,
                 'total_amount' => $request->amount,
                 'payment_status' => $request->payment_status,
 
             ]);
+
+            if($request->payment_status == 'paid') {
+                $expense = Expense::where('uuid',$request->uuid)->first();
+                event(new PaymentTransactionEvent(
+                    type: 'sub',
+                    amount: $request->amount,
+                    refNo: $expense->id,
+                    paymentType: $request->payment_type,
+                    status: 'expense',
+                    branchId: $request->branch_id,
+                ));
+            }
             return $this->sendResponse(1,'Expense Updated','','');
         }else{
 
@@ -93,11 +112,12 @@ class AdminExpenseController extends Controller
                 return $this->sendResponse(1,config('constant.UNAUTHORIZED_ACCESS'),'',url('admin/expense'));
             }
 
-            Expense::create([
+            $expense = Expense::create([
                 'expense_cat_id' => $request->expense_category,
                 'expense_cat_name' => expenseCatByID($request->expense_category)->expense_category_name,
                 'invoice_no' => $request->invoice_no,
                 'description' => $request->description,
+                'payment_type' => $request->payment_type,
                 'total_before_vat' => $request->tot_bf_vat,
                 'vat' => $request->vat_amt,
                 'total_amount' => $request->amount,
@@ -107,6 +127,17 @@ class AdminExpenseController extends Controller
                 'branch_id' => $request->branch_id,
                 'uuid' => Str::uuid(),
             ]);
+
+            if($request->payment_status == 'paid') {
+                event(new PaymentTransactionEvent(
+                    type: 'sub',
+                    amount: $request->amount,
+                    refNo: $expense->id,
+                    paymentType: $request->payment_type,
+                    status: 'expense',
+                    branchId: $request->branch_id,
+                ));
+            }
             return $this->sendResponse(1,'Expense Created','','');
         }
     }
@@ -120,7 +151,9 @@ class AdminExpenseController extends Controller
         {
             return view('Helper.unauthorized_access');;
         }
-        return view('Admin.Model.expensemodel',compact('expense'));
+                $payment_methods = PaymentMethod::where('branch_id',$this->getBranchId())->get();
+        return view('Admin.Model.expensemodel',compact('expense','payment_methods'));
+
     }
 
     /**

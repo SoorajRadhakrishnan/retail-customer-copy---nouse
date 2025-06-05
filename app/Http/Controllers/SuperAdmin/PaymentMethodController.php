@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\SuperAdmin;
 
+use App\Events\PaymentTransactionEvent;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\PaymentMethod;
 use App\Traits\ResponseTraits;
 use Illuminate\Validation\Rule;
 use App\Http\Controllers\Controller;
+use App\Models\PaymentTranscation;
 use Illuminate\Support\Facades\Validator;
 
 class PaymentMethodController extends Controller
@@ -26,10 +28,13 @@ class PaymentMethodController extends Controller
         //     $payment_methods = PaymentMethod::where('branch_id',auth()->user()->branch_id)->get();
         // }
         // else{
-            $payment_methods = PaymentMethod::all();
+        $branch_id = $this->getBranchId();
+        $payment_methods =  PaymentMethod::when($branch_id, function ($query,$branch_id) {
+                                $query->where('branch_id',$branch_id);
+                            })->get();
         // }
 
-        return view('SuperAdmin.payment-method', compact('payment_methods'));
+        return view('Admin.payment-method', compact('payment_methods'));
     }
 
     /**
@@ -37,8 +42,8 @@ class PaymentMethodController extends Controller
      */
     public function create(Request $request)
     {
-        $payment_method = null;
-        return view('SuperAdmin.Model.payment_method-model', compact('payment_method'));
+        $payment_method = $openBalance = null;
+        return view('Admin.Model.payment_method-model', compact('payment_method', 'openBalance'));
     }
 
     /**
@@ -46,6 +51,7 @@ class PaymentMethodController extends Controller
      */
     public function store(Request $request)
     {
+        // dd($request->all());
         $validation = Validator::make($request->all(), [
             // 'payment_method_name' => 'required',
             'payment_method_name' => [
@@ -58,6 +64,7 @@ class PaymentMethodController extends Controller
                                         }),
                                     ],
             'branch' => 'required',
+            'opening_balance' => 'required|numeric',
         ]);
 
         if ($validation->fails()) {
@@ -70,15 +77,34 @@ class PaymentMethodController extends Controller
                 'payment_method_slug' => strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $request->payment_method_name))),
                 'branch_id' => $request->branch,
             ]);
+
+            $paymentMethod = PaymentMethod::where('uuid', $request->uuid)->first();
+
+            PaymentTranscation::where('payment_type', $paymentMethod->payment_method_slug)
+                    ->where('status', 'open_balance')
+                    ->where('branch_id', $request->branch)
+                    ->update([
+                        'amount' => $request->opening_balance,
+                    ]);
             return $this->sendResponse(1, 'Payment Method Updated', '', '');
         } else {
 
-            PaymentMethod::create([
+            $paymentMethod = PaymentMethod::create([
                 'payment_method_name' => $request->payment_method_name,
                 'payment_method_slug' => strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $request->payment_method_name))),
                 'branch_id' => $request->branch,
                 'uuid' => Str::uuid(),
             ]);
+
+             event(new PaymentTransactionEvent(
+                type: 'add',
+                amount: $request->opening_balance,
+                refNo: null,
+                paymentType: $paymentMethod->payment_method_slug,
+                status: 'open_balance',
+                branchId: $request->branch,
+            ));
+
             return $this->sendResponse(1, 'Payment Method Created', '', '');
         }
     }
@@ -88,7 +114,13 @@ class PaymentMethodController extends Controller
      */
     public function edit(PaymentMethod $payment_method, Request $request)
     {
-        return view('SuperAdmin.Model.payment_method-model', compact('payment_method'));
+        $openBalance = PaymentTranscation::where('payment_type', $payment_method->payment_method_slug)
+            ->where('status', 'open_balance')
+            ->where('type', 'add')
+            ->where('branch_id', $payment_method->branch_id)
+            ->value('amount');
+
+        return view('Admin.Model.payment_method-model', compact('payment_method', 'openBalance'));
     }
 
     /**
@@ -98,9 +130,9 @@ class PaymentMethodController extends Controller
     {
         $result = $payment_method->delete();
         if ($result) {
-            return $this->sendResponse(1, 'Payment Method Deleted succussfully', '', url('admin/payment-method'));
+            return $this->sendResponse(1, 'Payment Method Deleted succussfully', '', '');
         } else {
-            return $this->sendResponse(1, 'Something Went Wrong! please try again.', '', url('admin/payment-method'));
+            return $this->sendResponse(1, 'Something Went Wrong! please try again.', '', '');
         }
     }
 }

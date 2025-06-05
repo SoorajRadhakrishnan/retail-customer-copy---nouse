@@ -250,7 +250,7 @@
                         </div>
                     </div>
                 </div> --}}
-                 
+
 
             <div class="col-12 px-2 ">
                 <div class="d-flex flex-wrap"> @if ((app('appSettings')['production'])->value == 'yes')
@@ -277,7 +277,7 @@
                     <div class="w-auto mr-2 d-flex d-inline-block border mb-3 px-3 py-2 rounded-10">
                         <div class="d-flex align-items-center justify-content-start">
                             <input type="checkbox" class="rounded-10 me-2" id="active" name="active"
-                                @if (optional($item)->active == '1') checked @endif value="1">
+                            @if (optional($item)->active == 'no') checked @endif value="no">
                             <label for="active" class="mt-0 mx-1 mb-0">Hide In POS</label>
                         </div>
                     </div>
@@ -338,10 +338,11 @@ document.getElementById('image').addEventListener('change', function(event) {
         var ingredient = $('#ingredient').is(':checked');
 
         if (ingredient && item_type == 1) {
-            $('#stock_applicable').val(1);
+            // $('#stock_applicable').val(1);
+            $('#stock_applicable').prop('checked', true);
         }
         if (item_type == 2) {
-            $('#stock_applicable').val(1);
+            $('#stock_applicable').prop('checked', true);
         }
 
       //  if (item_type != 1 && item_type != 2) {

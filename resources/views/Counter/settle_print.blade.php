@@ -165,6 +165,14 @@ $branch_details = DB::table('branches')->where('id', $branch_id)->whereNull('del
                     style="border: 1px solid #000;font-size:12px;text-align:right; width:30%;$style_print;padding-right: 6px;">
                     <?php echo showAmount($settle_sale['expense']); ?></td>
             </tr>
+            <tr>
+                <td
+                    style="border: 1px solid #000;font-size:12px;text-align:left; width:70%;$style_print;padding-left: 6px;">
+                    <?php echo 'PURCHASE'; ?></td>
+                <td
+                    style="border: 1px solid #000;font-size:12px;text-align:right; width:30%;$style_print;padding-right: 6px;">
+                    <?php echo showAmount($settle_sale['purchase']); ?></td>
+            </tr>
             @if (getVat($branch_id)->vat != 'no_vat')
                 <tr>
                     <td

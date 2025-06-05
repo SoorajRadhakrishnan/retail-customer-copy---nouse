@@ -136,6 +136,10 @@
                                                     <td>EXPENSE</td>
                                                     <td>{{ showAmount($settle_sales['expense'], 1) }}</td>
                                                 </tr>
+                                                <tr class="odd">
+                                                    <td>PURCHASE</td>
+                                                    <td>{{ showAmount($settle_sales['purchase'], 1) }}</td>
+                                                </tr>
                                                 @if (getVat($branch_id)->vat != 'no_vat')
                                                     <tr class="even">
                                                         <td>SALE VAT</td>
@@ -170,7 +174,7 @@
                             </div>
                         </div>
                         <iframe id="contentFrame"
-                            src="{{ url('settle-sale/create') }}?from_date={{ Session::get('print_date') }}"
+                            src="{{ url('settle-sale/create') }}?from_date={{ Session::get('print_date') }}&settleId={{ Session::get('settleId') }}"
                             style="display:none"></iframe>
                     </div>
                 </div>

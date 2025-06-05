@@ -13,7 +13,7 @@
             <div class="col-12">
                 <div class="az-dashboard-one-title">
                     <div>
-                        <h2 class="az-dashboard-title">Inventory Management</h2>
+                        <h2 class="az-dashboard-title">Stock Adjustment</h2>
                         <p class="az-dashboard-text"></p>
                     </div>
                 </div>

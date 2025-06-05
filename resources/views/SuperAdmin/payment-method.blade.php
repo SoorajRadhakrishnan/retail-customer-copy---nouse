@@ -1,5 +1,4 @@
-@extends('SuperAdmin.Layout.theme')
-
+@extends('Admin.theme')
 @section('title', 'PAYMENT METHOD')
 
 @section('style')
@@ -9,8 +8,7 @@
 @section('content')
     @section('back_url', url('settings'))
 
-    @include('SuperAdmin.Layout.header')
-
+{{-- @include('SuperAdmin.Layout.header') --}}
     <div class="az-content az-content-dashboard  animate__animated animate__fadeIn">
         <div class="container-fluid">
             <div class="az-content-body">

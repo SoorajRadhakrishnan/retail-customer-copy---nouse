@@ -14,7 +14,7 @@ class StockManageItem extends Model
 
     public $table = 'stock_manage_items';
 
-    protected $fillable = ['stock_manage_id', 'item_price_id', 'item_price_size_id', 'item_id', 'qty', 'received_qty', 'cost_price'];
+    protected $fillable = ['stock_manage_id', 'item_price_id', 'item_price_size_id', 'item_id', 'qty', 'received_qty'];
 
     public function getTransfer()
     {

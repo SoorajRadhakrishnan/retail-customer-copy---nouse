@@ -227,11 +227,23 @@ $(document).on("click", ".submitForm", function (e) {
                         window.location.href = result.redirect_to;
                     }, 1000);
                 } else if (returnaction == "createSupplierModal") {
-                closeCreateSupplierModal();
-                var newOption = new Option(result.name, result.id, true, true);
-                $('#supplier_id').append(newOption).val(result.id);
-                  hideProcessing();
-                }
+ closeCreateSupplierModal();
+                    var newOption = new Option(result.name, result.id, true, true);
+                    $('#supplier_id').append(newOption).val(result.id);
+                    hideProcessing();
+                } else if (returnaction == "createCustomerModal") {
+                    // Properly add only <option> to the select, not to any DataTable!
+                    closecreateCustomerModal();
+                    if ($("#customer_id").length) {
+                        // Prevent duplicate options
+                        if ($("#customer_id option[value='" + result.id + "']").length === 0) {
+                            var newOption = new Option(result.name, result.id, true, true);
+                            $('#customer_id').append(newOption).val(result.id).trigger('change');
+                        } else {
+                            $('#customer_id').val(result.id).trigger('change');
+                        }
+                    }
+                    hideProcessing();                }
                 // else if (returnaction === "createItemModal") {
                 //     closeCreateItemModal();
 
