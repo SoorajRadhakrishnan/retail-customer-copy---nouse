@@ -311,7 +311,21 @@
                                         data-target="#dynamicPopup-xl"
                                         data-image="{{ url(config('constant.LOADING_GIF')) }}" ><i
                                             class="fa fa-plus-circle mr-1"></i> <b>DELIVERY LIST</b></button> --}}
+                              <a class="nav-linkk btn btn-dark rounded-10 shadoww mr-2 mb-2" href="{{ url('delivery-log') }}">
+    <i class="fa fa-truck" aria-hidden="true"></i>
+    <b>DELIVERY LOG</b>
+</a>
+
                                 @endif
+                               <a class="nav-linkk btn btn-dark rounded-10 shadoww mr-2 mb-2"
+                                    href="{{ url('recent-sale') }}">
+                                    <i class="fa fa-history" aria-hidden="true"></i>
+                                    <b>RECENT SALE</b>
+                                </a>
+                                <a class="nav-linkk btn btn-dark rounded-10 shadoww mr-2 mb-2" href="{{ url('crm') }}">
+                                    <i class="fa fa-users" aria-hidden="true"></i>
+                                    <b>CRM</b>
+                                </a>
                                 <a class="nav-link rounded-10 mr-2 d-none" href="#"><i
                                         class="fas fa-ellipsis-h"></i></a>
                             </nav>

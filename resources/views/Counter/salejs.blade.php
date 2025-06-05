@@ -50,15 +50,9 @@
         if ($("#barcodeSearch").val().length > 0) {
             var barcode_id = $("#barcodeSearch").val();//alert(barcode_id);
             var barcode_id_numeric = barcode_id;
-            var order_type = $('#order_type').val();
-            var delivery_service = $('#delivery_service').val();
-            var url = "{{ url('item-search') }}";
-            if(order_type == 'delivery'){
-                url = "{{ url('barcode-search') }}?type="+order_type+"&service="+delivery_service;
-            }
             $.ajax({
                 type: "POST",
-                url: url,
+                url: "{{ url('barcode-search') }}",
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
@@ -92,8 +86,7 @@
                                     price: item.price,
                                     stock_applicable: item.stock_applicable,
                                     stock_check: item.stock_check,
-                                    price_id: item.price_id,
-                                    item_type: item.item_type
+                                    price_id: item.price_id
                                 }
                                 product_add(value);
                             }

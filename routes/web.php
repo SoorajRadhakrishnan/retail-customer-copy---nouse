@@ -114,7 +114,16 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin']], function 
     Route::resource('stock', ItemStockController::class);
     Route::resource('sale-order', SaleOrdersController::class);
     Route::post('sale-order/change-payment', [SaleOrdersController::class, 'changePaymentType']);
-    Route::resource('expense', AdminExpenseController::class);
+        Route::resource('expense', AdminExpenseController::class)->names([
+        'index' => 'admin.expense.index',
+        'create' => 'admin.expense.create',
+        'store' => 'admin.expense.store',
+        'show' => 'admin.expense.show',
+        'edit' => 'admin.expense.edit',
+        'update' => 'admin.expense.update',
+        'destroy' => 'admin.expense.destroy',
+    ]);
+
     Route::resource('purchase', PurchaseController::class);
     Route::post('change-purchase-status', [PurchaseController::class, 'change_purchase_status']);
 
@@ -188,7 +197,11 @@ Route::group(['middleware' => ['auth', 'counter']], function () {
     Route::post('change-delivery-status', [SaleController::class, 'change_delivery_status']);
     Route::get('fetch-items', [SaleController::class, 'fetchItems']);
     
-    Route::resource('expense', ExpenseController::class);
+        Route::resource('expense', ExpenseController::class)->names([
+        'store' => 'expense.store',
+        'create' => 'expense.create',
+    ]);
+
     Route::resource('credit-sale', CreditSaleController::class);
     Route::resource('recent-sale', RecentSaleController::class);
     Route::post('changePayment', [RecentSaleController::class, 'changePaymentType'])->name('changePaymentType');
@@ -217,6 +230,7 @@ Route::get('artisan/{command}', function($command) {
         return Artisan::output();
     // }
 });
+
 // excel route moved to excel.php file
 include 'excel.php';
 

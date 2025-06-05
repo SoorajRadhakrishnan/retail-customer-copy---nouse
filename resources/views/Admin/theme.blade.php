@@ -1004,7 +1004,6 @@
                 searching: false,
                 paging: false,
                 info: false,
-                order: false,
                 dom: 'Bfrtip',
                 buttons: [{
                         extend: 'excel',
