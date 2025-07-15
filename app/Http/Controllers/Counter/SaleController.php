@@ -26,16 +26,18 @@ class SaleController extends Controller
         $deliveryService = $request->service;
         $categorys = Category::where('branch_id', auth()->user()->branch_id)->get();
         $query = Item::leftJoin('item_prices', function ($join) {
-            $join->on('items.id', '=', 'item_prices.item_id');
-        })->leftJoin('categories', function ($joins) {
-            $joins->on('items.category_id', '=', 'categories.id');
-        })->leftJoin('price_size', function ($joins) {
-            $joins->on('item_prices.price_size_id', '=', 'price_size.id');
-        })->where('items.branch_id', auth()->user()->branch_id)
-            // ->where('items.item_type', '1')
-            ->where('items.active', 'yes')
-            // ->where('item_prices.price', '>', 0)
-            ->select(DB::raw('items.*,item_prices.id as price_id,item_prices.item_id,item_prices.price_size_id,item_prices.price,item_prices.stock as item_stock,item_prices.cost_price as item_price_cost_price,categories.category_slug,price_size.size_name'));
+    $join->on('items.id', '=', 'item_prices.item_id')
+         ->where('item_prices.branch_id', auth()->user()->branch_id); // Add this line
+})->leftJoin('categories', function ($joins) {
+    $joins->on('items.category_id', '=', 'categories.id');
+})->leftJoin('price_size', function ($joins) {
+    $joins->on('item_prices.price_size_id', '=', 'price_size.id');
+})->where('items.branch_id', auth()->user()->branch_id)
+  // ->where('items.item_type', '1')
+  ->where('items.active', 'yes')
+  // ->where('item_prices.price', '>', 0)
+  //->orderby('items.item_name')
+  ->select(DB::raw('items.*,item_prices.id as price_id,item_prices.item_id,item_prices.price_size_id,item_prices.price,item_prices.stock as item_stock,item_prices.cost_price as item_price_cost_price,categories.category_slug,price_size.size_name'));
 
         if ($deliveryService != 'normal' && $request->type == 'delivery') {
 
@@ -883,7 +885,10 @@ if ($loyalty) {
         $sale_orders = SaleOrders::where('uuid', $uuid)->first(); //dd($sale_orders);
         $drivers = Driver::where('branch_id', auth()->user()->branch_id)->get();
         $customer = null;
-        return view("Counter.sale", compact('categorys', 'items', 'drivers', 'sale_orders','customer', 'deliveryService'));
+      $offers = Offer::whereDate('from_date', '<=', Carbon::today())
+               ->whereDate('to_date', '>=', Carbon::today())
+               ->get();
+        return view("Counter.sale", compact('categorys', 'items', 'drivers', 'sale_orders','customer', 'deliveryService','offers'));
     }
 
     public function get_customer(Request $request)

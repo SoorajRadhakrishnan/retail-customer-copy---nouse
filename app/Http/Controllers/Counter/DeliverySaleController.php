@@ -95,6 +95,7 @@ class DeliverySaleController extends Controller
                         ->where('status','!=','delivered')
                         ->where('status','!=','reject')
                         ->orderBy('id',"desc")
+          ->where('payment_type', '=', '')
                         ->get();
 
         return view('Counter.driver_log',compact('sale_orders','driver_id'));

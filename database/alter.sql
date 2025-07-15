@@ -259,31 +259,6 @@ AFTER
     `stock`;
 
 -- new 05-05-2025
-CREATE TABLE `payment_transfers` (
-    `id` bigint(20) NOT NULL,
-    `uuid` char(36) NOT NULL,
-    `branch_id` bigint(20) NOT NULL,
-    `user_id` bigint(20) NOT NULL,
-    `source_payment_type` varchar(16) NOT NULL,
-    `destination_payment_type` varchar(16) NOT NULL,
-    `notes` text DEFAULT NULL,
-    `amount` double NOT NULL,
-    `transaction_date` date NOT NULL,
-    `created_at` timestamp NULL DEFAULT NULL,
-    `updated_at` timestamp NULL DEFAULT NULL,
-    `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE = InnoDB DEFAULT CHARSET = utf8 COLLATE = utf8_general_ci;
-
-ALTER TABLE
-    `payment_transfers`
-ADD
-    PRIMARY KEY (`id`);
-
-ALTER TABLE
-    `payment_transfers`
-MODIFY
-    `id` bigint(20) NOT NULL AUTO_INCREMENT,
-    AUTO_INCREMENT = 1;
 
 CREATE TABLE `payment_transcations` (
     `id` int(11) NOT NULL,
@@ -509,6 +484,7 @@ where
     and deleted_at is null
     and payment_type != null;
 
+-- today (21-05s)
 ALTER TABLE
     `settle_sale`
 ADD
@@ -1017,81 +993,10 @@ MODIFY
     `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
     AUTO_INCREMENT = 20;
 
-ALTER TABLE `offer_categories`
-  ADD CONSTRAINT `offer_categories_category_id_foreign` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `offer_categories_offer_id_foreign` FOREIGN KEY (`offer_id`) REFERENCES `offers` (`id`) ON DELETE CASCADE;
-INSERT INTO
-    `permissions` (
-        `id`,
-        `parent_id`,
-        `name`,
-        `usertype`,
-        `created_at`,
-        `updated_at`,
-        `deleted_at`
-    )
-VALUES
-    (NULL, '1', 'offers', 'admin', NULL, NULL, NULL);
+ALTER TABLE `offer_categories`ADD CONSTRAINT `offer_categories_category_id_foreign` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE CASCADE,ADD CONSTRAINT `offer_categories_offer_id_foreign` FOREIGN KEY (`offer_id`) REFERENCES `offers` (`id`) ON DELETE CASCADE;
+INSERT INTO`permissions` (`id`,`parent_id`,`name`,`usertype`,`created_at`,`updated_at`,`deleted_at`)VALUES(NULL, '1', 'offers', 'admin', NULL, NULL, NULL);
+INSERT INTO`permissions` (`id`,`parent_id`,`name`,`usertype`,`created_at`,`updated_at`,`deleted_at`)VALUES(NULL,'100','offer_create','admin',NULL,NULL,NULL),(NULL,'100','offer_edit','admin',NULL,NULL,NULL);
+INSERT INTO`permissions` (`id`,`parent_id`,`name`,`usertype`,`created_at`,`updated_at`,`deleted_at`)VALUES(NULL,'100','offer_delete','admin',NULL,NULL,NULL);
+ALTER TABLE`sale_orders`ADD`offer` VARCHAR(255) NULL DEFAULT NULLAFTER `payment_status`;
 
-INSERT INTO
-    `permissions` (
-        `id`,
-        `parent_id`,
-        `name`,
-        `usertype`,
-        `created_at`,
-        `updated_at`,
-        `deleted_at`
-    )
-VALUES
-    (
-        NULL,
-        '100',
-        'offer_create',
-        'admin',
-        NULL,
-        NULL,
-        NULL
-    ),
-    (
-        NULL,
-        '100',
-        'offer_edit',
-        'admin',
-        NULL,
-        NULL,
-        NULL
-    );
-INSERT INTO
-    `permissions` (
-        `id`,
-        `parent_id`,
-        `name`,
-        `usertype`,
-        `created_at`,
-        `updated_at`,
-        `deleted_at`
-    )
-VALUES
-    (
-        NULL,
-        '100',
-        'offer_delete',
-        'admin',
-        NULL,
-        NULL,
-        NULL
-    );
-ALTER TABLE
-    `sale_orders`
-ADD
-    `offer` VARCHAR(255) NULL DEFAULT NULL
-AFTER
-    `payment_status`;
-
-ALTER TABLE
-    `offers`
-ADD
-    `min_amt` VARCHAR(255) NULL DEFAULT NULL
-AFTER
-    `value`;
+ALTER TABLE`offers`ADD`min_amt` VARCHAR(255) NULL DEFAULT NULLAFTER `value`;

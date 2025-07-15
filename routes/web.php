@@ -117,7 +117,8 @@ Route::get('quotation/print', [QuotationController::class, 'printquote']);
     Route::resource('barcode-print', BarcodeController::class);
     Route::resource('payment-method', PaymentMethodController::class);
     Route::resource('loyalty', LoyalityController::class);
-    Route::resource('offers', OfferController::class);
+  	    Route::resource('offers', OfferController::class);
+
 
     // Transcation
     Route::resource('stock', ItemStockController::class);
@@ -202,6 +203,8 @@ Route::resource('stock-add', StockAddController::class);
     // Route::resource('testing',TestController::class);
   Route::get('production_log', [ReportController::class, 'production_log']);
   Route::get('points-history', [ReportController::class, 'points_history']);
+      Route::get('edit-report', [ReportController::class, 'edit_report']);
+
 });
 
 // Counter

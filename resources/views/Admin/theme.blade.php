@@ -92,8 +92,8 @@
                             style="width: 100%;">
                         <span></span></a>
                     @if (auth()->user()->branch)
-                        <h5 class="text-center mb-2 text-truncate">
-                            {{ Str::ucfirst(auth()->user()->branch->branch_name) }}</h5>
+                     <a href="{{ url('admin/dashboard') }}" class="text-decoration-none text-dark">   <h5 class="text-center mb-2 text-truncate">
+                            {{ Str::ucfirst(auth()->user()->branch->branch_name) }}</h5></a>
                     @endif
                     <!-- <a href="javascript:void(0)" class="close">&times;</a> -->
                     <a href="javascript:void(0)" id="azMenuShow" class="az-header-menu-icon d-xl-none"><span></span></a>
@@ -202,10 +202,13 @@
                                                         class="mr-1">
                                                     Delivery Service</a>
                                             @endif
-                                                                    <a href="{{ url('admin/offers') }}" class="nav-link">
+                                                                                                               @if (checkUserPermission('offers') )
+                                            <a href="{{ url('admin/offers') }}" class="nav-link">
                                                             <img src="{{ url('assets/icons/offers.svg') }}"
                                                                 class="mr-1">
                                                             Offers</a>
+                                                @endif
+
                                                             <a href="{{ url('admin/loyalty') }}" class="nav-link">
                                                         <img src="{{ url('assets/icons/customer.svg') }}" " class="mr-1">
                                                                 Loyalty
@@ -437,6 +440,12 @@
                                                     <img src="{{ url('assets/icons/stock_report.svg') }}"
                                                         class="mr-1">
                                                     Stock moving Report</a>
+                                            @endif
+                                          @if (checkUserPermission('sale_delete'))
+                                                <a href="{{ url('admin/edit-report') }}" class="nav-link">
+                                                    <img src="{{ url('assets/icons/settlesale_report.svg') }}"
+                                                        class="mr-1">
+                                                    Edit/Delete Report</a>
                                             @endif
                                                                     @if (checkUserPermission('stock_report'))
                                                 <a href="{{ url('admin/stock-out-report') }}" class="nav-link">
@@ -730,7 +739,7 @@
                 <h4 class="mt-2 text-right" style="max-width: 250px;">
                     @if (auth()->user()->branch)
                         <span class="d-block text-truncate"
-                            title="">{{ Str::ucfirst(auth()->user()->branch->branch_name) }}</span>
+                            title=""><a href="{{ url('admin/dashboard') }}" class="text-decoration-none text-dark">{{ Str::ucfirst(auth()->user()->branch->branch_name) }}</a></span>
                     @else
                         <select class="form-control rounded-10 onChange branch_select" id="branch_select"
                             name="branch_select">

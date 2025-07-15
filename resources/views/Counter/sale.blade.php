@@ -608,7 +608,7 @@
                                                     position: absolute;
                                                     right: 3px;
                                                     /* Set initial right position to keep the element on the right */
-                                                    top: 142px;
+
                                                     /* Adjust vertical alignment */
                                                     max-width: 80px;
                                                     /* Control width to avoid overflow */
@@ -733,6 +733,7 @@
                                         Female</option>
                                 </select>
 
+                                                            @if ( $branch_id!=32)
                                 <select class="form-control border-top-0 px-3 h-auto form-control-lg"
                                     style="border-radius: 0 0 0 10px;width:33.33%" name="offers" id="offers">">
                                     <option value="">Choose Offer</option>
@@ -743,9 +744,14 @@
                                         </option>
                                     @endforeach
                                 </select>
+                            @endif
+
                                 <input type="text" class="form-control border-top-0 h-auto px-3 form-control-lg"
                                     style="border-radius: 0 0 10px 0;width:66.67%" name="customer_address"
                                     placeholder="Address" id="customer_address" value="{{ $customer_address }}">
+                                <input type="text" class="form-control border-top-0 h-auto px-3 form-control-lg"
+                                    style="border-radius: 0 0 10px 0;width:66.67%" name="customer_address"
+                                    placeholder="Card NO" id="customer_address" value="{{ $customer_address }}">
                             </div>
                             {{-- @if (checkUserPermission('loyality_points')) --}}
                                 <div class="col-12">
@@ -756,7 +762,7 @@
                                         class="form-control form-control-lg py-4 rounded-10 bg-white text-center text-dark"
                                         id="referral_code" style="font-size: 2rem;" name="referral_code">
                                 </div> --}}
-                                        <div class="col-4 pr-1 float-left">
+                                        {{-- <div class="col-4 pr-1 float-left">
                                             <h5 class="text-center d-block">Points</h5>
                                             <input type="number" step="any"
                                                 class="form-control form-control-lg py-4 rounded-10 bg-white text-center text-dark "
@@ -767,7 +773,7 @@
                                             <button type="button"
                                                 class="btn btn-dark btn-lg mt-4 rounded-10 form-control form-control-lg p-4 text-center text-uppercase d-flex justify-content-center align-items-center"
                                                 id="redeem_points_button">Redeem Points</button>
-                                        </div>
+                                        </div> --}}
                                     </div>
                                 </div>
 

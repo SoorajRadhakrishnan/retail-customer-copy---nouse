@@ -708,12 +708,7 @@ public function minimum_stock(Request $request)
             ->whereBetween('created_at', [$from_date, $to_date])
             ->first();
 
-        $production=Production::when($branch_id, function ($query, $branch_id) {
-            $query->where('branch_id', $branch_id);
-        })->select(DB::raw('SUM(production_cost) as total_amount'))
-            ->whereBetween('created_at', [$from_date, $to_date])
-            ->first();
-// dd($production);
+    
         $sale = SaleOrders::whereBetween('ordered_date', [$from_date, $to_date])
             ->where('status', '!=', 'hold')
             ->where('payment_status', 'paid')
@@ -722,7 +717,7 @@ public function minimum_stock(Request $request)
             })->select(DB::raw('SUM(with_tax) as total_amount'))
             ->first();
 
-        return view('Admin.Report.profit_loss', compact('expense', 'sale', 'purchase','production'));
+        return view('Admin.Report.profit_loss', compact('expense', 'sale', 'purchase'));
     }
 
     public function driver(Request $request)
@@ -884,5 +879,33 @@ public function minimum_stock(Request $request)
 
         return view('Admin.Report.points_history', compact('pointsHistory', 'customers', 'customerId', 'startDate', 'endDate'));
     }
+          public function edit_report(Request $request)
+    {
+        $branch_id = $this->getBranchId();
+        $from_date = $this->getFromDate($request);
+        $to_date = $this->getToDate($request);
+
+        // Edited sales
+        $exchange = SaleOrders::where('edited', 'yes')
+            ->when($branch_id, function ($query, $branch_id) {
+                $query->where('shop_id', $branch_id);
+            })
+            ->whereBetween('updated_at', [$from_date, $to_date])
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        // Deleted sales
+        $deleted_sales = SaleOrders::onlyTrashed()
+            ->when($branch_id, function ($query, $branch_id) {
+                $query->where('shop_id', $branch_id);
+            })
+            ->whereBetween('deleted_at', [$from_date, $to_date])
+            ->orderBy('deleted_at', 'desc')
+            ->get();
+      // dd($exchange, $deleted_sales);
+
+        return view('Admin.Report.saleeditreport', compact('exchange', 'deleted_sales', 'from_date', 'to_date'));
+    }
+
 
 }

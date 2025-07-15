@@ -646,4 +646,16 @@ if (!function_exists('getPaymentOpeningBalance')) {
             ->where('branch_id', $branchId)
             ->value('amount');
     }
+  
+  
+if (!function_exists('getSalePaymentType')) {
+    function getSalePaymentType($saleId) {
+        $saleOrderPayments = SaleOrderPayment::where('sale_order_id', $saleId)->get();
+        if ($saleOrderPayments->count() === 1) {
+            return $saleOrderPayments->first()->payment_type;
+        }
+
+        return null;
+    }
+}
 }

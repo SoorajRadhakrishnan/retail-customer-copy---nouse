@@ -134,13 +134,21 @@
                                                                 Cancelled</option>
                                                             </select>
                                                         </td>
+                                                                                                              @php
+                                                            $payment_type = getSalePaymentType($delivery->id);
+                                                            $payment_type = $payment_type ? $payment_type : '';
+                                                        @endphp
+
                                                         <td>
                                                             <select name="payment_type" id="" class="form-control w-auto rounded-10 payment_type{{ $key }}" >
                                                                 {{-- <option value="">Select Payment Type</option> --}}
                                                                 @foreach ($PaymentLists as $PaymentList)
                                                                     @if ($PaymentList->payment_method_slug != 'credit')
                                                                         <option value="{{ $PaymentList->payment_method_slug }}"
-                                                                            data-id="{{ $PaymentList->id }}">
+                                                                            data-id="{{ $PaymentList->id }}"
+                                                                            @if ($PaymentList->payment_method_slug == $payment_type)
+                                                                                selected
+                                                                            @endif>
                                                                             {{ $PaymentList->payment_method_name }}
                                                                         </option>
                                                                     @endif

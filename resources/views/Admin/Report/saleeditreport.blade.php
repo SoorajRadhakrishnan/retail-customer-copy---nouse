@@ -1,6 +1,6 @@
 @extends('Admin.theme')
 
-@section('title', 'EDIT REPORT ')
+@section('title', 'EDIT/DELETE REPORT ')
 
 @section('style')
 
@@ -28,7 +28,7 @@
                 <div class="col-12">
                     <div class="az-dashboard-one-title">
                         <div>
-                            <h2 class="az-dashboard-title">Sale Edit Report</h2>
+                            <h2 class="az-dashboard-title">Sale Edit & Delete Report</h2>
                             <p class="az-dashboard-text"></p>
                         </div>
                         <div class="az-content-header-right">
@@ -117,6 +117,7 @@
                                         <thead>
                                             <tr>
                                                 <th style="width: 5%">S.No</th>
+                                                <th>Type</th>
                                                 <th>Receipt ID</th>
                                                 <th>Ordered Date</th>
                                                 <th>Order Type</th>
@@ -124,12 +125,12 @@
                                                 <th>Gross Total</th>
                                                 <th>Discount</th>
                                                 <th>Net Total</th>
-                                                <th class="text-center">Previous Bill</th>
+                                                <th class="text-center">Reference/Action</th>
                                             </tr>
                                         </thead>
-                                        <?php $total_credit = $total_debit = $total_balance = 0; ?>
                                         <tbody>
-                                            @if (count($exchange) > 0)
+                                            {{-- Edited Sales --}}
+                                            @if (isset($exchange) && count($exchange) > 0)
                                                 @foreach ($exchange as $key => $value)
                                                     <?php
                                                     $settle = $settle_date < $value->ordered_date;
@@ -138,36 +139,21 @@
                                                         $order_payment .= $order_payment ? ', ' : '';
                                                         $order_payment .= $payment->payment_type . ': ' . showAmount($payment->amount);
                                                     }
-                                                    // $url = url('admin/print_dashboard') . '?id=' . $value->id . '&re=dashboard';
                                                     ?>
                                                     <tr>
-                                                        <td style="width: 5%">{{ $key + 1 }}</td>
-                                                        <td data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Receipt ID">{{ $value->receipt_id }}</td>
-                                                        <td data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Ordered Date">{{ dateFormat($value->ordered_date, 1) }}
-                                                        </td>
-                                                        <td data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Order Type">
-                                                            {{ Str::ucfirst(str_replace('_', ' ', $value->order_type)) }}
-                                                        </td>
-                                                        <td data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Customer">
+                                                        <td>{{ $key + 1 }}</td>
+                                                        <td><span class="badge badge-info">Edited</span></td>
+                                                        <td>{{ $value->receipt_id }}</td>
+                                                        <td>{{ dateFormat($value->ordered_date, 1) }}</td>
+                                                        <td>{{ Str::ucfirst(str_replace('_', ' ', $value->order_type)) }}</td>
+                                                        <td>
                                                             {{ $value->customer_number ? Str::ucfirst($value->customer_name) . ' (' . $value->customer_number . ')' : '' }}
                                                         </td>
-
-
-
-
-                                                        <td data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Gross Total">{{ showAmount($value->without_tax) }}</td>
-                                                        <td data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Discount">{{ showAmount($value->discount) }}</td>
-                                                        <td data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Net Total">
+                                                        <td>{{ showAmount($value->without_tax) }}</td>
+                                                        <td>{{ showAmount($value->discount) }}</td>
+                                                        <td>
                                                             {{ showAmount($value->with_tax) }} <br> {{ $order_payment }}
                                                         </td>
-                                                        <?php $url = url('print') . '?id=' . $value->id; ?>
                                                         <td class="text-center">
                                                             <div class="btn-group rounded-10" role="group"
                                                                 aria-label="Basic example" data-bs-toggle="tooltip"
@@ -181,18 +167,28 @@
                                                                     <i class="fa fa-list"></i>
                                                                 </a>
                                                             </div>
-                                                            {{-- <div class="btn-group rounded-10" role="group"
-                                                                aria-label="Basic example" data-bs-toggle="tooltip"
-                                                                data-bs-placement="top" title="Print">
-                                                                <a class="btn btn-dark pt-2 px-3 rounded-10"
-                                                                    href="javascript:void(0)"
-                                                                    onclick="printit('{{ sha1(time()) }}','{{ $url }}');"><i
-                                                                        class="fa fa-print"></i>
-                                                                </a>
-                                                            </div> --}}
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            @endif
 
-
-
+                                            {{-- Deleted Sales --}}
+                                            @if (isset($deleted_sales) && count($deleted_sales) > 0)
+                                                @foreach ($deleted_sales as $key => $value)
+                                                    <tr>
+                                                        <td>{{ (isset($exchange) ? count($exchange) : 0) + $key + 1 }}</td>
+                                                        <td><span class="badge badge-danger">Deleted</span></td>
+                                                        <td>{{ $value->receipt_id }}</td>
+                                                        <td>{{ dateFormat($value->ordered_date, 1) }}</td>
+                                                        <td>{{ Str::ucfirst(str_replace('_', ' ', $value->order_type)) }}</td>
+                                                        <td>
+                                                            {{ $value->customer_number ? Str::ucfirst($value->customer_name) . ' (' . $value->customer_number . ')' : '' }}
+                                                        </td>
+                                                        <td>{{ showAmount($value->without_tax) }}</td>
+                                                        <td>{{ showAmount($value->discount) }}</td>
+                                                        <td>{{ showAmount($value->with_tax) }}</td>
+                                                        <td class="text-center">
+                                                            <span class="text-muted">Deleted at: {{ dateFormat($value->deleted_at, 1) }}</span>
                                                         </td>
                                                     </tr>
                                                 @endforeach
@@ -208,14 +204,7 @@
         </div>
     </div>
     <div id="if"></div>
-    <!-- Delete Confirmation Modal -->
-    <!-- Delete Confirmation Modal -->
-
-
 @endsection
 
 @section('script')
-
-
-
 @endsection

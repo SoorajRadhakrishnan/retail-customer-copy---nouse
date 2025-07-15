@@ -119,30 +119,30 @@
                 item_stock1 = parseFloat(item_stock) + parseFloat(old_qty);
             }
 
-            // if (prod_id == value.price_id && qty > 0) {
-            //     if (value.stock_applicable == 1) {
-            //         if (parseFloat(qty_plus) < parseFloat(item_stock1) || stock_check == 'no') {
-            //             $("tr:nth-child(" + i + ") td:nth-child(2) input").val((parseInt(qty_plus) + 1));
-            //             sb_total();
-            //             return true;
-            //         } else {
-            //             notifyme2("No Stock");
-            //             return false;
-            //         }
-            //     } else {
-            //         $("tr:nth-child(" + i + ") td:nth-child(2) input").val((parseInt(qty_plus) + 1));
-            //         sb_total();
-            //         return true;
-            //     }
-            // } else {
-            //     if (qty < 0) {
-            //         if (prod_id == value.price_id) {
-            //             $("tr:nth-child(" + i + ") td:nth-child(2) input").val((parseInt(qty_plus) - 1));
-            //             sb_total();
-            //             return true;
-            //         }
-            //     }
-            // }
+             if (prod_id == value.price_id && qty > 0) {
+                 if (value.stock_applicable == 1) {
+                     if (parseFloat(qty_plus) < parseFloat(item_stock1) || stock_check == 'no') {
+                         $("tr:nth-child(" + i + ") td:nth-child(2) input").val((parseInt(qty_plus) + 1));
+                         sb_total();
+                        return true;
+                     } else {
+                        notifyme2("No Stock");
+                         return false;
+                     }
+                 } else {
+                     $("tr:nth-child(" + i + ") td:nth-child(2) input").val((parseInt(qty_plus) + 1));
+                     sb_total();
+                     return true;
+                }
+             } else {
+                 if (qty < 0) {
+                    if (prod_id == value.price_id) {
+                        $("tr:nth-child(" + i + ") td:nth-child(2) input").val((parseInt(qty_plus) - 1));
+                         sb_total();
+                         return true;
+                     }
+                }
+             }
         }
         // <input type='number' name='price_id[]' class='price_id' id='price_id'  value="` + value.price_id + `">
         // <span class="d-block text-dark small unit-price">` + value.price + `</span>

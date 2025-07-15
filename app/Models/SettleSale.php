@@ -231,11 +231,14 @@ $expensecash = 0;
                 $Grand_total += $pay_value['amount'];
             }
         }
+$balanceCashDeliveryAmount = $this->getBalanceCashDeliveryAmount($sale_order_ids, $shop_id, $inputs);
 
         $Grand_total = $Grand_total + $DiscountTotal;//$Grand_total + ($DiscountTotal - $py_back_discount); //-$py_back;
 
 
-        $CashDrawerAmt = ($CashSaleAmt + $CreditRecoverCash) - $py_cash_back;
+$CashDrawerAmt = ($CashSaleAmt + $CreditRecoverCash + $balanceCashDeliveryAmount ) - $py_cash_back;
+        $Net_total = $Grand_total - $DiscountTotal;//($Grand_total - ($DiscountTotal - $py_back_discount));
+
         $Net_total = $Grand_total - $DiscountTotal;//($Grand_total - ($DiscountTotal - $py_back_discount));
         //if(ACCOUNT == 'yes'){
         //$CashDrawerAmt = ($CashDrawerAmt + $cash_at_starting) - ($cash_drawer_acct_exp);
@@ -569,5 +572,24 @@ $expensecash = 0;
     public function branch()
     {
         return $this->belongsTo(Branch::class,'shop_id','id');
+    }
+      public function getBalanceCashDeliveryAmount($sale_order_ids, $shop_id, $inputs)
+    {
+        $from_date = (isset($inputs['from_date']) && $inputs['from_date'] != '') ? $inputs['from_date'] : '';
+        $to_date = (isset($inputs['to_date']) && $inputs['to_date'] != '') ? $inputs['to_date'] : '';
+        $result = SaleOrderPayment::leftJoin('sale_orders', function ($join) {
+                $join->on('sale_order_payments.sale_order_id', '=', 'sale_orders.id');
+            })->whereNotIn('sale_order_payments.sale_order_id', $sale_order_ids)
+            ->where('sale_order_payments.payment_type', 'cash')
+            ->where('sale_order_payments.shop_id', $shop_id)
+            ->whereBetween('sale_order_payments.created_at', [$from_date, $to_date])
+            ->where('sale_orders.order_type', 'delivery')
+            ->select(DB::raw('COALESCE(SUM(sale_order_payments.amount),0) as amount'))
+            ->first();
+
+        if ($result !== null) {
+            return $result->amount;
+        }
+        return 0;
     }
 }

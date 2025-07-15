@@ -94,16 +94,16 @@
                         <img src="{{ url('assets/img/zaadDocs-m.png') }}" class="d-block d-xl-none px-3 mt-3 mt-2"
                             style="width: 100%;">
                         <span></span></a>
-                    <h5 class="text-center mb-2 text-truncate">
+                   <a href="{{ url('home') }}" class="az-logo"> <h5 class="text-center mb-2 text-truncate">
                         {{ Str::ucfirst(auth()->user()->branch->branch_name) }}
-                    </h5>
+                    </h5></a>
                 </div>
             </div>
             <div class="az-header-right animate__animatedd animate__flipInX">
-                <h4 class="mt-2 text-right" style="max-width: 250px;">
+                <a href="{{ url('home') }}" class="az-logo"><h4 class="mt-2 text-right" style="max-width: 250px;">
                     <span class="d-block text-truncate"
                         title="">{{ Str::ucfirst(auth()->user()->branch->branch_name) }}</span>
-                </h4>
+                </h4></a>
                 <div class="dropdown az-profile-menu">
                     <a href="javascript:void(0)" class="az-img-user shadoww border rounded-10"><img
                             src="{{ url('assets/img/appicon.webp') }}" alt=""></a>
