@@ -52,6 +52,30 @@
                                             class="form-control rounded-10" onchange="this.form.submit()">
                                     </div>
                                     <div class="w-auto ml-3">
+    <label class="mb-0 d-block small font-weight-bold">Status</label>
+    <select class="form-control rounded-10 select2" id="status" name="status" onchange="this.form.submit()">
+        <option value="">Select Status</option>
+        <option value="pending" @if ('pending' == $status) selected @endif>Pending</option>
+        <option value="out_for_delivery" @if ('out_for_delivery' == $status) selected @endif>out for delivery</option>
+        <option value="delivered" @if ('delivered' == $status) selected @endif>Delivered</option>
+        <option value="reject" @if ('reject' == $status) selected @endif>Cancelled</option>
+    </select>
+</div>
+<div class="w-auto ml-3">
+    <label class="mb-0 d-block small font-weight-bold">Payment Type</label>
+    <select class="form-control rounded-10" id="payment_type" name="payment_type" onchange="this.form.submit()">
+        <option value="">Select Type</option>
+        <?php $PaymentLists = PaymentList(auth()->user()->branch_id); ?>
+        @foreach ($PaymentLists as $PaymentList)
+            <option value="{{ $PaymentList->payment_method_name }}"
+                @if ($PaymentList->payment_method_name == $payment_type) selected @endif>
+                {{ Str::ucfirst($PaymentList->payment_method_name) }}
+            </option>
+        @endforeach
+    </select>
+</div>
+
+                                    <div class="w-auto ml-3">
                                         <label class="mb-0 d-block small font-weight-bold">&nbsp;</label>
                                         <button type="submit" class="btn btn-dark rounded-10 px-3">
                                             Submit

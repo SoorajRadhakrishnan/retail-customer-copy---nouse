@@ -16,26 +16,34 @@ class DeliverySaleController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
-    {
-        $customer_id = $request->customer;
-        $receipt_id = $request->receipt_id;
+public function index(Request $request)
+{
+    $customer_id = $request->customer;
+    $receipt_id = $request->receipt_id;
+    $status = $request->status;
+    $payment_type = $request->payment_type;
 
-        $sale_orders = SaleOrders::where('shop_id',auth()->user()->branch_id)
-                        ->when($customer_id, function ($query,$customer_id) {
-                            $query->where('customer_id',$customer_id);
-                        })
-                        ->when($receipt_id, function ($query,$receipt_id) {
-                            $query->where('receipt_id',$receipt_id);
-                        })
-                        ->where('order_type','delivery')
-                        ->where('status','!=','delivered')
-                        ->where('status','!=','reject')
-                        ->orderBy('id',"desc")
-                        ->get();
+    $sale_orders = SaleOrders::where('shop_id', auth()->user()->branch_id)
+        ->when($customer_id, function ($query, $customer_id) {
+            $query->where('customer_id', $customer_id);
+        })
+        ->when($receipt_id, function ($query, $receipt_id) {
+            $query->where('receipt_id', $receipt_id);
+        })
+        ->when($status, function ($query, $status) {
+            $query->where('status', $status);
+        }, function ($query) {
+            // If no status is selected, exclude 'delivered' and 'reject'
+            $query->whereNotIn('status', ['delivered', 'reject']);
+        })
+        ->when($payment_type, function ($query, $payment_type) {
+            $query->where('payment_type', $payment_type);
+        })
+        ->orderBy('id', 'desc')
+        ->get();
 
-        return view('Counter.delivery_sale',compact('sale_orders','customer_id','receipt_id'));
-    }
+    return view('Counter.delivery_sale', compact('sale_orders', 'customer_id', 'receipt_id', 'status', 'payment_type'));
+}
 
     /**
      * Show the form for creating a new resource.
